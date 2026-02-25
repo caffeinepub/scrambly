@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Profile, SonicKnowledgeEntry, PostContent, FriendsModeRequest, Video, Idea } from '../backend';
+import type { Profile, SonicKnowledgeEntry, PostContent, FriendsModeRequest, Video, Idea, FriendRequest } from '../backend';
 import { Principal } from '@dfinity/principal';
 
 // ─── Profile ────────────────────────────────────────────────────────────────
@@ -362,6 +362,52 @@ export function useMarkIdeaReviewed() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['allIdeas'] });
+    },
+  });
+}
+
+// ─── Friends ──────────────────────────────────────────────────────────────────
+
+export function useGetFriends() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<Principal[]>({
+    queryKey: ['friends'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getFriends();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 30000,
+  });
+}
+
+export function useGetFriendRequests() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<FriendRequest[]>({
+    queryKey: ['friendRequests'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getFriendRequests();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 30000,
+  });
+}
+
+export function useRespondToFriendRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ requesterId, accept }: { requesterId: Principal; accept: boolean }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.respondToFriendRequest(requesterId, accept);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
     },
   });
 }

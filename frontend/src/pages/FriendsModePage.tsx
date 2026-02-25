@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Users, Heart, Clock, CheckCircle, XCircle, Loader2, UserPlus, Star } from 'lucide-react';
+import { Users, Heart, Clock, CheckCircle, XCircle, Loader2, UserPlus, Star, MessageCircle, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,12 @@ import {
   useSubmitFriendsModeRequest,
   useGetCallerUserProfile,
   useSaveCallerUserProfile,
+  useGetFriends,
+  useGetFriendRequests,
 } from '../hooks/useQueries';
+import FriendsPanel from '../components/FriendsPanel';
+
+const FRIEND_LIMIT = 1000;
 
 export default function FriendsModePage() {
   const { data: status, isLoading: statusLoading, isFetched: statusFetched } = useGetFriendsModeStatus();
@@ -18,10 +23,17 @@ export default function FriendsModePage() {
   const submitRequest = useSubmitFriendsModeRequest();
   const saveProfile = useSaveCallerUserProfile();
 
+  const { data: friends = [] } = useGetFriends();
+  const { data: friendRequests = [] } = useGetFriendRequests();
+
   const [birthdate, setBirthdate] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [nameSaved, setNameSaved] = useState(false);
+  const [chatPanelOpen, setChatPanelOpen] = useState(false);
+
+  const pendingRequestCount = friendRequests.filter((r) => r.status === 'pending').length;
+  const friendCount = friends.length;
 
   // Track previous status to detect transitions
   const prevStatusRef = useRef<string | null | undefined>(undefined);
@@ -106,6 +118,34 @@ export default function FriendsModePage() {
           Connect with Scrambly fans your age!
         </p>
       </div>
+
+      {/* ── Chat Bar ── */}
+      <button
+        onClick={() => setChatPanelOpen(true)}
+        className="w-full flex items-center gap-3 px-5 py-4 rounded-2xl bg-primary text-primary-foreground
+                   shadow-md hover:bg-primary/90 active:scale-[0.98] transition-all duration-150 group"
+        aria-label="Open friends chat panel"
+      >
+        <div className="w-9 h-9 rounded-full bg-primary-foreground/20 flex items-center justify-center shrink-0">
+          <MessageCircle size={18} className="text-primary-foreground" />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="font-fredoka text-lg leading-tight">Chat with Friends</p>
+          <p className="font-nunito text-xs text-primary-foreground/70 leading-tight">
+            {friendCount === 0
+              ? 'No friends yet — tap to see your list'
+              : friendCount >= FRIEND_LIMIT
+              ? `Friend limit reached (${FRIEND_LIMIT}/${FRIEND_LIMIT})`
+              : `${friendCount} friend${friendCount !== 1 ? 's' : ''}${pendingRequestCount > 0 ? ` · ${pendingRequestCount} request${pendingRequestCount !== 1 ? 's' : ''}` : ''}`}
+          </p>
+        </div>
+        {pendingRequestCount > 0 && (
+          <Badge className="bg-yellow-400 text-yellow-900 font-fredoka text-xs shrink-0 border-0">
+            {pendingRequestCount}
+          </Badge>
+        )}
+        <ChevronRight size={18} className="text-primary-foreground/60 group-hover:translate-x-0.5 transition-transform shrink-0" />
+      </button>
 
       {/* Status: Approved */}
       {status === 'approved' && (
@@ -280,6 +320,9 @@ export default function FriendsModePage() {
           Friends Mode connects you with Scrambly fans born the same year as you. All requests are reviewed by the owner to keep the community safe. 💙
         </p>
       </div>
+
+      {/* Friends Panel (drawer/modal) */}
+      <FriendsPanel isOpen={chatPanelOpen} onClose={() => setChatPanelOpen(false)} />
     </div>
   );
 }

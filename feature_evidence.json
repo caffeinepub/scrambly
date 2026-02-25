@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-in-settingspage-tsx-add-an-apply-to-be-a-moderator-section-visually-styled-similarly-to-the-existing-appeals-ideas-sections-distinct-label-not-identical-to-either-the-section-must-contain-a-textarea-limited-to-1000-characters-where-the-user-types-why-they-want-to-become-a-moderator-the-textarea-must-accept-plain-text-only-include-a-character-counter-showing-how-many-characters-remain-include-a-clearly-labelled-submit-button",
-      "featureTitle": "In SettingsPage.tsx, add an 'Apply to be a Moderator' section visually styled similarly to the existing appeals/ideas sections (distinct label, not identical to either). The section must contain a textarea limited to 1000 characters where the user types why they want to become a moderator. The textarea must accept plain text only. Include a character counter showing how many characters remain. Include a clearly labelled submit button.",
+      "featureId": "feature-in-friendsmodepage-tsx-add-a-persistent-chat-bar-ui-element-positioned-below-the-user-s-profile-section-the-bar-must-display-a-friends-label-or-chat-icon-and-be-tappable-clickable-to-open-a-friends-panel-or-drawer",
+      "featureTitle": "In FriendsModePage.tsx, add a persistent chat bar UI element positioned below the user's profile section. The bar must display a 'Friends' label or chat icon and be tappable/clickable to open a friends panel or drawer.",
       "files": [
-        "frontend/src/pages/SettingsPage.tsx"
+        "frontend/src/components/FriendsPanel.tsx",
+        "frontend/src/pages/FriendsModePage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,15 +20,15 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-58"
+        "REQ-60"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-when-the-user-submits-the-moderator-application-form-in-settingspage-tsx-open-the-url-https-scrambly-moderator-lq2-caffeine-xyz-caffeineadmintoken-d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4-in-a-new-browser-tab-the-application-message-and-the-submitting-user-s-principal-or-display-name-must-be-appended-to-the-url-e-g-as-additional-hash-parameters-or-query-parameters-so-the-moderator-review-destination-receives-the-submission-details-after-submission-display-an-in-page-confirmation-message-to-the-user-e-g-your-application-has-been-submitted-a-moderator-will-review-it-soon",
-      "featureTitle": "When the user submits the moderator application form in SettingsPage.tsx, open the URL https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab. The application message and the submitting user's principal or display name must be appended to the URL (e.g. as additional hash parameters or query parameters) so the moderator review destination receives the submission details. After submission, display an in-page confirmation message to the user (e.g. 'Your application has been submitted! A moderator will review it soon.').",
+      "featureId": "feature-when-the-friends-panel-is-opened-and-the-user-has-no-friends-display-a-clear-no-friends-empty-state-message-with-a-friendly-prompt-encouraging-them-to-add-friends",
+      "featureTitle": "When the friends panel is opened and the user has no friends, display a clear 'No Friends' empty state message with a friendly prompt encouraging them to add friends.",
       "files": [
-        "frontend/src/pages/SettingsPage.tsx"
+        "frontend/src/components/FriendsPanel.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -41,7 +42,55 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-59"
+        "REQ-61"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-when-the-user-has-one-or-more-friends-display-the-friend-list-in-the-friends-panel-enforce-a-maximum-friend-limit-of-1000-if-the-user-already-has-1000-friends-prevent-adding-any-more-and-show-a-friend-limit-reached-1000-1000-message-store-the-friend-relationships-in-the-backend-associated-with-each-user-s-principal",
+      "featureTitle": "When the user has one or more friends, display the friend list in the friends panel. Enforce a maximum friend limit of 1000 — if the user already has 1000 friends, prevent adding any more and show a 'Friend limit reached (1000/1000)' message. Store the friend relationships in the backend, associated with each user's principal.",
+      "files": [
+        "frontend/src/components/FriendListItem.tsx",
+        "frontend/src/components/FriendsPanel.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "user-approval@3.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-62"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-in-the-friends-panel-on-friendsmodepage-tsx-display-incoming-pending-friend-requests-as-a-separate-section-labelled-friend-requests-each-pending-request-must-show-the-requester-s-display-name-and-two-action-buttons-accept-calls-respondtofriendrequest-with-accept-true-and-decline-calls-respondtofriendrequest-with-accept-false-after-accepting-the-new-friend-appears-in-the-friends-list-immediately",
+      "featureTitle": "In the friends panel on FriendsModePage.tsx, display incoming pending friend requests as a separate section labelled 'Friend Requests'. Each pending request must show the requester's display name and two action buttons: 'Accept' (calls respondToFriendRequest with accept=true) and 'Decline' (calls respondToFriendRequest with accept=false). After accepting, the new friend appears in the friends list immediately.",
+      "files": [
+        "frontend/src/components/FriendRequestItem.tsx",
+        "frontend/src/components/FriendsPanel.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "user-approval@3.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-64"
       ],
       "confidence": "high"
     }

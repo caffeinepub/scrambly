@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 45,
+  "projectStateVersion": 47,
   "summary": "Scrambly — a Sonic franchise-themed super app combining a Sonic-themed search/browser, mobile games (including Block Blast and Sonic Forces), social/community features for age-matched users, parental controls with timers and kid detection, offline search and gameplay, offline/emergency calling, ad blocker, and age verification with camera-based eligibility checks.",
   "architectural_notes": [
     "App name: Scrambly — Sonic-franchise themed super app targeting users aged 10–18",
@@ -416,6 +416,38 @@
         "REQ-59"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-in-friendsmodepage-tsx-add-a-persistent-chat-bar-ui-element-positioned-below-the-user-s-profile-section-the-bar-must-display-a-friends-label-or-chat-icon-and-be-tappable-clickable-to-open-a-friends-panel-or-drawer",
+      "title": "In FriendsModePage.tsx, add a persistent chat bar UI element positioned below the user's profile section. The bar must display a 'Friends' label or chat icon and be tappable/clickable to open a friends panel or drawer.",
+      "reqIds": [
+        "REQ-60"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-when-the-friends-panel-is-opened-and-the-user-has-no-friends-display-a-clear-no-friends-empty-state-message-with-a-friendly-prompt-encouraging-them-to-add-friends",
+      "title": "When the friends panel is opened and the user has no friends, display a clear 'No Friends' empty state message with a friendly prompt encouraging them to add friends.",
+      "reqIds": [
+        "REQ-61"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-when-the-user-has-one-or-more-friends-display-the-friend-list-in-the-friends-panel-enforce-a-maximum-friend-limit-of-1000-if-the-user-already-has-1000-friends-prevent-adding-any-more-and-show-a-friend-limit-reached-1000-1000-message-store-the-friend-relationships-in-the-backend-associated-with-each-user-s-principal",
+      "title": "When the user has one or more friends, display the friend list in the friends panel. Enforce a maximum friend limit of 1000 — if the user already has 1000 friends, prevent adding any more and show a 'Friend limit reached (1000/1000)' message. Store the friend relationships in the backend, associated with each user's principal.",
+      "reqIds": [
+        "REQ-62"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-the-friends-panel-on-friendsmodepage-tsx-display-incoming-pending-friend-requests-as-a-separate-section-labelled-friend-requests-each-pending-request-must-show-the-requester-s-display-name-and-two-action-buttons-accept-calls-respondtofriendrequest-with-accept-true-and-decline-calls-respondtofriendrequest-with-accept-false-after-accepting-the-new-friend-appears-in-the-friends-list-immediately",
+      "title": "In the friends panel on FriendsModePage.tsx, display incoming pending friend requests as a separate section labelled 'Friend Requests'. Each pending request must show the requester's display name and two action buttons: 'Accept' (calls respondToFriendRequest with accept=true) and 'Decline' (calls respondToFriendRequest with accept=false). After accepting, the new friend appears in the friends list immediately.",
+      "reqIds": [
+        "REQ-64"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -695,6 +727,20 @@
       "id": "AR-46",
       "summary": "Add an 'Apply to be a Moderator' button in SettingsPage.tsx. Opens a form styled like the appeals section (but distinct). User types up to 1000 characters explaining why they want to be a moderator. On submission, the application (including user's principal/display name and message) is sent to https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 for moderator review.",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-47",
+      "summary": "Add a chat bar below the profile. When pressed, show 'No Friends' if user has no friends. When user has friends, display them with a max friend limit of 1000. Include friend search by name/display name, ability to add trusted friends with accept/decline request flow, and chat with friends or age-matched people.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-51",
+      "summary": "Add a backend data model and functions for friend relationships: a FriendRequest record type with fields requesterId (Text), recipientId (Text), status (Text — 'pending', 'accepted', 'declined'), and sentAt (Int timestamp). Expose the following functions: sendFriendRequest(recipientPrincipal: Text) — creates a pending request; respondToFriendRequest(requesterId: Text, accept: Bool) — accepts or declines a request; getFriends() — returns all accepted friends of the calling principal; getFriendRequests() — returns all incoming pending requests for the calling principal. Enforce the 1000-friend cap in sendFriendRequest.",
+      "reqIds": [
+        "REQ-63"
+      ],
       "status": "pending"
     }
   ],

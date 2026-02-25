@@ -1,41 +1,98 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add 'Apply to be a Moderator' section to Settings",
+  "title": "Add Friends Chat Bar with Friend List and 1000 Friend Limit",
   "requirements": [
     {
-      "id": "REQ-58",
-      "summary": "Add an 'Apply to be a Moderator' section to SettingsPage.tsx with a 1000-character textarea, live character counter, and submit button, styled consistently with the Sonic visual theme",
+      "id": "REQ-60",
+      "summary": "Add a persistent chat bar UI element below the user profile section on FriendsModePage that opens a friends panel or drawer when clicked",
       "acceptanceCriteria": [
-        "An 'Apply to be a Moderator' section is visible in SettingsPage.tsx for authenticated users.",
-        "The section is visually distinct from the appeals and ideas sections but follows the same card/panel styling consistent with the Sonic visual theme.",
-        "The textarea accepts up to 1000 characters and displays a live character counter (e.g. '450 / 1000').",
-        "The submit button is clearly labelled (e.g. 'Submit Application').",
-        "The section is styled consistently with the existing Sonic visual theme (cobalt blue/yellow palette, Fredoka One or Nunito font, rounded styling)."
+        "A chat/friends bar is visible below the user profile section on FriendsModePage.tsx",
+        "Tapping or clicking the bar opens a friends panel or slide-up drawer",
+        "The bar is styled consistently with the Sonic visual theme (cobalt blue/yellow, Fredoka One or Nunito font, rounded styling)"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/SettingsPage.tsx",
+          "path": "frontend/src/pages/FriendsModePage.tsx",
           "operation": "modify",
-          "description": "Add a new 'Apply to be a Moderator' section below the existing ideas section. Include a textarea element with maxLength={1000} that accepts plain text only. Add a character counter display showing remaining characters (e.g., '450 / 1000'). Include a submit button labeled 'Submit Application'. Style the section using the sonic-card class and sonic-yellow accent color to match the existing appeals and ideas sections while remaining visually distinct. Use state to track the textarea value and disable the submit button when the textarea is empty or contains only whitespace."
+          "description": "Add a persistent chat bar UI component below the existing profile section. The bar should display a 'Friends' label with a chat/users icon. On click, toggle a slide-up drawer or panel component that overlays the page content. Style the bar using Sonic theme colors (cobalt blue background, yellow accent, Fredoka One font) with rounded corners. Ensure the bar remains visible and accessible at all times on the page."
+        },
+        {
+          "path": "frontend/src/components/FriendsPanel.tsx",
+          "operation": "create",
+          "description": "Create a drawer/panel component that slides up from the bottom (mobile) or appears as a modal overlay (desktop) when the chat bar is clicked. Include a close button, a header showing 'Friends', and a scrollable content area. Use Sonic-themed styling with rounded corners, blue/yellow color scheme, and shadcn/ui Sheet or Dialog primitives for accessibility. The component should accept isOpen and onClose props for controlled state."
         }
       ]
     },
     {
-      "id": "REQ-59",
-      "summary": "When the moderator application form is submitted, open the moderator review URL in a new tab with the application message and user identity appended, then display an in-page confirmation message and clear the form",
+      "id": "REQ-61",
+      "summary": "Display a 'No Friends' empty state message in the friends panel when the user has zero accepted friends",
       "acceptanceCriteria": [
-        "Clicking submit opens https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab.",
-        "The submission does not block or navigate away from the current settings page.",
-        "An in-page confirmation message is displayed after the form is submitted.",
-        "The form textarea is cleared after a successful submission.",
-        "Submitting an empty or whitespace-only textarea is prevented — the button is disabled or an inline validation error is shown if the field is empty."
+        "When the authenticated user has zero accepted friends, the panel shows a 'No Friends' empty state message",
+        "The empty state is styled consistently with the Sonic visual theme",
+        "No friend list items are rendered when the friend count is zero"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/SettingsPage.tsx",
+          "path": "frontend/src/components/FriendsPanel.tsx",
           "operation": "modify",
-          "description": "Implement the submit handler for the moderator application form. On submit, construct a URL by appending the application message and the user's principal ID as hash parameters to https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 (e.g., add &message=<encoded_message>&user=<principal_string>). Use window.open() with '_blank' to open the URL in a new tab. After opening the URL, display a confirmation message using the toast notification system (e.g., 'Your application has been submitted! A moderator will review it soon.'). Clear the textarea by resetting the form state. Ensure the submit button is disabled when the textarea is empty or contains only whitespace. Access the user's principal from the identity context using useInternetIdentity().identity.getPrincipal().toString()."
+          "description": "Add conditional rendering logic: when the friends list is empty (length === 0), display a centered empty state component with a friendly message such as 'No Friends Yet' and a subtitle encouraging the user to add friends. Use Sonic-themed icons (e.g., a Sonic character silhouette or ring icon) and maintain consistent typography (Nunito body text). Ensure no friend list items render when the count is zero."
+        }
+      ]
+    },
+    {
+      "id": "REQ-62",
+      "summary": "Display the friend list with a maximum of 1000 friends and show a 'Friend limit reached (1000/1000)' message when the cap is hit",
+      "acceptanceCriteria": [
+        "The friends panel lists all accepted friends when the user has at least one friend",
+        "The total number of displayed friends cannot exceed 1000",
+        "When the friend count reaches 1000, the 'Add Friend' action is disabled and a 'Friend limit reached (1000/1000)' notice is shown",
+        "Friend relationships are persisted in the backend keyed by the user's principal",
+        "The backend enforces the 1000-friend cap and returns an error if exceeded"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a useGetFriends hook that calls the backend getFriends() method and returns an array of Principal objects representing accepted friends. Use React Query with appropriate caching and error handling. The hook should be enabled only when the user is authenticated. Include a isFetching state for loading UI."
+        },
+        {
+          "path": "frontend/src/components/FriendsPanel.tsx",
+          "operation": "modify",
+          "description": "Use the useGetFriends hook to fetch and display the friend list. Map over the friends array and render each friend as a list item showing their display name (fetch via getUserProfile for each Principal). Display a friend count badge in the panel header (e.g., 'Friends (5)'). When the friend count reaches 1000, display a warning banner at the top of the panel: 'Friend limit reached (1000/1000)' styled with a yellow background. Disable any 'Add Friend' UI elements when the count is 1000. Show loading skeletons while fetching friends."
+        },
+        {
+          "path": "frontend/src/components/FriendListItem.tsx",
+          "operation": "create",
+          "description": "Create a reusable component that renders a single friend item. Accept a Principal prop, fetch the user profile via useQuery and getUserProfile, and display the friend's name. Include a placeholder avatar (use a Sonic-themed icon or generated asset). Style the item with hover effects, rounded corners, and Sonic theme colors. Handle loading and error states gracefully."
+        }
+      ]
+    },
+    {
+      "id": "REQ-64",
+      "summary": "Display incoming pending friend requests in a 'Friend Requests' section with Accept and Decline buttons",
+      "acceptanceCriteria": [
+        "A 'Friend Requests' section is shown in the friends panel when there are pending incoming requests",
+        "Each pending request shows the requester's display name",
+        "Accept and Decline buttons are present for each request",
+        "Accepting a request moves the user into the friends list without a full page reload",
+        "Declining a request removes it from the pending list"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add useGetFriendRequests and useRespondToFriendRequest hooks. useGetFriendRequests calls backend getFriendRequests() and returns an array of FriendRequest objects. useRespondToFriendRequest is a mutation hook that calls backend respondToFriendRequest(requesterId: Principal, accept: boolean), invalidates the friend requests and friends queries on success, and shows a toast notification. Include proper error handling and optimistic updates."
+        },
+        {
+          "path": "frontend/src/components/FriendsPanel.tsx",
+          "operation": "modify",
+          "description": "Add a 'Friend Requests' section above the friends list in the panel. Use the useGetFriendRequests hook to fetch pending requests. Conditionally render this section only when there are pending requests (length > 0). Display a section header 'Friend Requests' with a count badge. Map over the requests and render each using a FriendRequestItem component. Ensure the section is visually distinct from the friends list (e.g., lighter background or border separator)."
+        },
+        {
+          "path": "frontend/src/components/FriendRequestItem.tsx",
+          "operation": "create",
+          "description": "Create a component that renders a single friend request. Accept a FriendRequest prop, fetch the requester's profile via getUserProfile to display their name. Include two action buttons: 'Accept' (green, calls respondToFriendRequest with accept=true) and 'Decline' (red/gray, calls respondToFriendRequest with accept=false). Use the useRespondToFriendRequest mutation hook. Disable buttons while the mutation is pending. Style consistently with the Sonic theme using rounded buttons and appropriate spacing."
         }
       ]
     }

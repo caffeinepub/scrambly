@@ -28,6 +28,12 @@ export type ApprovalStatus = { 'pending' : null } |
   { 'approved' : null } |
   { 'rejected' : null };
 export type ExternalBlob = Uint8Array;
+export interface FriendRequest {
+  'status' : string,
+  'sentAt' : Time,
+  'recipientId' : Principal,
+  'requesterId' : Principal,
+}
 export interface FriendsModeRequest {
   'status' : string,
   'principal' : string,
@@ -116,6 +122,8 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [Profile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCommunityPosts' : ActorMethod<[], Array<PostContent>>,
+  'getFriendRequests' : ActorMethod<[], Array<FriendRequest>>,
+  'getFriends' : ActorMethod<[], Array<Principal>>,
   'getFriendsModeStatus' : ActorMethod<[], [] | [string]>,
   'getMyVideos' : ActorMethod<[], Array<Video>>,
   'getRemainingUsageTime' : ActorMethod<[Principal], [] | [bigint]>,
@@ -128,6 +136,7 @@ export interface _SERVICE {
   'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
   'markIdeaReviewed' : ActorMethod<[bigint], undefined>,
   'requestApproval' : ActorMethod<[], undefined>,
+  'respondToFriendRequest' : ActorMethod<[Principal, boolean], string>,
   'reviewAppeal' : ActorMethod<
     [Principal, boolean, [] | [string]],
     AppealStatus
@@ -135,6 +144,7 @@ export interface _SERVICE {
   'reviewFriendsModeRequest' : ActorMethod<[string, string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[Profile], undefined>,
   'searchSonicContent' : ActorMethod<[string], Array<SonicKnowledgeEntry>>,
+  'sendFriendRequest' : ActorMethod<[Principal], string>,
   'setApproval' : ActorMethod<[Principal, ApprovalStatus], undefined>,
   'setPassword' : ActorMethod<[string], undefined>,
   'setRemainingUsageTime' : ActorMethod<[Principal, bigint], undefined>,

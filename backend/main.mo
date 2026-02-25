@@ -8,17 +8,19 @@ import Text "mo:core/Text";
 import Runtime "mo:core/Runtime";
 import List "mo:core/List";
 import Iter "mo:core/Iter";
+import Nat "mo:core/Nat";
+import Set "mo:core/Set";
 
 import MixinAuthorization "authorization/MixinAuthorization";
-import AccessControl "authorization/access-control";
 import UserApproval "user-approval/approval";
-
+import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 
+import Migration "migration";
 
-// Apply the migration module using the `with` clause
-
+// Apply the migration module using the \`with\` clause
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -98,10 +100,19 @@ actor {
     verified : Bool;
   };
 
+  public type FriendRequest = {
+    requesterId : Principal;
+    recipientId : Principal;
+    status : Text; // "pending", "accepted", "declined"
+    sentAt : Time.Time;
+  };
+
   let profiles = Map.empty<Principal, Profile>();
   let appeals = Map.empty<Principal, BanAppeal>();
   let modApplications = List.empty<ModeratorApplication>();
   let friendsRequests = List.empty<FriendsModeRequest>();
+  let friendRequests = Map.empty<Principal, List.List<FriendRequest>>();
+  let friends = Map.empty<Principal, Set.Set<Principal>>();
 
   func triggerFriendsModeNotification(_status : Text, _principal : Text) {};
 
@@ -774,5 +785,144 @@ actor {
 
     ideas.toArray();
   };
-};
 
+  public shared ({ caller }) func sendFriendRequest(recipientPrincipal : Principal) : async Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can send friend requests");
+    };
+
+    if (caller == recipientPrincipal) {
+      Runtime.trap("Request from/to equal principals forbidden!");
+    };
+
+    switch (profiles.get(recipientPrincipal)) {
+      case (null) {
+        Runtime.trap("User profile not found");
+      };
+      case (?profile) {
+        if (profile.accountLocked) {
+          Runtime.trap("Profile banned! Cannot send friend requests");
+        };
+      };
+    };
+
+    let senderFriends = switch (friends.get(caller)) {
+      case (null) { Set.empty<Principal>() };
+      case (?existing) { existing };
+    };
+
+    if (senderFriends.size() >= 1000) {
+      return "Friend limit reached (1000/1000)";
+    };
+
+    let recipientFriends = switch (friends.get(recipientPrincipal)) {
+      case (null) { Set.empty<Principal>() };
+      case (?existing) { existing };
+    };
+
+    if (recipientFriends.size() >= 1000) {
+      return "Recipient friend limit reached (1000/1000)";
+    };
+
+    let recipientRequests = switch (friendRequests.get(recipientPrincipal)) {
+      case (null) { List.empty<FriendRequest>() };
+      case (?existing) { existing };
+    };
+
+    // Check for existing pending request
+    if (recipientRequests.toArray().find(func(req) { req.requesterId == caller and req.status == "pending" }) != null) {
+      return "Friend request already pending";
+    };
+
+    // Add the friend request to recipient's requests
+    let friendRequest : FriendRequest = {
+      requesterId = caller;
+      recipientId = recipientPrincipal;
+      status = "pending";
+      sentAt = Time.now();
+    };
+
+    recipientRequests.add(friendRequest);
+    friendRequests.add(recipientPrincipal, recipientRequests);
+
+    "Friend request sent successfully";
+  };
+
+  public shared ({ caller }) func respondToFriendRequest(requesterId : Principal, accept : Bool) : async Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can respond to friend requests");
+    };
+
+    let recipientRequests = switch (friendRequests.get(caller)) {
+      case (null) { List.empty<FriendRequest>() };
+      case (?existing) { existing };
+    };
+
+    var found = false;
+    var updatedRequests = List.empty<FriendRequest>();
+
+    for (request in recipientRequests.values()) {
+      if (request.requesterId == requesterId and request.status == "pending") {
+        found := true;
+        let updatedRequest : FriendRequest = {
+          request with
+          status = if accept { "accepted" } else { "declined" };
+        };
+        updatedRequests.add(updatedRequest);
+
+        if (accept) {
+          let callerFriends = switch (friends.get(caller)) {
+            case (null) { Set.empty<Principal>() };
+            case (?existing) { existing };
+          };
+
+          let requesterFriends = switch (friends.get(requesterId)) {
+            case (null) { Set.empty<Principal>() };
+            case (?existing) { existing };
+          };
+
+          if (callerFriends.size() >= 1000 or requesterFriends.size() >= 1000) {
+            return "Friend limit reached";
+          };
+
+          callerFriends.add(requesterId);
+          friends.add(caller, callerFriends);
+
+          requesterFriends.add(caller);
+          friends.add(requesterId, requesterFriends);
+        };
+      } else {
+        updatedRequests.add(request);
+      };
+    };
+
+    if (found) {
+      friendRequests.add(caller, updatedRequests);
+      "Friend request response processed";
+    } else {
+      "No matching pending friend request found";
+    };
+  };
+
+  public query ({ caller }) func getFriends() : async [Principal] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can get their friends list");
+    };
+
+    switch (friends.get(caller)) {
+      case (null) { [] };
+      case (?friendsSet) { friendsSet.toArray() };
+    };
+  };
+
+  public query ({ caller }) func getFriendRequests() : async [FriendRequest] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can get their friend requests");
+    };
+
+    switch (friendRequests.get(caller)) {
+      case (null) { [] };
+      case (?requests) { requests.toArray() };
+    };
+  };
+};

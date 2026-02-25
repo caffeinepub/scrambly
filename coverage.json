@@ -1,45 +1,94 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-25T11:39:59.605Z",
+  "generatedAt": "2026-02-25T12:45:39.028Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 2,
+    "total": 5,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-58",
-        "summary": "In SettingsPage.tsx, add an 'Apply to be a Moderator' section visually styled similarly to the existing appeals/ideas sections (distinct label, not identical to either). The section must contain a textarea limited to 1000 characters where the user types why they want to become a moderator. The textarea must accept plain text only. Include a character counter showing how many characters remain. Include a clearly labelled submit button.",
+        "id": "REQ-60",
+        "summary": "In FriendsModePage.tsx, add a persistent chat bar UI element positioned below the user's profile section. The bar must display a 'Friends' label or chat icon and be tappable/clickable to open a friends panel or drawer.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/SettingsPage.tsx"
+          "frontend/src/pages/FriendsModePage.tsx",
+          "frontend/src/components/FriendsPanel.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/SettingsPage.tsx"
+          "frontend/src/pages/FriendsModePage.tsx",
+          "frontend/src/components/FriendsPanel.tsx"
         ]
       },
       {
-        "id": "REQ-59",
-        "summary": "When the user submits the moderator application form in SettingsPage.tsx, open the URL https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab. The application message and the submitting user's principal or display name must be appended to the URL (e.g. as additional hash parameters or query parameters) so the moderator review destination receives the submission details. After submission, display an in-page confirmation message to the user (e.g. 'Your application has been submitted! A moderator will review it soon.').",
+        "id": "REQ-61",
+        "summary": "When the friends panel is opened and the user has no friends, display a clear 'No Friends' empty state message with a friendly prompt encouraging them to add friends.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/SettingsPage.tsx"
+          "frontend/src/components/FriendsPanel.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/SettingsPage.tsx"
+          "frontend/src/components/FriendsPanel.tsx"
+        ]
+      },
+      {
+        "id": "REQ-62",
+        "summary": "When the user has one or more friends, display the friend list in the friends panel. Enforce a maximum friend limit of 1000 — if the user already has 1000 friends, prevent adding any more and show a 'Friend limit reached (1000/1000)' message. Store the friend relationships in the backend, associated with each user's principal.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/FriendListItem.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/FriendListItem.tsx"
+        ]
+      },
+      {
+        "id": "REQ-63",
+        "summary": "Add a backend data model and functions for friend relationships: a FriendRequest record type with fields requesterId (Text), recipientId (Text), status (Text — 'pending', 'accepted', 'declined'), and sentAt (Int timestamp). Expose the following functions: sendFriendRequest(recipientPrincipal: Text) — creates a pending request; respondToFriendRequest(requesterId: Text, accept: Bool) — accepts or declines a request; getFriends() — returns all accepted friends of the calling principal; getFriendRequests() — returns all incoming pending requests for the calling principal. Enforce the 1000-friend cap in sendFriendRequest.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-64",
+        "summary": "In the friends panel on FriendsModePage.tsx, display incoming pending friend requests as a separate section labelled 'Friend Requests'. Each pending request must show the requester's display name and two action buttons: 'Accept' (calls respondToFriendRequest with accept=true) and 'Decline' (calls respondToFriendRequest with accept=false). After accepting, the new friend appears in the friends list immediately.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/FriendRequestItem.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/FriendRequestItem.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/FriendListItem.tsx",
+    "frontend/src/components/FriendRequestItem.tsx",
+    "frontend/src/components/FriendsPanel.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/FriendsModePage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

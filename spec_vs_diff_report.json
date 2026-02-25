@@ -1,14 +1,52 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-25T11:39:59.601Z",
-  "summary": "The diff modifies SettingsPage.tsx to add an 'Apply to be a Moderator' section. The file summary confirms the section exists. However, the diff content is truncated and does not provide full visibility into all implementation details. Based on the file summary description and partial code, most requirements appear implemented, but some acceptance criteria details cannot be fully verified from the truncated diff.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.62,
+  "generatedAt": "2026-02-25T12:45:39.020Z",
+  "summary": "The diff implements most of the required friend system features including backend data model (REQ-63), frontend friends panel with empty state (REQ-61), friend list with 1000-limit enforcement (REQ-62), friend requests section with Accept/Decline (REQ-64), and a chat bar in FriendsModePage (REQ-60). However, some details deviate from the spec.",
+  "missing_requirements": [
+    {
+      "id": "REQ-63",
+      "requirement": "FriendRequest record type must use Text fields for requesterId and recipientId, not Principal.",
+      "reason": "The backend/main.mo defines FriendRequest with requesterId: Principal and recipientId: Principal, but the spec explicitly requires Text fields for both IDs.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-63",
+      "requirement": "Expose sendFriendRequest(recipientPrincipal: Text) function in backend.",
+      "reason": "The backend/main.mo diff is truncated after the state variable declarations and does not show sendFriendRequest, respondToFriendRequest, getFriends, or getFriendRequests functions being implemented. The file summaries also do not mention these functions.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "A migration module (backend/migration.mo) was added to migrate old actor state to new state with friendRequests and friends maps.",
+      "reason": "The build request did not ask for any migration module or data migration logic. It only required backend data model and functions in backend/main.mo.",
+      "evidence": [
+        "backend/migration.mo"
+      ]
+    },
+    {
+      "description": "FriendListItem.tsx shows a green online presence indicator dot for all friends.",
+      "reason": "The build request does not mention online presence indicators. Real-time features are explicitly listed as non-goals (no WebSockets or push notifications).",
+      "evidence": [
+        "frontend/src/components/FriendListItem.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.52,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/src/components/FriendListItem.tsx",
+    "frontend/src/components/FriendRequestItem.tsx",
+    "frontend/src/components/FriendsPanel.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/FriendsModePage.tsx",
     "project_state.json"
   ]
 }

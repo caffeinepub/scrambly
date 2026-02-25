@@ -172,6 +172,12 @@ export interface UserApprovalInfo {
     status: ApprovalStatus;
     principal: Principal;
 }
+export interface FriendRequest {
+    status: string;
+    sentAt: Time;
+    recipientId: Principal;
+    requesterId: Principal;
+}
 export interface Password {
     attemptsLeft: bigint;
     verified: boolean;
@@ -214,6 +220,8 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCommunityPosts(): Promise<Array<PostContent>>;
+    getFriendRequests(): Promise<Array<FriendRequest>>;
+    getFriends(): Promise<Array<Principal>>;
     getFriendsModeStatus(): Promise<string | null>;
     getMyVideos(): Promise<Array<Video>>;
     getRemainingUsageTime(user: Principal): Promise<bigint | null>;
@@ -226,10 +234,12 @@ export interface backendInterface {
     listApprovals(): Promise<Array<UserApprovalInfo>>;
     markIdeaReviewed(index: bigint): Promise<void>;
     requestApproval(): Promise<void>;
+    respondToFriendRequest(requesterId: Principal, accept: boolean): Promise<string>;
     reviewAppeal(user: Principal, approve: boolean, adminNote: string | null): Promise<AppealStatus>;
     reviewFriendsModeRequest(principal: string, status: string): Promise<boolean>;
     saveCallerUserProfile(profile: Profile): Promise<void>;
     searchSonicContent(searchText: string): Promise<Array<SonicKnowledgeEntry>>;
+    sendFriendRequest(recipientPrincipal: Principal): Promise<string>;
     setApproval(user: Principal, status: ApprovalStatus): Promise<void>;
     setPassword(password: string): Promise<void>;
     setRemainingUsageTime(user: Principal, timeRemaining: bigint): Promise<void>;
@@ -483,6 +493,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getFriendRequests(): Promise<Array<FriendRequest>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFriendRequests();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFriendRequests();
+            return result;
+        }
+    }
+    async getFriends(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFriends();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFriends();
+            return result;
+        }
+    }
     async getFriendsModeStatus(): Promise<string | null> {
         if (this.processError) {
             try {
@@ -651,6 +689,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async respondToFriendRequest(arg0: Principal, arg1: boolean): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.respondToFriendRequest(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.respondToFriendRequest(arg0, arg1);
+            return result;
+        }
+    }
     async reviewAppeal(arg0: Principal, arg1: boolean, arg2: string | null): Promise<AppealStatus> {
         if (this.processError) {
             try {
@@ -704,6 +756,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.searchSonicContent(arg0);
+            return result;
+        }
+    }
+    async sendFriendRequest(arg0: Principal): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendFriendRequest(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendFriendRequest(arg0);
             return result;
         }
     }

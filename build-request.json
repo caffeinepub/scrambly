@@ -1,59 +1,117 @@
 {
   "kind": "build_request",
-  "title": "Add 'Apply to be a Moderator' section to Settings",
+  "title": "Add Friends Chat Bar with Friend List and 1000 Friend Limit",
   "projectName": "Scrambly",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-58",
-      "text": "In SettingsPage.tsx, add an 'Apply to be a Moderator' section visually styled similarly to the existing appeals/ideas sections (distinct label, not identical to either). The section must contain a textarea limited to 1000 characters where the user types why they want to become a moderator. The textarea must accept plain text only. Include a character counter showing how many characters remain. Include a clearly labelled submit button.",
+      "id": "REQ-60",
+      "text": "In FriendsModePage.tsx, add a persistent chat bar UI element positioned below the user's profile section. The bar must display a 'Friends' label or chat icon and be tappable/clickable to open a friends panel or drawer.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-last"
         ],
         "quotes": [
-          "Add a button that says apply to be a Moderater on the settings and it shows like an appeal but its not and its 1000 characters long and as the user types why they want to be moderate"
+          "Add a chat bar below the profile and once its pressed"
         ]
       },
       "acceptanceCriteria": [
-        "An 'Apply to be a Moderator' section is visible in SettingsPage.tsx for authenticated users.",
-        "The section is visually distinct from the appeals and ideas sections but follows the same card/panel styling consistent with the Sonic visual theme.",
-        "The textarea accepts up to 1000 characters and displays a live character counter (e.g. '450 / 1000').",
-        "The submit button is clearly labelled (e.g. 'Submit Application').",
-        "The section is styled consistently with the existing Sonic visual theme (cobalt blue/yellow palette, Fredoka One or Nunito font, rounded styling)."
+        "A chat/friends bar is visible below the user profile section on FriendsModePage.tsx",
+        "Tapping or clicking the bar opens a friends panel or slide-up drawer",
+        "The bar is styled consistently with the Sonic visual theme (cobalt blue/yellow, Fredoka One or Nunito font, rounded styling)"
       ]
     },
     {
-      "id": "REQ-59",
-      "text": "When the user submits the moderator application form in SettingsPage.tsx, open the URL https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab. The application message and the submitting user's principal or display name must be appended to the URL (e.g. as additional hash parameters or query parameters) so the moderator review destination receives the submission details. After submission, display an in-page confirmation message to the user (e.g. 'Your application has been submitted! A moderator will review it soon.').",
+      "id": "REQ-61",
+      "text": "When the friends panel is opened and the user has no friends, display a clear 'No Friends' empty state message with a friendly prompt encouraging them to add friends.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-last"
         ],
         "quotes": [
-          "as they send it to the moderator application applying https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4"
+          "show no friends when you have no friends"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking submit opens https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab.",
-        "The submission does not block or navigate away from the current settings page.",
-        "An in-page confirmation message is displayed after the form is submitted.",
-        "The form textarea is cleared after a successful submission.",
-        "Submitting an empty or whitespace-only textarea is prevented — the button is disabled or an inline validation error is shown if the field is empty."
+        "When the authenticated user has zero accepted friends, the panel shows a 'No Friends' empty state message",
+        "The empty state is styled consistently with the Sonic visual theme",
+        "No friend list items are rendered when the friend count is zero"
+      ]
+    },
+    {
+      "id": "REQ-62",
+      "text": "When the user has one or more friends, display the friend list in the friends panel. Enforce a maximum friend limit of 1000 — if the user already has 1000 friends, prevent adding any more and show a 'Friend limit reached (1000/1000)' message. Store the friend relationships in the backend, associated with each user's principal.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "when you have friends the friends max limit is 1000"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The friends panel lists all accepted friends when the user has at least one friend",
+        "The total number of displayed friends cannot exceed 1000",
+        "When the friend count reaches 1000, the 'Add Friend' action is disabled and a 'Friend limit reached (1000/1000)' notice is shown",
+        "Friend relationships are persisted in the backend keyed by the user's principal",
+        "The backend enforces the 1000-friend cap and returns an error if exceeded"
+      ]
+    },
+    {
+      "id": "REQ-63",
+      "text": "Add a backend data model and functions for friend relationships: a FriendRequest record type with fields requesterId (Text), recipientId (Text), status (Text — 'pending', 'accepted', 'declined'), and sentAt (Int timestamp). Expose the following functions: sendFriendRequest(recipientPrincipal: Text) — creates a pending request; respondToFriendRequest(requesterId: Text, accept: Bool) — accepts or declines a request; getFriends() — returns all accepted friends of the calling principal; getFriendRequests() — returns all incoming pending requests for the calling principal. Enforce the 1000-friend cap in sendFriendRequest.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "add a add as a trusted friend and they will press accept trusted friend request"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A stable FriendRequest record array is stored in backend/main.mo",
+        "sendFriendRequest creates a new pending request and returns an error if the caller already has 1000 accepted friends",
+        "respondToFriendRequest updates the request status to 'accepted' or 'declined'",
+        "getFriends returns only accepted friend records for the calling principal",
+        "getFriendRequests returns all pending incoming requests for the calling principal"
+      ]
+    },
+    {
+      "id": "REQ-64",
+      "text": "In the friends panel on FriendsModePage.tsx, display incoming pending friend requests as a separate section labelled 'Friend Requests'. Each pending request must show the requester's display name and two action buttons: 'Accept' (calls respondToFriendRequest with accept=true) and 'Decline' (calls respondToFriendRequest with accept=false). After accepting, the new friend appears in the friends list immediately.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-last"
+        ],
+        "quotes": [
+          "add a add as a trusted friend and they will press accept trusted friend request on the person name"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Friend Requests' section is shown in the friends panel when there are pending incoming requests",
+        "Each pending request shows the requester's display name",
+        "Accept and Decline buttons are present for each request",
+        "Accepting a request moves the user into the friends list without a full page reload",
+        "Declining a request removes it from the pending list"
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files listed under frontend.immutablePaths.",
-    "The moderator application section must be visually distinct from the existing appeals and ideas sections — do not reuse their identical markup, but match the general card/panel aesthetic.",
-    "The admin token URL https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 must be preserved exactly as provided."
+    "All Motoko logic must remain in backend/main.mo (single-actor architecture)",
+    "Do not modify any files listed in frontend.immutablePaths",
+    "Friend relationships and request state must be persisted in the backend, not only in localStorage",
+    "The 1000-friend cap must be enforced on both frontend and backend"
   ],
   "nonGoals": [
-    "No backend storage of moderator applications is required for this feature — submission is handled client-side by opening the external URL.",
-    "No trivia-question gating for the moderator application (that is a separate feature request).",
-    "No changes to the existing appeals or ideas sections."
+    "Real-time chat messaging between friends (WebSockets or push notifications are not supported)",
+    "Friend search by name/display name (not included in this request)",
+    "Age-matched peer chat (separate from friend list, not in scope for this request)",
+    "Blocking or reporting friends"
   ],
   "imageRequirements": {
     "required": [],

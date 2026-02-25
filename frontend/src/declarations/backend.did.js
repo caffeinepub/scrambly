@@ -68,6 +68,12 @@ export const PostContent = IDL.Record({
   'message' : IDL.Text,
   'timestamp' : Time,
 });
+export const FriendRequest = IDL.Record({
+  'status' : IDL.Text,
+  'sentAt' : Time,
+  'recipientId' : IDL.Principal,
+  'requesterId' : IDL.Principal,
+});
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
 export const Video = IDL.Record({ 'title' : IDL.Text, 'blob' : ExternalBlob });
 export const ApprovalStatus = IDL.Variant({
@@ -144,6 +150,8 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getCommunityPosts' : IDL.Func([], [IDL.Vec(PostContent)], ['query']),
+  'getFriendRequests' : IDL.Func([], [IDL.Vec(FriendRequest)], ['query']),
+  'getFriends' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
   'getFriendsModeStatus' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
   'getMyVideos' : IDL.Func([], [IDL.Vec(Video)], ['query']),
   'getRemainingUsageTime' : IDL.Func(
@@ -160,6 +168,11 @@ export const idlService = IDL.Service({
   'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
   'markIdeaReviewed' : IDL.Func([IDL.Nat], [], []),
   'requestApproval' : IDL.Func([], [], []),
+  'respondToFriendRequest' : IDL.Func(
+      [IDL.Principal, IDL.Bool],
+      [IDL.Text],
+      [],
+    ),
   'reviewAppeal' : IDL.Func(
       [IDL.Principal, IDL.Bool, IDL.Opt(IDL.Text)],
       [AppealStatus],
@@ -172,6 +185,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(SonicKnowledgeEntry)],
       ['query'],
     ),
+  'sendFriendRequest' : IDL.Func([IDL.Principal], [IDL.Text], []),
   'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
   'setPassword' : IDL.Func([IDL.Text], [], []),
   'setRemainingUsageTime' : IDL.Func([IDL.Principal, IDL.Nat], [], []),
@@ -251,6 +265,12 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Principal,
     'message' : IDL.Text,
     'timestamp' : Time,
+  });
+  const FriendRequest = IDL.Record({
+    'status' : IDL.Text,
+    'sentAt' : Time,
+    'recipientId' : IDL.Principal,
+    'requesterId' : IDL.Principal,
   });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
   const Video = IDL.Record({ 'title' : IDL.Text, 'blob' : ExternalBlob });
@@ -332,6 +352,8 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getCommunityPosts' : IDL.Func([], [IDL.Vec(PostContent)], ['query']),
+    'getFriendRequests' : IDL.Func([], [IDL.Vec(FriendRequest)], ['query']),
+    'getFriends' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'getFriendsModeStatus' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
     'getMyVideos' : IDL.Func([], [IDL.Vec(Video)], ['query']),
     'getRemainingUsageTime' : IDL.Func(
@@ -352,6 +374,11 @@ export const idlFactory = ({ IDL }) => {
     'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
     'markIdeaReviewed' : IDL.Func([IDL.Nat], [], []),
     'requestApproval' : IDL.Func([], [], []),
+    'respondToFriendRequest' : IDL.Func(
+        [IDL.Principal, IDL.Bool],
+        [IDL.Text],
+        [],
+      ),
     'reviewAppeal' : IDL.Func(
         [IDL.Principal, IDL.Bool, IDL.Opt(IDL.Text)],
         [AppealStatus],
@@ -364,6 +391,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(SonicKnowledgeEntry)],
         ['query'],
       ),
+    'sendFriendRequest' : IDL.Func([IDL.Principal], [IDL.Text], []),
     'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
     'setPassword' : IDL.Func([IDL.Text], [], []),
     'setRemainingUsageTime' : IDL.Func([IDL.Principal, IDL.Nat], [], []),
