@@ -1,0 +1,9 @@
+{
+  "frontend/src/App.tsx": "Main app entry with TanStack Router setup, all routes defined, and unused `useNavigate` import removed.",
+  "frontend/src/hooks/useQueries.ts": "All React Query hooks for backend interactions — removed unused `AgeCheckResult` import to fix TypeScript error.",
+  "frontend/src/pages/CommunityPage.tsx": "Community feed page showing posts, post form, guidelines, warnings display, and kid mode gate.",
+  "frontend/src/pages/AgeMatcher.tsx": "Age-matched friend discovery page showing users born the same year, with admin-gated search functionality.",
+  "frontend/src/pages/ModerationDashboard.tsx": "Admin-only moderation dashboard for issuing warnings to users from community posts, with access control guard.",
+  "frontend/src/pages/ParentalDashboard.tsx": "PIN-protected parental controls dashboard for setting usage timers, viewing child stats, and managing kid safety settings.",
+  "frontend/src/pages/SettingsPage.tsx": "Settings page with ad blocker toggle, user profile display, parental controls link, app info, and logout button."
+}

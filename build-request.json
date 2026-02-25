@@ -1,0 +1,204 @@
+{
+  "kind": "build_request",
+  "title": "Scrambly — Sonic-Themed Super App (Search, Games, Social, Parental Controls)",
+  "projectName": "Scrambly",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Create a Sonic franchise-themed search interface that allows users to search for Sonic-related content (characters, games, lore, media) using a curated local knowledge base, with offline search capability using cached data stored on-device.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "its like Google but everything is about the sonic franchise",
+          "search offline too"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A search bar is prominently displayed on the home screen with Sonic-themed branding",
+        "Search returns results related to the Sonic franchise (characters, games, media, lore)",
+        "Search works offline using previously cached or bundled content",
+        "Search results display thumbnails, titles, and short descriptions",
+        "Sonic-themed visual styling (colors, icons, fonts) is applied throughout the search UI"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Build a games library section with at least two playable in-browser games: a Block Blast-style puzzle game and a Sonic-themed runner game (inspired by Sonic Forces). Games must be playable offline without requiring a network connection.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "Include games in scrambly like block blast",
+          "add sonic forces",
+          "add all of the playable mobile games on scrambler"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A Games section is accessible from the main navigation",
+        "A Block Blast-style tile puzzle game is fully playable in the browser",
+        "A Sonic-themed endless runner game is fully playable in the browser",
+        "Both games function without an internet connection (offline-first)",
+        "Games display a Sonic-themed UI with score tracking",
+        "Game library page lists all available games with preview thumbnails"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement a social/community feature that allows registered users to connect with random other users of the same age. Include a community feed where users can post messages. Implement a moderation system that issues warnings for inappropriate behavior, and after repeated violations, locks the user's account requiring them to create a new one.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "help people get to connect with random people who are the same age as the user",
+          "a community that warns you for being inappropriate and being rude to kids and kicks you and you have to make a new account"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Users can be matched with and message other users of the same declared age",
+        "A community feed allows users to post short messages visible to others",
+        "A moderation panel (admin view) can issue warnings to users",
+        "After 3 warnings, a user's account is locked and they are shown a message to create a new account",
+        "Locked accounts cannot log in or post",
+        "Inappropriate content warnings are displayed on the user's profile"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement age verification on every login using a declared age input form. Users must confirm they are between 10 and 18 years old to access the app. Users outside this range are shown a message and denied access.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "age verification for every time you get in",
+          "10 or 18 and to see if you are 11, 12, 13, 14, 15, 16, 17, and 18 are allowed to be in the scrambler"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Every login flow requires the user to confirm their age via a dropdown or input",
+        "Ages 10–18 are permitted; any other age results in an access-denied screen",
+        "Age verification screen is Sonic-themed and clearly explains the age restriction",
+        "Age is stored with the user's session and used for age-matching in social features",
+        "No camera-based biometric age detection is used (privacy and reliability concerns)"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Implement parental controls including: a configurable usage timer that locks the child out of the app when time is up, a PIN-protected parent dashboard to set the timer and review activity, and a 'kid mode' detection that restricts access to age-appropriate content and games when the logged-in user is under 13.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "add a timer for parents to stop their kids from being on scrambler for too long",
+          "parental controls",
+          "detect a kid is on it locking the kid out"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A parent dashboard exists, accessible via a PIN code",
+        "Parents can set a daily usage time limit (in minutes) for their child's account",
+        "When the usage timer expires, the child is shown a friendly lockout screen and cannot continue using the app",
+        "Users aged 10–12 are automatically placed in 'kid mode' with restricted content",
+        "Kid mode hides adult-community features and shows only age-appropriate games and content",
+        "Parent dashboard shows the child's total session time for the current day"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add an emergency call button visible at all times within the app that, when tapped, opens the device's native phone dialer pre-filled with the local emergency number (e.g., 911). Include a visible 'SOS' button in the app's navigation or footer.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "always add emergency calling"
+        ]
+      },
+      "acceptanceCriteria": [
+        "An SOS/Emergency button is always visible in the app footer or navigation bar",
+        "Tapping it opens the device dialer with an emergency number (e.g., 911) pre-filled using a tel: link",
+        "A confirmation prompt asks 'Are you sure you want to call emergency services?' before dialing",
+        "The button is styled distinctly (e.g., red) so it is easy to find in an emergency"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Add a built-in ad blocker indicator/toggle in the app settings that suppresses display of any third-party ad elements within the app's own content areas. Show a visual badge indicating 'Ads Blocked' status.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "have ad blocker"
+        ]
+      },
+      "acceptanceCriteria": [
+        "App settings include an 'Ad Blocker' toggle that is ON by default",
+        "A visible badge or indicator in the UI shows 'Ads Blocked' when enabled",
+        "No third-party ad slots or promotional banners appear in the app's content areas when ad blocker is enabled",
+        "Toggling the ad blocker off and on persists the preference across sessions"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Apply a cohesive Sonic-franchise visual theme across the entire app: use Sonic's iconic color palette (cobalt blue, golden yellow, white, red accents), bold rounded typography, speed-line and ring motifs as decorative elements, and a playful energetic layout consistent with the Sonic brand. Apply this theme consistently to all pages including search, games, community, and settings.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "its like Google but everything is about the sonic franchise"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Primary colors are Sonic blue (#006DB7), golden yellow (#F5C800), and white with red accents",
+        "Typography uses bold, rounded fonts evoking the Sonic game aesthetic",
+        "Ring and speed-line decorative elements appear as background or UI accents",
+        "All major pages (Home/Search, Games, Community, Settings, Parental Controls) share the same theme",
+        "App logo/wordmark 'Scrambly' is displayed on the home screen in Sonic-themed styling"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not implement camera-based biometric age verification — use form-based age declaration instead",
+    "Do not implement real VoIP or P2P offline calling — emergency calling uses a tel: link only",
+    "Do not integrate real licensed Sonic Forces game assets — build original Sonic-inspired games",
+    "All backend logic must remain in a single Motoko actor (backend/main.mo)",
+    "Do not modify any files under frontend/src/hooks/ or frontend/src/components/ui"
+  ],
+  "nonGoals": [
+    "Real-time WebSocket-based chat or calling infrastructure",
+    "Integration with external search engines (Google, Bing, etc.)",
+    "Licensing or embedding actual Sega/Sonic Team game binaries",
+    "Camera or biometric age detection",
+    "SMS, email, or push notification services",
+    "GPS or location-based features",
+    "Payments or in-app purchases"
+  ],
+  "imageRequirements": {
+    "required": [
+      "Scrambly app logo with bold 'SCRAMBLY' wordmark styled in Sonic-blue and golden-yellow with speed-line accents (scrambly-logo.dim_512x256.png)",
+      "Sonic-themed hero banner with rings, speed lines, and cobalt blue gradient background (hero-banner.dim_1200x400.png)",
+      "Block Blast game thumbnail preview tile with colorful falling blocks on dark background (game-thumb-blockblast.dim_256x256.png)",
+      "Sonic runner game thumbnail preview tile showing a blue hedgehog silhouette sprinting against a green hill backdrop (game-thumb-sonicrunner.dim_256x256.png)",
+      "SOS emergency button icon, bold red circle with white lightning bolt (sos-icon.dim_128x128.png)",
+      "Parental controls shield icon in golden yellow with a lock symbol (parental-shield-icon.dim_128x128.png)",
+      "Scrambly community icon showing two stylized characters facing each other with speech bubbles in Sonic colors (community-icon.dim_128x128.png)"
+    ],
+    "edits": []
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-25T05:47:59.020Z",
+  "summary": "The diff implements most of the requested requirements including age verification, community features, moderation, parental controls, emergency SOS button, ad blocker, and Sonic-themed UI. However, several important requirements are partially or fully missing, including the actual playable games (Block Blast and Sonic Runner), offline search capability with bundled knowledge base, search result thumbnails, and the knowledge base data itself.",
+  "missing_requirements": [
+    {
+      "id": "REQ-2",
+      "requirement": "Build a games library section with at least two playable in-browser games: a Block Blast-style puzzle game and a Sonic-themed runner game. Games must be playable offline.",
+      "reason": "While BlockBlastGame and SonicRunnerGame page routes exist in App.tsx, the actual game implementation files (BlockBlastGame.tsx, SonicRunnerGame.tsx, GamesPage.tsx) are among the 18 omitted files. The diff shows route registrations but no evidence that the canvas/game logic is implemented.",
+      "evidence": [
+        "frontend/src/App.tsx"
+      ]
+    },
+    {
+      "id": "REQ-1",
+      "requirement": "Search works offline using previously cached or bundled content; Search results display thumbnails, titles, and short descriptions.",
+      "reason": "SearchBar and SearchResults components exist but there is no evidence of a bundled local knowledge base, Service Worker registration, or offline caching strategy. The SearchResults component shows name/description/highlights but no thumbnail field. The actual SearchPage.tsx is among the omitted files.",
+      "evidence": [
+        "frontend/src/components/SearchBar.tsx",
+        "frontend/src/components/SearchResults.tsx"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Users can be matched with and message other users of the same age.",
+      "reason": "An AgeMatcher page route exists and useGetUsersByAge hook is referenced in useQueries.ts, but the AgeMatcher.tsx page implementation is among the omitted files. Direct messaging between matched users is not evidenced anywhere in the shown diff.",
+      "evidence": [
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Parent dashboard shows the child's total session time for the current day.",
+      "reason": "ParentalDashboard.tsx is among the omitted files. The useUsageTimer hook tracks remaining time from the profile's usageTimeRemaining field but there is no evidence of tracking or displaying total session time consumed for the current day.",
+      "evidence": [
+        "frontend/src/hooks/useUsageTimer.ts",
+        "frontend/src/App.tsx"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Internet Identity (ICP blockchain authentication) is used as the login system with principal-based identity.",
+      "reason": "The build request does not specify Internet Computer Protocol or Internet Identity as the authentication mechanism. The use of Principal, ICP actors, and II login is an implementation choice not requested in the spec.",
+      "evidence": [
+        "frontend/src/hooks/useInternetIdentity.ts",
+        "frontend/src/hooks/useActor.ts",
+        "backend/main.mo"
+      ]
+    },
+    {
+      "description": "An admin token initialization via URL parameter (caffeineAdminToken) is implemented for access control bootstrapping.",
+      "reason": "The build request does not mention any admin token, URL parameter-based admin initialization, or caffeine-specific access control patterns.",
+      "evidence": [
+        "frontend/src/hooks/useActor.ts"
+      ]
+    },
+    {
+      "description": "MixinAuthorization and AccessControl modules are included in the backend for role-based access control beyond what was specified.",
+      "reason": "The spec only requires admin moderation warnings and account locking. A full MixinAuthorization and AccessControl system with permission levels is not requested.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    }
+  ],
+  "confidence": 0.62,
+  "changed_files": [
+    "all_files_summary.json",
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/index.css",
+    "frontend/index.html",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AccountLockedMessage.tsx",
+    "frontend/src/components/AdBlockerToggle.tsx",
+    "frontend/src/components/AgeVerificationModal.tsx",
+    "frontend/src/components/AuthGate.tsx",
+    "frontend/src/components/CommunityFeed.tsx",
+    "frontend/src/components/CommunityPostForm.tsx",
+    "frontend/src/components/EmergencyCallButton.tsx",
+    "frontend/src/components/KidModeWrapper.tsx",
+    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/PINEntryModal.tsx",
+    "frontend/src/components/SearchBar.tsx",
+    "frontend/src/components/SearchResults.tsx",
+    "frontend/src/components/UsageTimerLockout.tsx",
+    "frontend/src/hooks/useActor.ts",
+    "frontend/src/hooks/useAdBlocker.ts",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useUsageTimer.ts",
+    "frontend/src/index.css",
+    "frontend/src/main.tsx",
+    "frontend/src/pages/AgeMatcher.tsx",
+    "frontend/src/pages/BlockBlastGame.tsx",
+    "frontend/src/pages/CommunityPage.tsx",
+    "frontend/src/pages/GamesPage.tsx",
+    "frontend/src/pages/ModerationDashboard.tsx",
+    "frontend/src/pages/ParentalDashboard.tsx",
+    "frontend/src/pages/SearchPage.tsx",
+    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/src/pages/SonicRunnerGame.tsx",
+    "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
+    "project_state.json"
+  ]
+}
