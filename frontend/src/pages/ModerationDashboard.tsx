@@ -1,12 +1,32 @@
 import { useState } from 'react';
-import { useGetCommunityPosts, useIssueWarning, useIsCallerAdmin } from '../hooks/useQueries';
+import {
+  useGetCommunityPosts,
+  useIssueWarning,
+  useIsCallerAdmin,
+  useGetAllFriendsModeRequests,
+  useReviewFriendsModeRequest,
+  useGetAllIdeas,
+  useMarkIdeaReviewed,
+} from '../hooks/useQueries';
 import { useActor } from '../hooks/useActor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Shield, AlertTriangle, Lock, Zap, Users } from 'lucide-react';
+import {
+  Shield,
+  AlertTriangle,
+  Lock,
+  Zap,
+  Users,
+  Heart,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Clock,
+  Lightbulb,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Principal } from '@dfinity/principal';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,12 +34,18 @@ import { formatDistanceToNow } from 'date-fns';
 export default function ModerationDashboard() {
   const { data: isAdmin, isLoading: adminLoading } = useIsCallerAdmin();
   const { data: posts, isLoading: postsLoading } = useGetCommunityPosts();
+  const { data: friendsRequests, isLoading: friendsLoading } = useGetAllFriendsModeRequests();
+  const { data: allIdeas, isLoading: ideasLoading } = useGetAllIdeas();
   const issueWarning = useIssueWarning();
+  const reviewFriendsRequest = useReviewFriendsModeRequest();
+  const markIdeaReviewed = useMarkIdeaReviewed();
   const { actor } = useActor();
 
   const [targetPrincipal, setTargetPrincipal] = useState('');
   const [reason, setReason] = useState('');
   const [issuingFor, setIssuingFor] = useState<string | null>(null);
+  const [reviewingPrincipal, setReviewingPrincipal] = useState<string | null>(null);
+  const [markingIdeaIndex, setMarkingIdeaIndex] = useState<number | null>(null);
 
   if (adminLoading) {
     return (
@@ -72,6 +98,39 @@ export default function ModerationDashboard() {
     setReason('');
   };
 
+  const handleReviewFriendsRequest = async (principal: string, status: 'approved' | 'denied') => {
+    setReviewingPrincipal(principal + status);
+    try {
+      const success = await reviewFriendsRequest.mutateAsync({ principal, status });
+      if (success) {
+        toast.success(`Request ${status === 'approved' ? 'approved' : 'denied'} successfully.`);
+      } else {
+        toast.error('Request not found. It may have already been reviewed.');
+      }
+    } catch (err) {
+      toast.error('Failed to review request. Please try again.');
+    } finally {
+      setReviewingPrincipal(null);
+    }
+  };
+
+  const handleMarkIdeaReviewed = async (index: number) => {
+    setMarkingIdeaIndex(index);
+    try {
+      await markIdeaReviewed.mutateAsync(BigInt(index));
+      toast.success('Idea marked as reviewed.');
+    } catch {
+      toast.error('Failed to mark idea as reviewed.');
+    } finally {
+      setMarkingIdeaIndex(null);
+    }
+  };
+
+  const pendingFriendsRequests = friendsRequests?.filter((r) => r.status === 'pending') ?? [];
+  const reviewedFriendsRequests = friendsRequests?.filter((r) => r.status !== 'pending') ?? [];
+  const unreviewedIdeas = allIdeas?.filter((idea) => !idea.reviewed) ?? [];
+  const reviewedIdeas = allIdeas?.filter((idea) => idea.reviewed) ?? [];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -86,7 +145,212 @@ export default function ModerationDashboard() {
         <Badge variant="destructive" className="ml-auto font-nunito font-700">Admin</Badge>
       </div>
 
-      {/* Issue Warning Form */}
+      {/* ── Friends Mode Requests ─────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <h2 className="font-fredoka text-xl text-foreground flex items-center gap-2">
+          <Heart size={20} className="text-primary" />
+          Friends Mode Requests
+          {pendingFriendsRequests.length > 0 && (
+            <Badge className="font-nunito ml-1 bg-primary text-primary-foreground">
+              {pendingFriendsRequests.length} pending
+            </Badge>
+          )}
+        </h2>
+
+        {friendsLoading ? (
+          <div className="sonic-card p-6 flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 size={18} className="animate-spin" />
+            <span className="font-nunito text-sm">Loading requests...</span>
+          </div>
+        ) : pendingFriendsRequests.length === 0 ? (
+          <div className="sonic-card p-6 text-center text-muted-foreground font-nunito text-sm">
+            No pending Friends Mode requests.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pendingFriendsRequests.map((req) => {
+              const submittedDate = new Date(Number(req.submittedAt) / 1_000_000);
+              const shortPrincipal = req.principal.slice(0, 14) + '...';
+              const isApproving = reviewingPrincipal === req.principal + 'approved';
+              const isDenying = reviewingPrincipal === req.principal + 'denied';
+
+              return (
+                <div key={req.principal} className="sonic-card p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-nunito font-700 text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                          {shortPrincipal}
+                        </span>
+                        <Badge variant="secondary" className="font-nunito text-xs">
+                          <Clock size={10} className="mr-1" />
+                          Pending
+                        </Badge>
+                      </div>
+                      <p className="font-nunito text-sm text-foreground">
+                        🎂 Birthdate: <strong>{req.birthdate}</strong>
+                      </p>
+                      <p className="font-nunito text-xs text-muted-foreground">
+                        Submitted {formatDistanceToNow(submittedDate, { addSuffix: true })}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        onClick={() => handleReviewFriendsRequest(req.principal, 'approved')}
+                        disabled={isApproving || isDenying}
+                        className="rounded-full font-nunito text-xs bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {isApproving ? (
+                          <Loader2 size={12} className="animate-spin mr-1" />
+                        ) : (
+                          <CheckCircle size={12} className="mr-1" />
+                        )}
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleReviewFriendsRequest(req.principal, 'denied')}
+                        disabled={isApproving || isDenying}
+                        className="rounded-full font-nunito text-xs"
+                      >
+                        {isDenying ? (
+                          <Loader2 size={12} className="animate-spin mr-1" />
+                        ) : (
+                          <XCircle size={12} className="mr-1" />
+                        )}
+                        Deny
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Reviewed requests */}
+        {reviewedFriendsRequests.length > 0 && (
+          <details className="sonic-card p-4">
+            <summary className="font-nunito font-700 text-sm text-muted-foreground cursor-pointer select-none">
+              Show {reviewedFriendsRequests.length} reviewed request(s)
+            </summary>
+            <div className="mt-3 space-y-2">
+              {reviewedFriendsRequests.map((req) => {
+                const shortPrincipal = req.principal.slice(0, 14) + '...';
+                return (
+                  <div key={req.principal} className="flex items-center justify-between gap-2 py-1.5 border-b border-border last:border-0">
+                    <span className="text-xs font-nunito text-muted-foreground">{shortPrincipal}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-nunito text-muted-foreground">{req.birthdate}</span>
+                      <Badge
+                        variant={req.status === 'approved' ? 'default' : 'destructive'}
+                        className="font-nunito text-xs capitalize"
+                      >
+                        {req.status}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        )}
+      </div>
+
+      {/* ── Ideas Review ──────────────────────────────────────────────────── */}
+      <div className="space-y-3">
+        <h2 className="font-fredoka text-xl text-foreground flex items-center gap-2">
+          <Lightbulb size={20} className="text-primary" />
+          Ideas Review
+          {unreviewedIdeas.length > 0 && (
+            <Badge className="font-nunito ml-1 bg-primary text-primary-foreground">
+              {unreviewedIdeas.length} new
+            </Badge>
+          )}
+        </h2>
+
+        {ideasLoading ? (
+          <div className="sonic-card p-6 flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 size={18} className="animate-spin" />
+            <span className="font-nunito text-sm">Loading ideas...</span>
+          </div>
+        ) : !allIdeas || allIdeas.length === 0 ? (
+          <div className="sonic-card p-6 text-center text-muted-foreground font-nunito text-sm">
+            No ideas submitted yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {unreviewedIdeas.map((idea, i) => {
+              const globalIndex = allIdeas.indexOf(idea);
+              const submittedDate = new Date(Number(idea.timestamp) / 1_000_000);
+              const isMarking = markingIdeaIndex === globalIndex;
+
+              return (
+                <div key={i} className="sonic-card p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-nunito font-700 text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                          {idea.author}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-nunito">
+                          {formatDistanceToNow(submittedDate, { addSuffix: true })}
+                        </span>
+                        <Badge variant="secondary" className="font-nunito text-xs">New</Badge>
+                      </div>
+                      <p className="font-nunito text-sm text-foreground leading-relaxed mt-1">
+                        {idea.content}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleMarkIdeaReviewed(globalIndex)}
+                      disabled={isMarking}
+                      className="rounded-full font-nunito text-xs shrink-0 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {isMarking ? (
+                        <Loader2 size={12} className="animate-spin mr-1" />
+                      ) : (
+                        <CheckCircle size={12} className="mr-1" />
+                      )}
+                      Mark Reviewed
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {reviewedIdeas.length > 0 && (
+              <details className="sonic-card p-4">
+                <summary className="font-nunito font-700 text-sm text-muted-foreground cursor-pointer select-none">
+                  Show {reviewedIdeas.length} reviewed idea(s)
+                </summary>
+                <div className="mt-3 space-y-2">
+                  {reviewedIdeas.map((idea, i) => {
+                    const submittedDate = new Date(Number(idea.timestamp) / 1_000_000);
+                    return (
+                      <div key={i} className="py-2 border-b border-border last:border-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-nunito font-700 text-muted-foreground">{idea.author}</span>
+                          <span className="text-xs text-muted-foreground font-nunito">
+                            {formatDistanceToNow(submittedDate, { addSuffix: true })}
+                          </span>
+                          <Badge variant="outline" className="font-nunito text-xs">Reviewed</Badge>
+                        </div>
+                        <p className="font-nunito text-xs text-muted-foreground leading-relaxed">{idea.content}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Issue Warning Form ────────────────────────────────────────────── */}
       <div className="sonic-card p-5 space-y-4">
         <h2 className="font-fredoka text-xl text-foreground flex items-center gap-2">
           <AlertTriangle size={20} className="text-destructive" />
@@ -133,7 +397,7 @@ export default function ModerationDashboard() {
         </p>
       </div>
 
-      {/* Community Posts for Review */}
+      {/* ── Community Posts for Review ────────────────────────────────────── */}
       <div>
         <h2 className="font-fredoka text-xl text-foreground mb-3 flex items-center gap-2">
           <Users size={20} className="text-primary" />

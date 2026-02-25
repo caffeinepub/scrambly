@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetCallerUserProfile } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
-import AgeVerificationModal from './AgeVerificationModal';
+import OnboardingFlow from './OnboardingFlow';
 import AccountLockedMessage from './AccountLockedMessage';
 import UsageTimerLockout from './UsageTimerLockout';
 import { useUsageTimer } from '../hooks/useUsageTimer';
@@ -84,7 +84,12 @@ export default function AuthGate({ children }: AuthGateProps) {
   }
 
   if (showProfileSetup) {
-    return <AgeVerificationModal onSuccess={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })} onLogout={handleLogout} />;
+    return (
+      <OnboardingFlow
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return <>{children}</>;

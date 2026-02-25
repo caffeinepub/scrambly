@@ -10,16 +10,15 @@ import AgeMatcher from './pages/AgeMatcher';
 import ModerationDashboard from './pages/ModerationDashboard';
 import ParentalDashboard from './pages/ParentalDashboard';
 import SettingsPage from './pages/SettingsPage';
+import VideosPage from './pages/VideosPage';
+import AppealPage from './pages/AppealPage';
+import FriendsModePage from './pages/FriendsModePage';
 import AuthGate from './components/AuthGate';
 
-// Root route with Layout
+// Root route with Layout (requires auth)
 const rootRoute = createRootRoute({
   component: () => (
-    <AuthGate>
-      <Layout>
-        <Outlet />
-      </Layout>
-    </AuthGate>
+    <Outlet />
   ),
   notFoundComponent: () => (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -30,70 +29,107 @@ const rootRoute = createRootRoute({
   ),
 });
 
-const indexRoute = createRoute({
+// Auth-gated layout route — wraps all normal pages
+const authLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
+  id: 'auth-layout',
+  component: () => (
+    <AuthGate>
+      <Layout>
+        <Outlet />
+      </Layout>
+    </AuthGate>
+  ),
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => authLayoutRoute,
   path: '/',
   component: SearchPage,
 });
 
 const gamesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/games',
   component: GamesPage,
 });
 
 const blockBlastRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/games/blockblast',
   component: BlockBlastGame,
 });
 
 const sonicRunnerRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/games/sonicrunner',
   component: SonicRunnerGame,
 });
 
 const communityRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/community',
   component: CommunityPage,
 });
 
 const ageMatchRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/community/match',
   component: AgeMatcher,
 });
 
 const moderationRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/admin/moderation',
   component: ModerationDashboard,
 });
 
 const parentalRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/parental',
   component: ParentalDashboard,
 });
 
 const settingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: '/settings',
   component: SettingsPage,
 });
 
+const videosRoute = createRoute({
+  getParentRoute: () => authLayoutRoute,
+  path: '/videos',
+  component: VideosPage,
+});
+
+const friendsModeRoute = createRoute({
+  getParentRoute: () => authLayoutRoute,
+  path: '/friends',
+  component: FriendsModePage,
+});
+
+// Appeal route — accessible without auth gate so banned users can reach it
+const appealRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/appeal',
+  component: AppealPage,
+});
+
 const routeTree = rootRoute.addChildren([
-  indexRoute,
-  gamesRoute,
-  blockBlastRoute,
-  sonicRunnerRoute,
-  communityRoute,
-  ageMatchRoute,
-  moderationRoute,
-  parentalRoute,
-  settingsRoute,
+  authLayoutRoute.addChildren([
+    indexRoute,
+    gamesRoute,
+    blockBlastRoute,
+    sonicRunnerRoute,
+    communityRoute,
+    ageMatchRoute,
+    moderationRoute,
+    parentalRoute,
+    settingsRoute,
+    videosRoute,
+    friendsModeRoute,
+  ]),
+  appealRoute,
 ]);
 
 const router = createRouter({ routeTree });

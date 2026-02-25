@@ -1,305 +1,41 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Scrambly — Sonic-Themed Super App (Frontend Implementation)",
+  "title": "Add 'Apply to be a Moderator' section to Settings",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Create Sonic-themed search interface with offline capability for franchise content",
+      "id": "REQ-58",
+      "summary": "Add an 'Apply to be a Moderator' section to SettingsPage.tsx with a 1000-character textarea, live character counter, and submit button, styled consistently with the Sonic visual theme",
       "acceptanceCriteria": [
-        "A search bar is prominently displayed on the home screen with Sonic-themed branding",
-        "Search returns results related to the Sonic franchise (characters, games, media, lore)",
-        "Search works offline using previously cached or bundled content",
-        "Search results display thumbnails, titles, and short descriptions",
-        "Sonic-themed visual styling (colors, icons, fonts) is applied throughout the search UI"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/SearchPage.tsx",
-          "operation": "create",
-          "description": "Create the main search page component with a prominent Sonic-themed search bar, search result display area showing thumbnails/titles/descriptions, and offline-first architecture using cached results. Call backend searchSonicContent() and getAllEntriesByType() methods. Display the hero banner image at frontend/public/assets/generated/hero-banner.dim_1200x400.png as a static asset."
-        },
-        {
-          "path": "frontend/src/components/SearchBar.tsx",
-          "operation": "create",
-          "description": "Create a reusable Sonic-themed search input component with blue/yellow color scheme, rounded styling, and search icon. Handle user input and trigger search queries."
-        },
-        {
-          "path": "frontend/src/components/SearchResults.tsx",
-          "operation": "create",
-          "description": "Create a component to display search results in a grid or list format with thumbnails, titles, and descriptions. Handle empty states and loading states gracefully."
-        },
-        {
-          "path": "frontend/src/hooks/useSearchSonic.ts",
-          "operation": "create",
-          "description": "Create a custom hook that wraps backend searchSonicContent() and getAllEntriesByType() calls with React Query for caching and offline support. Implement local storage fallback for offline mode."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire SearchPage into the main router with route path '/search' or '/' (home). Ensure navigation includes a link to the search page."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Build games library with Block Blast puzzle and Sonic runner games, playable offline",
-      "acceptanceCriteria": [
-        "A Games section is accessible from the main navigation",
-        "A Block Blast-style tile puzzle game is fully playable in the browser",
-        "A Sonic-themed endless runner game is fully playable in the browser",
-        "Both games function without an internet connection (offline-first)",
-        "Games display a Sonic-themed UI with score tracking",
-        "Game library page lists all available games with preview thumbnails"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/GamesPage.tsx",
-          "operation": "create",
-          "description": "Create the games library landing page listing available games with preview thumbnails. Display game-thumb-blockblast.dim_256x256.png at frontend/public/assets/generated/game-thumb-blockblast.dim_256x256.png and game-thumb-sonicrunner.dim_256x256.png at frontend/public/assets/generated/game-thumb-sonicrunner.dim_256x256.png as static assets. Link to individual game pages. This is a 2D game section."
-        },
-        {
-          "path": "frontend/src/pages/BlockBlastGame.tsx",
-          "operation": "create",
-          "description": "Create a fully playable Block Blast-style 2D tile puzzle game component using HTML5 Canvas or CSS Grid. Implement game logic (tile placement, row clearing, scoring) entirely in frontend JavaScript. Use Sonic blue/yellow theming. Track and display score. No backend calls needed for gameplay."
-        },
-        {
-          "path": "frontend/src/pages/SonicRunnerGame.tsx",
-          "operation": "create",
-          "description": "Create a fully playable Sonic-themed endless 2D runner game component using HTML5 Canvas. Implement running/jumping mechanics, obstacle generation, speed increase over time, and score tracking entirely in frontend JavaScript. Use Sonic-themed sprites and colors. No backend calls needed for gameplay."
-        },
-        {
-          "path": "frontend/src/components/GameCanvas.tsx",
-          "operation": "create",
-          "description": "Create a reusable Canvas wrapper component with Sonic-themed borders, score display overlay, and game controls UI. Accepts game logic as props or children."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire GamesPage into router at '/games', BlockBlastGame at '/games/blockblast', and SonicRunnerGame at '/games/sonicrunner'. Add navigation link to Games section in main navigation menu."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Implement social community feature with age-matched connections, community feed, and moderation with account locking",
-      "acceptanceCriteria": [
-        "Users can be matched with and message other users of the same declared age",
-        "A community feed allows users to post short messages visible to others",
-        "A moderation panel (admin view) can issue warnings to users",
-        "After 3 warnings, a user's account is locked and they are shown a message to create a new account",
-        "Locked accounts cannot log in or post",
-        "Inappropriate content warnings are displayed on the user's profile"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/CommunityPage.tsx",
-          "operation": "create",
-          "description": "Create the community feed page that displays posts from createCommunityPost() and getCommunityPosts() backend calls. Show post form for authenticated users. Display community-icon.dim_128x128.png at frontend/public/assets/generated/community-icon.dim_128x128.png as a static asset. Check user accountLocked status from profile before allowing posts."
-        },
-        {
-          "path": "frontend/src/components/CommunityPostForm.tsx",
-          "operation": "create",
-          "description": "Create a form component for posting messages to the community feed. Call backend createCommunityPost() method. Disable for locked accounts with a message."
-        },
-        {
-          "path": "frontend/src/components/CommunityFeed.tsx",
-          "operation": "create",
-          "description": "Create a feed component displaying posts with author names, timestamps, and message content. Fetch from backend getCommunityPosts(). Use React Query for caching."
-        },
-        {
-          "path": "frontend/src/pages/AgeMatcher.tsx",
-          "operation": "create",
-          "description": "Create a page that calls backend getUsersByAge() to find and display users with matching birth years based on the logged-in user's profile. Show user names and allow initiating conversations (UI placeholder for future messaging)."
-        },
-        {
-          "path": "frontend/src/pages/ModerationDashboard.tsx",
-          "operation": "create",
-          "description": "Create an admin-only moderation panel page that lists users and their warning counts from getUserProfile(). Provide a form to issue warnings via backend issueWarning() method. Use the authorization component to restrict access to admins only; call isCallerAdmin() or getCallerUserRole() to check admin status. Show locked account status."
-        },
-        {
-          "path": "frontend/src/components/AccountLockedMessage.tsx",
-          "operation": "create",
-          "description": "Create a component displaying a friendly message when a user's account is locked (3 warnings reached). Explain they must create a new account and provide a logout button."
-        },
-        {
-          "path": "frontend/src/hooks/useCommunityPosts.ts",
-          "operation": "create",
-          "description": "Create a custom hook wrapping getCommunityPosts() backend call with React Query for caching and real-time updates."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire CommunityPage into router at '/community', AgeMatcher at '/community/match', and ModerationDashboard at '/admin/moderation'. Add Community link to main navigation. Guard moderation route with admin-only access check."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Implement age verification on login requiring users to be 10-18 years old",
-      "acceptanceCriteria": [
-        "Every login flow requires the user to confirm their age via a dropdown or input",
-        "Ages 10–18 are permitted; any other age results in an access-denied screen",
-        "Age verification screen is Sonic-themed and clearly explains the age restriction",
-        "Age is stored with the user's session and used for age-matching in social features",
-        "No camera-based biometric age detection is used (privacy and reliability concerns)"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AgeVerificationModal.tsx",
-          "operation": "create",
-          "description": "Create a Sonic-themed modal that prompts users to enter their name and birth year on first login. Call backend verifyAge() method. Handle AgeCheckResult responses: show access-denied message for tooYoung/tooOld, handle locked accounts, and proceed on ok. Integrate with the authorization component's profile setup flow; check if getCallerUserProfile() returns null to trigger this modal."
-        },
-        {
-          "path": "frontend/src/components/AccessDeniedScreen.tsx",
-          "operation": "create",
-          "description": "Create a Sonic-themed screen displayed when age verification fails (user is outside 10-18 range) or account is locked. Explain the age restriction clearly and provide a logout option."
-        },
-        {
-          "path": "frontend/src/hooks/useAgeVerification.ts",
-          "operation": "create",
-          "description": "Create a custom hook wrapping verifyAge() backend call. Parse AgeCheckResult and return user-friendly status. Store verification result in React state."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Integrate AgeVerificationModal to appear after login when getCallerUserProfile() returns null (no profile exists). Show AccessDeniedScreen when age verification fails. Use the authorization component to manage authentication state and trigger profile setup flow."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Implement parental controls with usage timer, PIN-protected dashboard, and kid mode restrictions",
-      "acceptanceCriteria": [
-        "A parent dashboard exists, accessible via a PIN code",
-        "Parents can set a daily usage time limit (in minutes) for their child's account",
-        "When the usage timer expires, the child is shown a friendly lockout screen and cannot continue using the app",
-        "Users aged 10–12 are automatically placed in 'kid mode' with restricted content",
-        "Kid mode hides adult-community features and shows only age-appropriate games and content",
-        "Parent dashboard shows the child's total session time for the current day"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/ParentalDashboard.tsx",
-          "operation": "create",
-          "description": "Create a PIN-protected parent dashboard page. Display the child's usageTimeRemaining from getCallerUserProfile(). Provide a form to set remaining usage time via backend setRemainingUsageTime() method. Display parental-shield-icon.dim_128x128.png at frontend/public/assets/generated/parental-shield-icon.dim_128x128.png as a static asset. Show session time stats."
-        },
-        {
-          "path": "frontend/src/components/PINEntryModal.tsx",
-          "operation": "create",
-          "description": "Create a modal component for entering a parent PIN code to access the parental dashboard. Store PIN in local storage (basic client-side protection; not cryptographically secure but sufficient for this use case)."
-        },
-        {
-          "path": "frontend/src/components/UsageTimerLockout.tsx",
-          "operation": "create",
-          "description": "Create a friendly Sonic-themed lockout screen displayed when usageTimeRemaining reaches 0. Explain the timer and suggest taking a break. Provide a logout button."
-        },
-        {
-          "path": "frontend/src/components/KidModeWrapper.tsx",
-          "operation": "create",
-          "description": "Create a wrapper component that detects if the user is in kid mode (birthYear indicates age 10-12). Hide community features and show only age-appropriate games. Use profile birthYear to calculate current age."
-        },
-        {
-          "path": "frontend/src/hooks/useUsageTimer.ts",
-          "operation": "create",
-          "description": "Create a custom hook that tracks usageTimeRemaining from profile, decrements it locally during the session, and calls setRemainingUsageTime() to sync with backend. Trigger lockout when timer reaches 0."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wire ParentalDashboard into router at '/parental'. Integrate UsageTimerLockout to appear globally when timer expires. Integrate KidModeWrapper to conditionally render navigation/content based on user age. Add parental controls link to settings or navigation."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Add emergency call button that opens device dialer with emergency number",
-      "acceptanceCriteria": [
-        "An SOS/Emergency button is always visible in the app footer or navigation bar",
-        "Tapping it opens the device dialer with an emergency number (e.g., 911) pre-filled using a tel: link",
-        "A confirmation prompt asks 'Are you sure you want to call emergency services?' before dialing",
-        "The button is styled distinctly (e.g., red) so it is easy to find in an emergency"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/EmergencyCallButton.tsx",
-          "operation": "create",
-          "description": "Create a prominent red SOS button component displayed in the app footer or navigation. Display sos-icon.dim_128x128.png at frontend/public/assets/generated/sos-icon.dim_128x128.png as a static asset. On click, show a confirmation dialog. If confirmed, open tel:911 link to trigger device dialer. Style with bold red background and white text."
-        },
-        {
-          "path": "frontend/src/components/EmergencyConfirmDialog.tsx",
-          "operation": "create",
-          "description": "Create a confirmation dialog component asking 'Are you sure you want to call emergency services?' with Yes/No buttons. Trigger tel: link on Yes."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Integrate EmergencyCallButton into the global footer or navigation so it appears on every page."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Add built-in ad blocker toggle in settings with visual indicator",
-      "acceptanceCriteria": [
-        "App settings include an 'Ad Blocker' toggle that is ON by default",
-        "A visible badge or indicator in the UI shows 'Ads Blocked' when enabled",
-        "No third-party ad slots or promotional banners appear in the app's content areas when ad blocker is enabled",
-        "Toggling the ad blocker off and on persists the preference across sessions"
+        "An 'Apply to be a Moderator' section is visible in SettingsPage.tsx for authenticated users.",
+        "The section is visually distinct from the appeals and ideas sections but follows the same card/panel styling consistent with the Sonic visual theme.",
+        "The textarea accepts up to 1000 characters and displays a live character counter (e.g. '450 / 1000').",
+        "The submit button is clearly labelled (e.g. 'Submit Application').",
+        "The section is styled consistently with the existing Sonic visual theme (cobalt blue/yellow palette, Fredoka One or Nunito font, rounded styling)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/pages/SettingsPage.tsx",
-          "operation": "create",
-          "description": "Create a settings page with an Ad Blocker toggle switch (default ON). Persist toggle state in local storage. Display 'Ads Blocked' badge when enabled. Sonic-themed styling."
-        },
-        {
-          "path": "frontend/src/components/AdBlockerToggle.tsx",
-          "operation": "create",
-          "description": "Create a reusable toggle component for ad blocker setting. Read/write state from local storage. Display a visual badge or icon when ads are blocked."
-        },
-        {
-          "path": "frontend/src/hooks/useAdBlocker.ts",
-          "operation": "create",
-          "description": "Create a custom hook to manage ad blocker state in local storage and provide getter/setter functions."
-        },
-        {
-          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire SettingsPage into router at '/settings'. Add Settings link to main navigation."
+          "description": "Add a new 'Apply to be a Moderator' section below the existing ideas section. Include a textarea element with maxLength={1000} that accepts plain text only. Add a character counter display showing remaining characters (e.g., '450 / 1000'). Include a submit button labeled 'Submit Application'. Style the section using the sonic-card class and sonic-yellow accent color to match the existing appeals and ideas sections while remaining visually distinct. Use state to track the textarea value and disable the submit button when the textarea is empty or contains only whitespace."
         }
       ]
     },
     {
-      "id": "REQ-8",
-      "summary": "Apply cohesive Sonic-themed visual design across all pages",
+      "id": "REQ-59",
+      "summary": "When the moderator application form is submitted, open the moderator review URL in a new tab with the application message and user identity appended, then display an in-page confirmation message and clear the form",
       "acceptanceCriteria": [
-        "Primary colors are Sonic blue (#006DB7), golden yellow (#F5C800), and white with red accents",
-        "Typography uses bold, rounded fonts evoking the Sonic game aesthetic",
-        "Ring and speed-line decorative elements appear as background or UI accents",
-        "All major pages (Home/Search, Games, Community, Settings, Parental Controls) share the same theme",
-        "App logo/wordmark 'Scrambly' is displayed on the home screen in Sonic-themed styling"
+        "Clicking submit opens https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab.",
+        "The submission does not block or navigate away from the current settings page.",
+        "An in-page confirmation message is displayed after the form is submitted.",
+        "The form textarea is cleared after a successful submission.",
+        "Submitting an empty or whitespace-only textarea is prevented — the button is disabled or an inline validation error is shown if the field is empty."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/pages/SettingsPage.tsx",
           "operation": "modify",
-          "description": "Define global Sonic color palette CSS variables (--sonic-blue: #006DB7, --sonic-yellow: #F5C800, --sonic-red, --sonic-white). Add global styles for bold rounded typography (e.g., using 'Fredoka One' or similar web font). Include ring and speed-line background patterns or decorative classes."
-        },
-        {
-          "path": "frontend/tailwind.config.js",
-          "operation": "modify",
-          "description": "Extend Tailwind theme with Sonic color palette (sonicBlue, sonicYellow, sonicRed). Configure rounded font family (e.g., 'Fredoka One', sans-serif). Add custom utility classes for speed-line and ring decorative elements."
-        },
-        {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "create",
-          "description": "Create a global layout component wrapping all pages with Sonic-themed header (including scrambly-logo.dim_512x256.png at frontend/public/assets/generated/scrambly-logo.dim_512x256.png as a static asset), navigation bar with links (Search, Games, Community, Settings, Parental, SOS), and footer. Apply consistent Sonic styling (blue/yellow colors, rounded elements, speed-line accents)."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Wrap all routes with the Layout component to apply consistent Sonic theming across every page."
+          "description": "Implement the submit handler for the moderator application form. On submit, construct a URL by appending the application message and the user's principal ID as hash parameters to https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 (e.g., add &message=<encoded_message>&user=<principal_string>). Use window.open() with '_blank' to open the URL in a new tab. After opening the URL, display a confirmation message using the toast notification system (e.g., 'Your application has been submitted! A moderator will review it soon.'). Clear the textarea by resetting the form state. Ensure the submit button is disabled when the textarea is empty or contains only whitespace. Access the user's principal from the identity context using useInternetIdentity().identity.getPrincipal().toString()."
         }
       ]
     }

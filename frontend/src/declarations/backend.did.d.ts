@@ -15,6 +15,39 @@ export type AgeCheckResult = { 'ok' : null } |
   { 'invalidInput' : null } |
   { 'tooOld' : bigint } |
   { 'tooYoung' : bigint };
+export interface AppealRequest {
+  'timestamp' : Time,
+  'adminResponse' : [] | [string],
+  'reason' : string,
+}
+export type AppealStatus = { 'pending' : AppealRequest } |
+  { 'noAppeal' : null } |
+  { 'denied' : AppealRequest } |
+  { 'approved' : null };
+export type ApprovalStatus = { 'pending' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null };
+export type ExternalBlob = Uint8Array;
+export interface FriendsModeRequest {
+  'status' : string,
+  'principal' : string,
+  'birthdate' : string,
+  'submittedAt' : bigint,
+}
+export interface Idea {
+  'content' : string,
+  'author' : string,
+  'timestamp' : Time,
+  'reviewed' : boolean,
+}
+export type ModeratorApplicationResult = { 'incorrectAnswers' : null } |
+  { 'success' : null } |
+  { 'applicationFull' : null };
+export interface Password {
+  'attemptsLeft' : bigint,
+  'verified' : boolean,
+  'password' : string,
+}
 export interface PostContent {
   'author' : Principal,
   'message' : string,
@@ -22,7 +55,9 @@ export interface PostContent {
 }
 export interface Profile {
   'birthYear' : bigint,
+  'password' : [] | [Password],
   'name' : string,
+  'isSchoolAccount' : boolean,
   'usageTimeRemaining' : [] | [bigint],
   'accountLocked' : boolean,
   'warnings' : bigint,
@@ -35,28 +70,82 @@ export interface SonicKnowledgeEntry {
   'highlights' : string,
 }
 export type Time = bigint;
+export interface UserApprovalInfo {
+  'status' : ApprovalStatus,
+  'principal' : Principal,
+}
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface Video { 'title' : string, 'blob' : ExternalBlob }
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
 export interface _SERVICE {
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addSonicEntry' : ActorMethod<[SonicKnowledgeEntry], undefined>,
+  'applyForModerator' : ActorMethod<[string], ModeratorApplicationResult>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createCommunityPost' : ActorMethod<[string], undefined>,
   'getAllEntriesByType' : ActorMethod<[string], Array<SonicKnowledgeEntry>>,
+  'getAllFriendsModeRequests' : ActorMethod<[], Array<FriendsModeRequest>>,
+  'getAllIdeas' : ActorMethod<[], Array<Idea>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [Profile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCommunityPosts' : ActorMethod<[], Array<PostContent>>,
+  'getFriendsModeStatus' : ActorMethod<[], [] | [string]>,
+  'getMyVideos' : ActorMethod<[], Array<Video>>,
   'getRemainingUsageTime' : ActorMethod<[Principal], [] | [bigint]>,
   'getUserProfile' : ActorMethod<[Principal], Profile>,
   'getUsersByAge' : ActorMethod<[bigint, bigint], Array<Profile>>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'isCallerApproved' : ActorMethod<[], boolean>,
+  'isSchoolAccount' : ActorMethod<[Principal], boolean>,
   'issueWarning' : ActorMethod<[Principal, string], bigint>,
+  'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
+  'markIdeaReviewed' : ActorMethod<[bigint], undefined>,
+  'requestApproval' : ActorMethod<[], undefined>,
+  'reviewAppeal' : ActorMethod<
+    [Principal, boolean, [] | [string]],
+    AppealStatus
+  >,
+  'reviewFriendsModeRequest' : ActorMethod<[string, string], boolean>,
   'saveCallerUserProfile' : ActorMethod<[Profile], undefined>,
   'searchSonicContent' : ActorMethod<[string], Array<SonicKnowledgeEntry>>,
+  'setApproval' : ActorMethod<[Principal, ApprovalStatus], undefined>,
+  'setPassword' : ActorMethod<[string], undefined>,
   'setRemainingUsageTime' : ActorMethod<[Principal, bigint], undefined>,
+  'setSchoolAccountMode' : ActorMethod<[Principal, boolean], undefined>,
+  'submitBanAppeal' : ActorMethod<[string], AppealStatus>,
+  'submitFriendsModeRequest' : ActorMethod<[string], undefined>,
+  'submitIdea' : ActorMethod<[string], undefined>,
   'suggestSimilarEntries' : ActorMethod<[string], Array<SonicKnowledgeEntry>>,
+  'uploadVideo' : ActorMethod<[string, ExternalBlob], undefined>,
   'verifyAge' : ActorMethod<[string, bigint], AgeCheckResult>,
+  'verifyPassword' : ActorMethod<[string], boolean>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

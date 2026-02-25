@@ -2,145 +2,9 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-a-sonic-franchise-themed-search-interface-that-allows-users-to-search-for-sonic-related-content-characters-games-lore-media-using-a-curated-local-knowledge-base-with-offline-search-capability-using-cached-data-stored-on-device",
-      "featureTitle": "Create a Sonic franchise-themed search interface that allows users to search for Sonic-related content (characters, games, lore, media) using a curated local knowledge base, with offline search capability using cached data stored on-device.",
+      "featureId": "feature-in-settingspage-tsx-add-an-apply-to-be-a-moderator-section-visually-styled-similarly-to-the-existing-appeals-ideas-sections-distinct-label-not-identical-to-either-the-section-must-contain-a-textarea-limited-to-1000-characters-where-the-user-types-why-they-want-to-become-a-moderator-the-textarea-must-accept-plain-text-only-include-a-character-counter-showing-how-many-characters-remain-include-a-clearly-labelled-submit-button",
+      "featureTitle": "In SettingsPage.tsx, add an 'Apply to be a Moderator' section visually styled similarly to the existing appeals/ideas sections (distinct label, not identical to either). The section must contain a textarea limited to 1000 characters where the user types why they want to become a moderator. The textarea must accept plain text only. Include a character counter showing how many characters remain. Include a clearly labelled submit button.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/SearchBar.tsx",
-        "frontend/src/components/SearchResults.tsx",
-        "frontend/src/pages/SearchPage.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-build-a-games-library-section-with-at-least-two-playable-in-browser-games-a-block-blast-style-puzzle-game-and-a-sonic-themed-runner-game-inspired-by-sonic-forces-games-must-be-playable-offline-without-requiring-a-network-connection",
-      "featureTitle": "Build a games library section with at least two playable in-browser games: a Block Blast-style puzzle game and a Sonic-themed runner game (inspired by Sonic Forces). Games must be playable offline without requiring a network connection.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/pages/BlockBlastGame.tsx",
-        "frontend/src/pages/GamesPage.tsx",
-        "frontend/src/pages/SonicRunnerGame.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-a-social-community-feature-that-allows-registered-users-to-connect-with-random-other-users-of-the-same-age-include-a-community-feed-where-users-can-post-messages-implement-a-moderation-system-that-issues-warnings-for-inappropriate-behavior-and-after-repeated-violations-locks-the-user-s-account-requiring-them-to-create-a-new-one",
-      "featureTitle": "Implement a social/community feature that allows registered users to connect with random other users of the same age. Include a community feed where users can post messages. Implement a moderation system that issues warnings for inappropriate behavior, and after repeated violations, locks the user's account requiring them to create a new one.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/AccountLockedMessage.tsx",
-        "frontend/src/components/CommunityFeed.tsx",
-        "frontend/src/components/CommunityPostForm.tsx",
-        "frontend/src/pages/AgeMatcher.tsx",
-        "frontend/src/pages/CommunityPage.tsx",
-        "frontend/src/pages/ModerationDashboard.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-age-verification-on-every-login-using-a-declared-age-input-form-users-must-confirm-they-are-between-10-and-18-years-old-to-access-the-app-users-outside-this-range-are-shown-a-message-and-denied-access",
-      "featureTitle": "Implement age verification on every login using a declared age input form. Users must confirm they are between 10 and 18 years old to access the app. Users outside this range are shown a message and denied access.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/AgeVerificationModal.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-implement-parental-controls-including-a-configurable-usage-timer-that-locks-the-child-out-of-the-app-when-time-is-up-a-pin-protected-parent-dashboard-to-set-the-timer-and-review-activity-and-a-kid-mode-detection-that-restricts-access-to-age-appropriate-content-and-games-when-the-logged-in-user-is-under-13",
-      "featureTitle": "Implement parental controls including: a configurable usage timer that locks the child out of the app when time is up, a PIN-protected parent dashboard to set the timer and review activity, and a 'kid mode' detection that restricts access to age-appropriate content and games when the logged-in user is under 13.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/KidModeWrapper.tsx",
-        "frontend/src/components/PINEntryModal.tsx",
-        "frontend/src/components/UsageTimerLockout.tsx",
-        "frontend/src/hooks/useUsageTimer.ts",
-        "frontend/src/pages/ParentalDashboard.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-an-emergency-call-button-visible-at-all-times-within-the-app-that-when-tapped-opens-the-device-s-native-phone-dialer-pre-filled-with-the-local-emergency-number-e-g-911-include-a-visible-sos-button-in-the-app-s-navigation-or-footer",
-      "featureTitle": "Add an emergency call button visible at all times within the app that, when tapped, opens the device's native phone dialer pre-filled with the local emergency number (e.g., 911). Include a visible 'SOS' button in the app's navigation or footer.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/EmergencyCallButton.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-6"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-built-in-ad-blocker-indicator-toggle-in-the-app-settings-that-suppresses-display-of-any-third-party-ad-elements-within-the-app-s-own-content-areas-show-a-visual-badge-indicating-ads-blocked-status",
-      "featureTitle": "Add a built-in ad blocker indicator/toggle in the app settings that suppresses display of any third-party ad elements within the app's own content areas. Show a visual badge indicating 'Ads Blocked' status.",
-      "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/AdBlockerToggle.tsx",
-        "frontend/src/hooks/useAdBlocker.ts",
         "frontend/src/pages/SettingsPage.tsx"
       ],
       "components": [
@@ -149,21 +13,21 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "user-approval@3.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-7"
+        "REQ-58"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-apply-a-cohesive-sonic-franchise-visual-theme-across-the-entire-app-use-sonic-s-iconic-color-palette-cobalt-blue-golden-yellow-white-red-accents-bold-rounded-typography-speed-line-and-ring-motifs-as-decorative-elements-and-a-playful-energetic-layout-consistent-with-the-sonic-brand-apply-this-theme-consistently-to-all-pages-including-search-games-community-and-settings",
-      "featureTitle": "Apply a cohesive Sonic-franchise visual theme across the entire app: use Sonic's iconic color palette (cobalt blue, golden yellow, white, red accents), bold rounded typography, speed-line and ring motifs as decorative elements, and a playful energetic layout consistent with the Sonic brand. Apply this theme consistently to all pages including search, games, community, and settings.",
+      "featureId": "feature-when-the-user-submits-the-moderator-application-form-in-settingspage-tsx-open-the-url-https-scrambly-moderator-lq2-caffeine-xyz-caffeineadmintoken-d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4-in-a-new-browser-tab-the-application-message-and-the-submitting-user-s-principal-or-display-name-must-be-appended-to-the-url-e-g-as-additional-hash-parameters-or-query-parameters-so-the-moderator-review-destination-receives-the-submission-details-after-submission-display-an-in-page-confirmation-message-to-the-user-e-g-your-application-has-been-submitted-a-moderator-will-review-it-soon",
+      "featureTitle": "When the user submits the moderator application form in SettingsPage.tsx, open the URL https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab. The application message and the submitting user's principal or display name must be appended to the URL (e.g. as additional hash parameters or query parameters) so the moderator review destination receives the submission details. After submission, display an in-page confirmation message to the user (e.g. 'Your application has been submitted! A moderator will review it soon.').",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/Layout.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
+        "frontend/src/pages/SettingsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -171,10 +35,13 @@
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "user-approval@3.0.0",
+        "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-8"
+        "REQ-59"
       ],
       "confidence": "high"
     }

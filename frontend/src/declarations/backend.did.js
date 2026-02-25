@@ -8,21 +8,56 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const _CaffeineStorageCreateCertificateResult = IDL.Record({
+  'method' : IDL.Text,
+  'blob_hash' : IDL.Text,
+});
+export const _CaffeineStorageRefillInformation = IDL.Record({
+  'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const _CaffeineStorageRefillResult = IDL.Record({
+  'success' : IDL.Opt(IDL.Bool),
+  'topped_up_amount' : IDL.Opt(IDL.Nat),
+});
 export const SonicKnowledgeEntry = IDL.Record({
   'name' : IDL.Text,
   'content_type' : IDL.Text,
   'description' : IDL.Text,
   'highlights' : IDL.Text,
 });
+export const ModeratorApplicationResult = IDL.Variant({
+  'incorrectAnswers' : IDL.Null,
+  'success' : IDL.Null,
+  'applicationFull' : IDL.Null,
+});
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const FriendsModeRequest = IDL.Record({
+  'status' : IDL.Text,
+  'principal' : IDL.Text,
+  'birthdate' : IDL.Text,
+  'submittedAt' : IDL.Int,
+});
 export const Time = IDL.Int;
+export const Idea = IDL.Record({
+  'content' : IDL.Text,
+  'author' : IDL.Text,
+  'timestamp' : Time,
+  'reviewed' : IDL.Bool,
+});
+export const Password = IDL.Record({
+  'attemptsLeft' : IDL.Nat,
+  'verified' : IDL.Bool,
+  'password' : IDL.Text,
+});
 export const Profile = IDL.Record({
   'birthYear' : IDL.Nat,
+  'password' : IDL.Opt(Password),
   'name' : IDL.Text,
+  'isSchoolAccount' : IDL.Bool,
   'usageTimeRemaining' : IDL.Opt(IDL.Nat),
   'accountLocked' : IDL.Bool,
   'warnings' : IDL.Nat,
@@ -33,6 +68,28 @@ export const PostContent = IDL.Record({
   'message' : IDL.Text,
   'timestamp' : Time,
 });
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const Video = IDL.Record({ 'title' : IDL.Text, 'blob' : ExternalBlob });
+export const ApprovalStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'approved' : IDL.Null,
+  'rejected' : IDL.Null,
+});
+export const UserApprovalInfo = IDL.Record({
+  'status' : ApprovalStatus,
+  'principal' : IDL.Principal,
+});
+export const AppealRequest = IDL.Record({
+  'timestamp' : Time,
+  'adminResponse' : IDL.Opt(IDL.Text),
+  'reason' : IDL.Text,
+});
+export const AppealStatus = IDL.Variant({
+  'pending' : AppealRequest,
+  'noAppeal' : IDL.Null,
+  'denied' : AppealRequest,
+  'approved' : IDL.Null,
+});
 export const AgeCheckResult = IDL.Variant({
   'ok' : IDL.Null,
   'locked' : IDL.Null,
@@ -42,8 +99,35 @@ export const AgeCheckResult = IDL.Variant({
 });
 
 export const idlService = IDL.Service({
+  '_caffeineStorageBlobIsLive' : IDL.Func(
+      [IDL.Vec(IDL.Nat8)],
+      [IDL.Bool],
+      ['query'],
+    ),
+  '_caffeineStorageBlobsToDelete' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      ['query'],
+    ),
+  '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
+  '_caffeineStorageCreateCertificate' : IDL.Func(
+      [IDL.Text],
+      [_CaffeineStorageCreateCertificateResult],
+      [],
+    ),
+  '_caffeineStorageRefillCashier' : IDL.Func(
+      [IDL.Opt(_CaffeineStorageRefillInformation)],
+      [_CaffeineStorageRefillResult],
+      [],
+    ),
+  '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addSonicEntry' : IDL.Func([SonicKnowledgeEntry], [], []),
+  'applyForModerator' : IDL.Func([IDL.Text], [ModeratorApplicationResult], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createCommunityPost' : IDL.Func([IDL.Text], [], []),
   'getAllEntriesByType' : IDL.Func(
@@ -51,9 +135,17 @@ export const idlService = IDL.Service({
       [IDL.Vec(SonicKnowledgeEntry)],
       ['query'],
     ),
+  'getAllFriendsModeRequests' : IDL.Func(
+      [],
+      [IDL.Vec(FriendsModeRequest)],
+      ['query'],
+    ),
+  'getAllIdeas' : IDL.Func([], [IDL.Vec(Idea)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getCommunityPosts' : IDL.Func([], [IDL.Vec(PostContent)], ['query']),
+  'getFriendsModeStatus' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+  'getMyVideos' : IDL.Func([], [IDL.Vec(Video)], ['query']),
   'getRemainingUsageTime' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(IDL.Nat)],
@@ -62,40 +154,94 @@ export const idlService = IDL.Service({
   'getUserProfile' : IDL.Func([IDL.Principal], [Profile], ['query']),
   'getUsersByAge' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Vec(Profile)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
+  'isSchoolAccount' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
   'issueWarning' : IDL.Func([IDL.Principal, IDL.Text], [IDL.Nat], []),
+  'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
+  'markIdeaReviewed' : IDL.Func([IDL.Nat], [], []),
+  'requestApproval' : IDL.Func([], [], []),
+  'reviewAppeal' : IDL.Func(
+      [IDL.Principal, IDL.Bool, IDL.Opt(IDL.Text)],
+      [AppealStatus],
+      [],
+    ),
+  'reviewFriendsModeRequest' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
   'saveCallerUserProfile' : IDL.Func([Profile], [], []),
   'searchSonicContent' : IDL.Func(
       [IDL.Text],
       [IDL.Vec(SonicKnowledgeEntry)],
       ['query'],
     ),
+  'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
+  'setPassword' : IDL.Func([IDL.Text], [], []),
   'setRemainingUsageTime' : IDL.Func([IDL.Principal, IDL.Nat], [], []),
+  'setSchoolAccountMode' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
+  'submitBanAppeal' : IDL.Func([IDL.Text], [AppealStatus], []),
+  'submitFriendsModeRequest' : IDL.Func([IDL.Text], [], []),
+  'submitIdea' : IDL.Func([IDL.Text], [], []),
   'suggestSimilarEntries' : IDL.Func(
       [IDL.Text],
       [IDL.Vec(SonicKnowledgeEntry)],
       ['query'],
     ),
+  'uploadVideo' : IDL.Func([IDL.Text, ExternalBlob], [], []),
   'verifyAge' : IDL.Func([IDL.Text, IDL.Nat], [AgeCheckResult], []),
+  'verifyPassword' : IDL.Func([IDL.Text], [IDL.Bool], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const _CaffeineStorageCreateCertificateResult = IDL.Record({
+    'method' : IDL.Text,
+    'blob_hash' : IDL.Text,
+  });
+  const _CaffeineStorageRefillInformation = IDL.Record({
+    'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const _CaffeineStorageRefillResult = IDL.Record({
+    'success' : IDL.Opt(IDL.Bool),
+    'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
   const SonicKnowledgeEntry = IDL.Record({
     'name' : IDL.Text,
     'content_type' : IDL.Text,
     'description' : IDL.Text,
     'highlights' : IDL.Text,
   });
+  const ModeratorApplicationResult = IDL.Variant({
+    'incorrectAnswers' : IDL.Null,
+    'success' : IDL.Null,
+    'applicationFull' : IDL.Null,
+  });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const FriendsModeRequest = IDL.Record({
+    'status' : IDL.Text,
+    'principal' : IDL.Text,
+    'birthdate' : IDL.Text,
+    'submittedAt' : IDL.Int,
+  });
   const Time = IDL.Int;
+  const Idea = IDL.Record({
+    'content' : IDL.Text,
+    'author' : IDL.Text,
+    'timestamp' : Time,
+    'reviewed' : IDL.Bool,
+  });
+  const Password = IDL.Record({
+    'attemptsLeft' : IDL.Nat,
+    'verified' : IDL.Bool,
+    'password' : IDL.Text,
+  });
   const Profile = IDL.Record({
     'birthYear' : IDL.Nat,
+    'password' : IDL.Opt(Password),
     'name' : IDL.Text,
+    'isSchoolAccount' : IDL.Bool,
     'usageTimeRemaining' : IDL.Opt(IDL.Nat),
     'accountLocked' : IDL.Bool,
     'warnings' : IDL.Nat,
@@ -106,6 +252,28 @@ export const idlFactory = ({ IDL }) => {
     'message' : IDL.Text,
     'timestamp' : Time,
   });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const Video = IDL.Record({ 'title' : IDL.Text, 'blob' : ExternalBlob });
+  const ApprovalStatus = IDL.Variant({
+    'pending' : IDL.Null,
+    'approved' : IDL.Null,
+    'rejected' : IDL.Null,
+  });
+  const UserApprovalInfo = IDL.Record({
+    'status' : ApprovalStatus,
+    'principal' : IDL.Principal,
+  });
+  const AppealRequest = IDL.Record({
+    'timestamp' : Time,
+    'adminResponse' : IDL.Opt(IDL.Text),
+    'reason' : IDL.Text,
+  });
+  const AppealStatus = IDL.Variant({
+    'pending' : AppealRequest,
+    'noAppeal' : IDL.Null,
+    'denied' : AppealRequest,
+    'approved' : IDL.Null,
+  });
   const AgeCheckResult = IDL.Variant({
     'ok' : IDL.Null,
     'locked' : IDL.Null,
@@ -115,8 +283,39 @@ export const idlFactory = ({ IDL }) => {
   });
   
   return IDL.Service({
+    '_caffeineStorageBlobIsLive' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [IDL.Bool],
+        ['query'],
+      ),
+    '_caffeineStorageBlobsToDelete' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
+    '_caffeineStorageCreateCertificate' : IDL.Func(
+        [IDL.Text],
+        [_CaffeineStorageCreateCertificateResult],
+        [],
+      ),
+    '_caffeineStorageRefillCashier' : IDL.Func(
+        [IDL.Opt(_CaffeineStorageRefillInformation)],
+        [_CaffeineStorageRefillResult],
+        [],
+      ),
+    '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addSonicEntry' : IDL.Func([SonicKnowledgeEntry], [], []),
+    'applyForModerator' : IDL.Func(
+        [IDL.Text],
+        [ModeratorApplicationResult],
+        [],
+      ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createCommunityPost' : IDL.Func([IDL.Text], [], []),
     'getAllEntriesByType' : IDL.Func(
@@ -124,9 +323,17 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(SonicKnowledgeEntry)],
         ['query'],
       ),
+    'getAllFriendsModeRequests' : IDL.Func(
+        [],
+        [IDL.Vec(FriendsModeRequest)],
+        ['query'],
+      ),
+    'getAllIdeas' : IDL.Func([], [IDL.Vec(Idea)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getCommunityPosts' : IDL.Func([], [IDL.Vec(PostContent)], ['query']),
+    'getFriendsModeStatus' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+    'getMyVideos' : IDL.Func([], [IDL.Vec(Video)], ['query']),
     'getRemainingUsageTime' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(IDL.Nat)],
@@ -139,20 +346,39 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
+    'isSchoolAccount' : IDL.Func([IDL.Principal], [IDL.Bool], ['query']),
     'issueWarning' : IDL.Func([IDL.Principal, IDL.Text], [IDL.Nat], []),
+    'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
+    'markIdeaReviewed' : IDL.Func([IDL.Nat], [], []),
+    'requestApproval' : IDL.Func([], [], []),
+    'reviewAppeal' : IDL.Func(
+        [IDL.Principal, IDL.Bool, IDL.Opt(IDL.Text)],
+        [AppealStatus],
+        [],
+      ),
+    'reviewFriendsModeRequest' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
     'saveCallerUserProfile' : IDL.Func([Profile], [], []),
     'searchSonicContent' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(SonicKnowledgeEntry)],
         ['query'],
       ),
+    'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
+    'setPassword' : IDL.Func([IDL.Text], [], []),
     'setRemainingUsageTime' : IDL.Func([IDL.Principal, IDL.Nat], [], []),
+    'setSchoolAccountMode' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
+    'submitBanAppeal' : IDL.Func([IDL.Text], [AppealStatus], []),
+    'submitFriendsModeRequest' : IDL.Func([IDL.Text], [], []),
+    'submitIdea' : IDL.Func([IDL.Text], [], []),
     'suggestSimilarEntries' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(SonicKnowledgeEntry)],
         ['query'],
       ),
+    'uploadVideo' : IDL.Func([IDL.Text, ExternalBlob], [], []),
     'verifyAge' : IDL.Func([IDL.Text, IDL.Nat], [AgeCheckResult], []),
+    'verifyPassword' : IDL.Func([IDL.Text], [IDL.Bool], []),
   });
 };
 

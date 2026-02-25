@@ -1,17 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Search, Gamepad2, Users, Settings, Shield, Zap, Menu, X, LogOut } from 'lucide-react';
+import { Search, Gamepad2, Users, Settings, Shield, Zap, Menu, X, LogOut, Youtube, Clock, Heart } from 'lucide-react';
 import EmergencyCallButton from './EmergencyCallButton';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetCallerUserProfile, useIsCallerAdmin } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAdBlocker } from '../hooks/useAdBlocker';
-import { useState } from 'react';
 import { useUsageTimer } from '../hooks/useUsageTimer';
 import { isKidMode } from './KidModeWrapper';
 
 interface LayoutProps {
   children: React.ReactNode;
+}
+
+function RealTimeClock() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  const hours = pad(now.getHours());
+  const minutes = pad(now.getMinutes());
+  const seconds = pad(now.getSeconds());
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const dayName = dayNames[now.getDay()];
+  const day = pad(now.getDate());
+  const month = monthNames[now.getMonth()];
+  const year = now.getFullYear();
+
+  return (
+    <div className="flex items-center gap-1.5 bg-white/15 border border-white/20 rounded-xl px-3 py-1 shrink-0">
+      <Clock size={12} className="text-sonic-yellow shrink-0" />
+      <div className="flex flex-col leading-none">
+        <span className="font-fredoka text-white text-sm tracking-wide">
+          {hours}:{minutes}:{seconds}
+        </span>
+        <span className="font-nunito text-white/70 text-[10px] tracking-wide">
+          {dayName} {day} {month} {year}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export default function Layout({ children }: LayoutProps) {
@@ -34,7 +70,9 @@ export default function Layout({ children }: LayoutProps) {
   const navLinks = [
     { to: '/', label: 'Search', icon: <Search size={16} /> },
     { to: '/games', label: 'Games', icon: <Gamepad2 size={16} /> },
+    { to: '/videos', label: 'Videos', icon: <Youtube size={16} /> },
     ...(!kidMode ? [{ to: '/community', label: 'Community', icon: <Users size={16} /> }] : []),
+    { to: '/friends', label: 'Friends Mode', icon: <Heart size={16} /> },
     { to: '/settings', label: 'Settings', icon: <Settings size={16} /> },
     { to: '/parental', label: 'Parental', icon: <Shield size={16} /> },
     ...(isAdmin ? [{ to: '/admin/moderation', label: 'Moderation', icon: <Zap size={16} /> }] : []),
@@ -44,6 +82,11 @@ export default function Layout({ children }: LayoutProps) {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="sonic-gradient shadow-sonic sticky top-0 z-50">
+        {/* Clock bar — top strip */}
+        <div className="border-b border-white/10 px-4 py-1.5 flex items-center justify-center">
+          <RealTimeClock />
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
@@ -170,24 +213,21 @@ export default function Layout({ children }: LayoutProps) {
                 className="h-8 object-contain"
               />
               <span className="text-white/70 text-sm font-nunito">
-                © {new Date().getFullYear()} Scrambly
+                The Sonic fan hub for kids
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm font-nunito text-white/70">
-              <EmergencyCallButton />
-              <span>
-                Built with{' '}
-                <span className="text-sonic-yellow">♥</span>{' '}
-                using{' '}
-                <a
-                  href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'scrambly')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-secondary hover:text-white transition-colors underline"
-                >
-                  caffeine.ai
-                </a>
-              </span>
+            <div className="text-white/60 text-xs font-nunito text-center">
+              © {new Date().getFullYear()} Scrambly. Built with{' '}
+              <Heart size={12} className="inline text-sonic-yellow" />{' '}
+              using{' '}
+              <a
+                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== 'undefined' ? window.location.hostname : 'scrambly')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sonic-yellow hover:underline"
+              >
+                caffeine.ai
+              </a>
             </div>
           </div>
         </div>

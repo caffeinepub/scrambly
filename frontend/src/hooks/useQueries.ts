@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Profile, SonicKnowledgeEntry, PostContent } from '../backend';
+import type { Profile, SonicKnowledgeEntry, PostContent, FriendsModeRequest, Video, Idea } from '../backend';
 import { Principal } from '@dfinity/principal';
 
 // ─── Profile ────────────────────────────────────────────────────────────────
@@ -188,6 +188,180 @@ export function useSetRemainingUsageTime() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+// ─── Ban Appeal ──────────────────────────────────────────────────────────────
+
+export function useSubmitBanAppeal() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (reason: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.submitBanAppeal(reason);
+    },
+  });
+}
+
+// ─── Friends Mode ─────────────────────────────────────────────────────────────
+
+export function useGetFriendsModeStatus() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<string | null>({
+    queryKey: ['friendsModeStatus'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getFriendsModeStatus();
+    },
+    enabled: !!actor && !actorFetching,
+    refetchInterval: 30000,
+    retry: false,
+  });
+}
+
+export function useSubmitFriendsModeRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (birthdate: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.submitFriendsModeRequest(birthdate);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendsModeStatus'] });
+    },
+  });
+}
+
+export function useGetAllFriendsModeRequests() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<FriendsModeRequest[]>({
+    queryKey: ['allFriendsModeRequests'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getAllFriendsModeRequests();
+    },
+    enabled: !!actor && !actorFetching,
+    retry: false,
+  });
+}
+
+export function useReviewFriendsModeRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ principal, status }: { principal: string; status: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.reviewFriendsModeRequest(principal, status);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allFriendsModeRequests'] });
+    },
+  });
+}
+
+// ─── Password ─────────────────────────────────────────────────────────────────
+
+export function useSetPassword() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (password: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.setPassword(password);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+export function useVerifyPassword() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (password: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.verifyPassword(password);
+    },
+  });
+}
+
+// ─── Videos ───────────────────────────────────────────────────────────────────
+
+export function useGetMyVideos() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<Video[]>({
+    queryKey: ['myVideos'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMyVideos();
+    },
+    enabled: !!actor && !actorFetching,
+  });
+}
+
+export function useUploadVideo() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ title, blob }: { title: string; blob: import('../backend').ExternalBlob }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.uploadVideo(title, blob);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myVideos'] });
+    },
+  });
+}
+
+// ─── Ideas ────────────────────────────────────────────────────────────────────
+
+export function useSubmitIdea() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async (content: string) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.submitIdea(content);
+    },
+  });
+}
+
+export function useGetAllIdeas() {
+  const { actor, isFetching: actorFetching } = useActor();
+
+  return useQuery<Idea[]>({
+    queryKey: ['allIdeas'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getAllIdeas();
+    },
+    enabled: !!actor && !actorFetching,
+    retry: false,
+  });
+}
+
+export function useMarkIdeaReviewed() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (index: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.markIdeaReviewed(index);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['allIdeas'] });
     },
   });
 }

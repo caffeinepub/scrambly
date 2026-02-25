@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Gamepad2, Play, Zap } from 'lucide-react';
+import { Gamepad2, Play, Zap, ExternalLink, Clock, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const GAMES = [
   {
@@ -25,6 +27,8 @@ const GAMES = [
 ];
 
 export default function GamesPage() {
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -67,7 +71,7 @@ export default function GamesPage() {
                 to={game.path}
                 className="flex items-center justify-center gap-2 w-full bg-primary text-primary-foreground
                            font-fredoka text-base py-2.5 rounded-full hover:opacity-90 active:scale-95
-                           transition-all duration-150 shadow-md"
+                           transition-all duration-150"
               >
                 <Play size={16} />
                 Play Now
@@ -75,31 +79,83 @@ export default function GamesPage() {
             </div>
           </div>
         ))}
+      </div>
 
-        {/* Coming Soon Card */}
-        <div className="sonic-card overflow-hidden opacity-60">
-          <div className="w-full h-48 bg-muted flex items-center justify-center">
-            <div className="text-center">
-              <Zap size={40} className="text-muted-foreground mx-auto mb-2" />
-              <p className="font-fredoka text-muted-foreground">More Games Coming!</p>
-            </div>
+      {/* More Games Bar */}
+      <button
+        onClick={() => window.open('https://kbhgames.com/?s=Mobile', '_blank', 'noopener,noreferrer')}
+        className="w-full flex items-center justify-between gap-3 bg-primary text-primary-foreground
+                   font-fredoka text-lg px-6 py-4 rounded-2xl hover:opacity-90 active:scale-[0.99]
+                   transition-all duration-150 shadow-sonic group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <Gamepad2 size={20} className="text-primary-foreground" />
           </div>
-          <div className="p-4">
-            <h3 className="font-fredoka text-xl text-muted-foreground mb-1">Coming Soon</h3>
-            <p className="text-sm text-muted-foreground font-nunito">
-              More Sonic-themed games are on the way. Stay tuned!
-            </p>
+          <div className="text-left">
+            <p className="font-fredoka text-lg leading-tight">More Games</p>
+            <p className="font-nunito text-xs text-primary-foreground/80">Explore more Sonic-compatible games →</p>
           </div>
         </div>
-      </div>
+        <ExternalLink size={20} className="text-primary-foreground/80 group-hover:translate-x-1 transition-transform" />
+      </button>
 
-      {/* Offline Notice */}
-      <div className="bg-secondary/10 border border-secondary/30 rounded-2xl p-4 flex items-center gap-3">
-        <Zap size={20} className="text-secondary-foreground shrink-0" />
-        <p className="text-sm font-nunito text-secondary-foreground">
-          <strong>Offline Ready!</strong> All games work without an internet connection. Play anywhere, anytime!
-        </p>
-      </div>
+      {/* Coming Soon Bar */}
+      <button
+        onClick={() => setShowComingSoonModal(true)}
+        className="w-full flex items-center justify-between gap-3 bg-secondary/20 border-2 border-secondary/40
+                   text-foreground font-fredoka text-lg px-6 py-4 rounded-2xl hover:bg-secondary/30
+                   active:scale-[0.99] transition-all duration-150 group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-secondary/30 rounded-xl flex items-center justify-center">
+            <Clock size={20} className="text-secondary-foreground" />
+          </div>
+          <div className="text-left">
+            <p className="font-fredoka text-lg leading-tight text-foreground">Coming Soon</p>
+            <p className="font-nunito text-xs text-muted-foreground">New features on the way!</p>
+          </div>
+        </div>
+        <Zap size={20} className="text-secondary-foreground/60 group-hover:text-secondary-foreground transition-colors" />
+      </button>
+
+      {/* Coming Soon Modal */}
+      {showComingSoonModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowComingSoonModal(false)}
+        >
+          <div
+            className="sonic-card max-w-sm w-full p-6 space-y-4 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowComingSoonModal(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={20} />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-secondary/20 rounded-2xl flex items-center justify-center">
+                <Clock size={24} className="text-secondary-foreground" />
+              </div>
+              <h2 className="font-fredoka text-2xl text-foreground">Coming Soon!</h2>
+            </div>
+            <p className="font-nunito text-foreground leading-relaxed">
+              Sorry, this area is being thought about. Please send in ideas!
+            </p>
+            <p className="font-nunito text-sm text-muted-foreground">
+              Head over to <strong>Settings → Send Your Best Ideas</strong> to share your thoughts with us. 💡
+            </p>
+            <Button
+              onClick={() => setShowComingSoonModal(false)}
+              className="w-full rounded-full font-fredoka"
+            >
+              Got it!
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
