@@ -1,236 +1,150 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useRouterState } from '@tanstack/react-router';
-import { Search, Gamepad2, Users, Settings, Shield, Zap, Menu, X, LogOut, Youtube, Clock, Heart } from 'lucide-react';
-import EmergencyCallButton from './EmergencyCallButton';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetCallerUserProfile, useIsCallerAdmin } from '../hooks/useQueries';
-import { useQueryClient } from '@tanstack/react-query';
-import { useAdBlocker } from '../hooks/useAdBlocker';
-import { useUsageTimer } from '../hooks/useUsageTimer';
-import { isKidMode } from './KidModeWrapper';
+import React from "react";
+import { Link, useLocation } from "@tanstack/react-router";
+import { Home, Search, Video, Gamepad2, Users, Settings, Shield, Heart, Crown } from "lucide-react";
+import ModeratorWelcomeBanner from "./ModeratorWelcomeBanner";
+import { useGetCallerUserProfile } from "../hooks/useQueries";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
-interface LayoutProps {
-  children: React.ReactNode;
+const ADMIN_USERNAME = "TailsTheBeast124";
+
+interface NavItem {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
 }
 
-function RealTimeClock() {
-  const [now, setNow] = useState(() => new Date());
+const navItems: NavItem[] = [
+  { to: "/", icon: <Home className="w-5 h-5" />, label: "Home" },
+  { to: "/search", icon: <Search className="w-5 h-5" />, label: "Search" },
+  { to: "/videos", icon: <Video className="w-5 h-5" />, label: "Videos" },
+  { to: "/games", icon: <Gamepad2 className="w-5 h-5" />, label: "Games" },
+  { to: "/community", icon: <Users className="w-5 h-5" />, label: "Community" },
+  { to: "/friends", icon: <Heart className="w-5 h-5" />, label: "Friends" },
+  { to: "/settings", icon: <Settings className="w-5 h-5" />, label: "Settings" },
+];
 
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const pad = (n: number) => String(n).padStart(2, '0');
-
-  const hours = pad(now.getHours());
-  const minutes = pad(now.getMinutes());
-  const seconds = pad(now.getSeconds());
-
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  const dayName = dayNames[now.getDay()];
-  const day = pad(now.getDate());
-  const month = monthNames[now.getMonth()];
-  const year = now.getFullYear();
-
-  return (
-    <div className="flex items-center gap-1.5 bg-white/15 border border-white/20 rounded-xl px-3 py-1 shrink-0">
-      <Clock size={12} className="text-sonic-yellow shrink-0" />
-      <div className="flex flex-col leading-none">
-        <span className="font-fredoka text-white text-sm tracking-wide">
-          {hours}:{minutes}:{seconds}
-        </span>
-        <span className="font-nunito text-white/70 text-[10px] tracking-wide">
-          {dayName} {day} {month} {year}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-export default function Layout({ children }: LayoutProps) {
-  const { clear, identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const { identity } = useInternetIdentity();
   const { data: profile } = useGetCallerUserProfile();
-  const { data: isAdmin } = useIsCallerAdmin();
-  const { adBlockerEnabled } = useAdBlocker();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const routerState = useRouterState();
-  const currentPath = routerState.location.pathname;
-  const { timeRemaining, formatTime } = useUsageTimer(profile);
-  const kidMode = isKidMode(profile);
 
-  const handleLogout = async () => {
-    await clear();
-    queryClient.clear();
-  };
-
-  const navLinks = [
-    { to: '/', label: 'Search', icon: <Search size={16} /> },
-    { to: '/games', label: 'Games', icon: <Gamepad2 size={16} /> },
-    { to: '/videos', label: 'Videos', icon: <Youtube size={16} /> },
-    ...(!kidMode ? [{ to: '/community', label: 'Community', icon: <Users size={16} /> }] : []),
-    { to: '/friends', label: 'Friends Mode', icon: <Heart size={16} /> },
-    { to: '/settings', label: 'Settings', icon: <Settings size={16} /> },
-    { to: '/parental', label: 'Parental', icon: <Shield size={16} /> },
-    ...(isAdmin ? [{ to: '/admin/moderation', label: 'Moderation', icon: <Zap size={16} /> }] : []),
-  ];
+  const isAdmin = profile?.name === ADMIN_USERNAME;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="sonic-gradient shadow-sonic sticky top-0 z-50">
-        {/* Clock bar — top strip */}
-        <div className="border-b border-white/10 px-4 py-1.5 flex items-center justify-center">
-          <RealTimeClock />
-        </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Moderator Welcome Banner */}
+      <ModeratorWelcomeBanner />
 
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      {/* Header */}
+      <header className="bg-card border-b border-border sticky top-0 z-40 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+          <Link to="/" className="flex items-center gap-2">
             <img
               src="/assets/generated/scrambly-logo.dim_512x256.png"
               alt="Scrambly"
-              className="h-10 object-contain"
+              className="h-8 object-contain"
             />
           </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
+            {navItems.map((item) => (
               <Link
-                key={link.to}
-                to={link.to}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-nunito font-700 text-sm transition-colors duration-150
-                  ${currentPath === link.to
-                    ? 'bg-white/20 text-white'
-                    : 'text-white/80 hover:bg-white/10 hover:text-white'
-                  }`}
+                key={item.to}
+                to={item.to}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === item.to
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                }`}
               >
-                {link.icon}
-                {link.label}
+                {item.icon}
+                <span>{item.label}</span>
               </Link>
             ))}
+
+            {/* Admin link — only for TailsTheBeast124 */}
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  location.pathname === "/admin"
+                    ? "bg-yellow-500 text-white"
+                    : "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                }`}
+              >
+                <Crown className="w-5 h-5" />
+                <span>Admin</span>
+              </Link>
+            )}
+
+            {/* Parental Controls */}
+            <Link
+              to="/parental"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === "/parental"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              <span>Parental</span>
+            </Link>
           </nav>
-
-          {/* Right side */}
-          <div className="flex items-center gap-2">
-            {/* Ad Blocker Badge */}
-            {adBlockerEnabled && (
-              <span className="hidden sm:flex items-center gap-1 text-xs font-nunito font-700 bg-white/20 text-white px-2 py-1 rounded-full">
-                <Shield size={12} /> Ads Blocked
-              </span>
-            )}
-
-            {/* Timer */}
-            {timeRemaining !== null && (
-              <span className="hidden sm:flex items-center gap-1 text-xs font-nunito font-700 bg-secondary/80 text-secondary-foreground px-2 py-1 rounded-full">
-                ⏱ {formatTime(timeRemaining)}
-              </span>
-            )}
-
-            {/* User name */}
-            {profile && (
-              <span className="hidden sm:block text-white/90 font-nunito text-sm font-700">
-                Hi, {profile.name}!
-              </span>
-            )}
-
-            {/* Emergency */}
-            <EmergencyCallButton />
-
-            {/* Logout */}
-            {identity && (
-              <button
-                onClick={handleLogout}
-                className="hidden md:flex items-center gap-1 text-white/80 hover:text-white text-sm font-nunito transition-colors"
-                title="Logout"
-              >
-                <LogOut size={16} />
-              </button>
-            )}
-
-            {/* Mobile menu toggle */}
-            <button
-              className="md:hidden text-white p-1"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
-          </div>
         </div>
-
-        {/* Mobile Nav */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-sonic-blue-dark border-t border-white/10 px-4 py-3 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-nunito font-700 text-sm transition-colors
-                  ${currentPath === link.to
-                    ? 'bg-white/20 text-white'
-                    : 'text-white/80 hover:bg-white/10 hover:text-white'
-                  }`}
-              >
-                {link.icon}
-                {link.label}
-              </Link>
-            ))}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-nunito font-700 text-sm text-white/80 hover:text-white w-full"
-            >
-              <LogOut size={16} /> Logout
-            </button>
-          </div>
-        )}
       </header>
 
-      {/* Kid Mode Banner */}
-      {kidMode && (
-        <div className="bg-secondary text-secondary-foreground text-center py-1.5 text-sm font-nunito font-700">
-          🌟 Kid Mode Active — Safe content for young fans!
+      {/* Mobile Nav */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40">
+        <div className="flex items-center justify-around px-2 py-2">
+          {navItems.slice(0, 5).map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                location.pathname === item.to
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          ))}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
+                location.pathname === "/admin" ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500"
+              }`}
+            >
+              <Crown className="w-5 h-5" />
+              <span>Admin</span>
+            </Link>
+          )}
         </div>
-      )}
+      </nav>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
-        {children}
-      </main>
+      <main className="flex-1 pb-16 md:pb-0">{children}</main>
 
       {/* Footer */}
-      <footer className="sonic-gradient text-white py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <img
-                src="/assets/generated/scrambly-logo.dim_512x256.png"
-                alt="Scrambly"
-                className="h-8 object-contain"
-              />
-              <span className="text-white/70 text-sm font-nunito">
-                The Sonic fan hub for kids
-              </span>
-            </div>
-            <div className="text-white/60 text-xs font-nunito text-center">
-              © {new Date().getFullYear()} Scrambly. Built with{' '}
-              <Heart size={12} className="inline text-sonic-yellow" />{' '}
-              using{' '}
-              <a
-                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== 'undefined' ? window.location.hostname : 'scrambly')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sonic-yellow hover:underline"
-              >
-                caffeine.ai
-              </a>
-            </div>
-          </div>
-        </div>
+      <footer className="bg-card border-t border-border py-6 px-4 text-center text-sm text-muted-foreground md:pb-6 pb-20">
+        <p>
+          © {new Date().getFullYear()} Scrambly — Built with{" "}
+          <span className="text-red-500">❤️</span> using{" "}
+          <a
+            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
+              typeof window !== "undefined" ? window.location.hostname : "scrambly"
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            caffeine.ai
+          </a>
+        </p>
       </footer>
     </div>
   );

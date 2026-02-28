@@ -1,451 +1,60 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 47,
-  "summary": "Scrambly — a Sonic franchise-themed super app combining a Sonic-themed search/browser, mobile games (including Block Blast and Sonic Forces), social/community features for age-matched users, parental controls with timers and kid detection, offline search and gameplay, offline/emergency calling, ad blocker, and age verification with camera-based eligibility checks.",
+  "projectStateVersion": 3,
+  "summary": "Scrambly is a Sonic-themed social/video app for kids with parental controls, admin moderation, and Sonic Mania-styled UI. Features include PIN-protected parental controls, Sonic Mania monitor box button animations, admin panel for owner TailsTheBeast124, and curated Sonic video content.",
   "architectural_notes": [
-    "App name: Scrambly — Sonic-franchise themed super app targeting users aged 10–18",
-    "Age verification required on every login using device camera to confirm user eligibility (ages 10–18 allowed)",
-    "Offline-first architecture needed for search, games, and calling features",
-    "Community moderation system: warn → kick → require new account for policy violations",
-    "School accounts restrict content to educational material only and enforce auto ad blocking",
-    "Device binding: one account per device — account bypass/switching is disabled once bound",
-    "Ban appeal system: max 2 appeals before permanent denial; mod application requires Sonic trivia answer",
-    "On first app open, camera captures a face photo for age verification, then immediately deletes the image after processing — only the age determination result is retained",
-    "Search moderation: anime/MHA queries trigger progressive warnings; porn queries trigger accelerated warnings leading to permanent ban with 1 appeal",
-    "Friends Mode: age verification via birthdate form (MM/DD/YYYY) submitted for owner review; email delivery disabled — submissions stored in backend as pending; owner manually approves/denies; user notified in-app within 1-2 days"
+    "Admin panel is owner-only (TailsTheBeast124); ban/warn/unban actions require typing the username from a public post",
+    "Parental controls PIN defaults to 1234 and is changeable to 3-4 characters; face scan verifies parent then is deleted",
+    "Auto-moderation: instant ban on anime image posts or spam of porn/anime/inappropriate keywords in search"
   ],
-  "known_issues": [
-    "Camera-based age detection is technically unreliable and raises privacy/legal concerns — may need alternative age verification approach",
-    "Offline calling is technically complex and may require P2P or mesh networking solutions",
-    "Licensing real mobile games (Sonic Forces etc.) requires third-party agreements",
-    "YouTube integration requires YouTube Data API key and compliance with YouTube Terms of Service, including restrictions for minors (COPPA/GDPR-K)",
-    "Device binding (one account per device) is technically complex across platforms (phone, PC, VR, tablet) and may require device fingerprinting or platform-specific APIs",
-    "Generated Sonic Mania icon was identified as showing Eggman laughing instead of Sonic — icon needs to be regenerated",
-    "Friends Mode owner review/notification system requires a backend queue and push notification mechanism — email to Robloxnumber4work@gmail.com is not available"
-  ],
+  "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-create-a-sonic-franchise-themed-search-interface-that-allows-users-to-search-for-sonic-related-content-characters-games-lore-media-using-a-curated-local-knowledge-base-with-offline-search-capability-using-cached-data-stored-on-device",
-      "title": "Create a Sonic franchise-themed search interface that allows users to search for Sonic-related content (characters, games, lore, media) using a curated local knowledge base, with offline search capability using cached data stored on-device.",
+      "id": "feature-replace-the-current-video-content-on-the-videos-page-with-curated-sonic-speedrun-and-gameplay-videos-covering-four-categories-how-to-speed-run-sonic-1-how-to-speed-run-sonic-2-how-to-speed-run-sonic-3-and-how-to-speed-run-sonic-mania-update-the-static-video-data-files-knucklesvideos-ts-sonicboomvideos-ts-sonicprimevideos-ts-sonicsaysvideos-ts-or-a-new-speedrunvideos-ts-to-include-real-youtube-video-entries-for-each-of-these-four-sonic-game-speedrun-gameplay-categories-replace-old-video-lists-with-these-new-entries-and-update-videospage-tsx-category-filters-accordingly",
+      "title": "Replace the current video content on the Videos page with curated Sonic speedrun and gameplay videos covering four categories: 'How to Speed Run Sonic 1', 'How to Speed Run Sonic 2', 'How to Speed Run Sonic 3', and 'How to Speed Run Sonic Mania'. Update the static video data files (knucklesVideos.ts, sonicBoomVideos.ts, sonicPrimeVideos.ts, sonicSaysVideos.ts, or a new speedrunVideos.ts) to include real YouTube video entries for each of these four Sonic game speedrun/gameplay categories. Replace old video lists with these new entries and update VideosPage.tsx category filters accordingly.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-build-a-games-library-section-with-at-least-two-playable-in-browser-games-a-block-blast-style-puzzle-game-and-a-sonic-themed-runner-game-inspired-by-sonic-forces-games-must-be-playable-offline-without-requiring-a-network-connection",
-      "title": "Build a games library section with at least two playable in-browser games: a Block Blast-style puzzle game and a Sonic-themed runner game (inspired by Sonic Forces). Games must be playable offline without requiring a network connection.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-a-social-community-feature-that-allows-registered-users-to-connect-with-random-other-users-of-the-same-age-include-a-community-feed-where-users-can-post-messages-implement-a-moderation-system-that-issues-warnings-for-inappropriate-behavior-and-after-repeated-violations-locks-the-user-s-account-requiring-them-to-create-a-new-one",
-      "title": "Implement a social/community feature that allows registered users to connect with random other users of the same age. Include a community feed where users can post messages. Implement a moderation system that issues warnings for inappropriate behavior, and after repeated violations, locks the user's account requiring them to create a new one.",
+      "id": "feature-add-a-face-scan-step-to-the-parental-controls-access-flow-when-a-parent-attempts-to-open-the-parental-controls-dashboard-show-a-camera-modal-that-briefly-captures-a-frame-liveness-check-displays-a-verifying-parent-identity-message-then-immediately-discards-the-image-data-and-grants-access-the-captured-image-must-never-be-stored-or-sent-to-the-backend-after-the-scan-completes-close-the-camera-and-proceed-to-the-pin-entry-step",
+      "title": "Add a face scan step to the parental controls access flow. When a parent attempts to open the parental controls dashboard, show a camera modal that briefly captures a frame (liveness check), displays a 'Verifying parent identity...' message, then immediately discards the image data and grants access. The captured image must never be stored or sent to the backend. After the scan completes, close the camera and proceed to the PIN entry step.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-age-verification-on-every-login-using-a-declared-age-input-form-users-must-confirm-they-are-between-10-and-18-years-old-to-access-the-app-users-outside-this-range-are-shown-a-message-and-denied-access",
-      "title": "Implement age verification on every login using a declared age input form. Users must confirm they are between 10 and 18 years old to access the app. Users outside this range are shown a message and denied access.",
+      "id": "feature-create-a-dedicated-admin-panel-page-accessible-only-to-the-user-with-username-tailsthebeast124-add-a-route-admin-to-app-tsx-gated-by-admin-identity-check-the-panel-must-include-1-a-ban-section-with-a-text-input-for-username-and-a-ban-button-that-bans-the-typed-user-2-a-warn-section-with-a-text-input-for-username-and-a-warn-button-that-sends-a-warning-to-that-user-3-an-unban-section-that-shows-a-scrollable-list-of-currently-banned-users-by-username-with-an-unban-button-next-to-each-entry-4-a-ban-list-display-that-shows-nobody-when-zero-users-are-banned-or-x-person-s-banned-when-any-are-banned-up-to-a-display-cap-of-100-000-000-000-000-5-a-warn-list-display-showing-the-total-number-of-warned-users-up-to-100-000-000-000-000",
+      "title": "Create a dedicated Admin Panel page accessible only to the user with username 'TailsTheBeast124'. Add a route '/admin' to App.tsx gated by admin identity check. The panel must include: (1) a Ban section with a text input for username and a 'Ban' button that bans the typed user; (2) a Warn section with a text input for username and a 'Warn' button that sends a warning to that user; (3) an Unban section that shows a scrollable list of currently banned users by username with an 'Unban' button next to each entry; (4) a Ban List display that shows 'Nobody' when zero users are banned, or 'X person(s) banned' when any are banned, up to a display cap of 100,000,000,000,000; (5) a Warn List display showing the total number of warned users up to 100,000,000,000,000.",
       "reqIds": [
         "REQ-4"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-parental-controls-including-a-configurable-usage-timer-that-locks-the-child-out-of-the-app-when-time-is-up-a-pin-protected-parent-dashboard-to-set-the-timer-and-review-activity-and-a-kid-mode-detection-that-restricts-access-to-age-appropriate-content-and-games-when-the-logged-in-user-is-under-13",
-      "title": "Implement parental controls including: a configurable usage timer that locks the child out of the app when time is up, a PIN-protected parent dashboard to set the timer and review activity, and a 'kid mode' detection that restricts access to age-appropriate content and games when the logged-in user is under 13.",
+      "id": "feature-add-a-moderation-promotion-tool-to-the-admin-panel-the-owner-tailsthebeast124-must-be-able-to-type-a-target-username-and-a-reason-then-press-make-moderator-to-grant-that-user-the-moderator-role-when-a-user-is-successfully-granted-the-moderator-role-upon-their-next-page-load-or-navigation-they-should-see-a-celebratory-message-yay-you-re-a-mod-help-with-scrambly-to-make-it-better",
+      "title": "Add a Moderation Promotion tool to the Admin Panel. The owner (TailsTheBeast124) must be able to type a target username and a reason, then press 'Make Moderator' to grant that user the moderator role. When a user is successfully granted the moderator role, upon their next page load or navigation they should see a celebratory message: 'Yay, you're a mod! Help with Scrambly to make it better!'",
       "reqIds": [
         "REQ-5"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-an-emergency-call-button-visible-at-all-times-within-the-app-that-when-tapped-opens-the-device-s-native-phone-dialer-pre-filled-with-the-local-emergency-number-e-g-911-include-a-visible-sos-button-in-the-app-s-navigation-or-footer",
-      "title": "Add an emergency call button visible at all times within the app that, when tapped, opens the device's native phone dialer pre-filled with the local emergency number (e.g., 911). Include a visible 'SOS' button in the app's navigation or footer.",
+      "id": "feature-update-post-moderation-logic-do-not-auto-warn-users-for-any-regular-text-post-however-instantly-ban-any-user-who-posts-content-containing-or-attaching-anime-images-or-who-spams-the-words-porn-anime-inappropriate-anime-or-other-clearly-inappropriate-terms-in-their-post-body-the-auto-ban-must-trigger-before-the-post-is-saved-and-must-display-a-clear-ban-reason-to-the-affected-user",
+      "title": "Update post moderation logic: do NOT auto-warn users for any regular text post. However, instantly ban any user who posts content containing or attaching anime images, or who spams the words 'porn', 'anime', 'inappropriate anime', or other clearly inappropriate terms in their post body. The auto-ban must trigger before the post is saved and must display a clear ban reason to the affected user.",
       "reqIds": [
         "REQ-6"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-built-in-ad-blocker-indicator-toggle-in-the-app-settings-that-suppresses-display-of-any-third-party-ad-elements-within-the-app-s-own-content-areas-show-a-visual-badge-indicating-ads-blocked-status",
-      "title": "Add a built-in ad blocker indicator/toggle in the app settings that suppresses display of any third-party ad elements within the app's own content areas. Show a visual badge indicating 'Ads Blocked' status.",
+      "id": "feature-update-the-search-moderation-logic-in-usesearchmoderator-ts-when-the-admin-tailsthebeast124-searches-for-inappropriate-terms-porn-anime-inappropriate-content-do-not-block-or-warn-instead-silently-replace-the-results-with-sonic-the-hedgehog-vs-metal-sonic-content-when-any-user-including-admin-searches-for-sonic-exe-vs-metal-sonic-show-all-youtube-video-results-for-that-exact-query-by-embedding-matching-video-entries-from-a-new-static-data-file-containing-sonic-exe-vs-metal-sonic-youtube-entries",
+      "title": "Update the search moderation logic in useSearchModerator.ts: when the admin (TailsTheBeast124) searches for inappropriate terms (porn, anime, inappropriate content), do not block or warn — instead silently replace the results with Sonic the Hedgehog vs Metal Sonic content. When any user (including admin) searches for 'sonic.exe vs metal sonic', show all YouTube video results for that exact query by embedding matching video entries from a new static data file containing 'sonic.exe vs metal sonic' YouTube entries.",
       "reqIds": [
         "REQ-7"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-apply-a-cohesive-sonic-franchise-visual-theme-across-the-entire-app-use-sonic-s-iconic-color-palette-cobalt-blue-golden-yellow-white-red-accents-bold-rounded-typography-speed-line-and-ring-motifs-as-decorative-elements-and-a-playful-energetic-layout-consistent-with-the-sonic-brand-apply-this-theme-consistently-to-all-pages-including-search-games-community-and-settings",
-      "title": "Apply a cohesive Sonic-franchise visual theme across the entire app: use Sonic's iconic color palette (cobalt blue, golden yellow, white, red accents), bold rounded typography, speed-line and ring motifs as decorative elements, and a playful energetic layout consistent with the Sonic brand. Apply this theme consistently to all pages including search, games, community, and settings.",
-      "reqIds": [
-        "REQ-8"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-youtube-browsing-page-to-scrambly-that-embeds-a-curated-selection-of-sonic-themed-youtube-videos-using-hardcoded-video-ids-or-youtube-iframe-embeds-so-users-can-watch-videos-for-entertainment-the-page-should-be-accessible-from-the-main-navigation-and-styled-consistently-with-the-sonic-visual-theme",
-      "title": "Add a YouTube browsing page to Scrambly that embeds a curated selection of Sonic-themed YouTube videos (using hardcoded video IDs or YouTube iframe embeds) so users can watch videos for entertainment. The page should be accessible from the main navigation and styled consistently with the Sonic visual theme.",
-      "reqIds": [
-        "REQ-9"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-when-a-user-plays-any-video-on-the-videos-page-automatically-start-playing-oil-ocean-act-2-from-sonic-mania-as-background-music-the-music-should-loop-continuously-while-any-video-is-active-and-stop-when-the-video-is-closed-or-the-user-navigates-away-from-the-videos-page",
-      "title": "When a user plays any video on the Videos page, automatically start playing 'Oil Ocean Act 2' from Sonic Mania as background music. The music should loop continuously while any video is active and stop when the video is closed or the user navigates away from the Videos page.",
-      "reqIds": [
-        "REQ-14"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-on-the-very-first-visit-to-the-site-before-the-existing-age-verification-form-prompt-the-user-to-allow-camera-access-and-capture-a-single-photo-of-their-face-using-the-browser-s-mediadevices-api-immediately-after-the-photo-is-captured-discard-it-from-memory-do-not-store-upload-or-persist-the-image-anywhere-display-a-brief-on-screen-confirmation-that-the-photo-was-taken-and-deleted",
-      "title": "On the very first visit to the site (before the existing age verification form), prompt the user to allow camera access and capture a single photo of their face using the browser's MediaDevices API. Immediately after the photo is captured, discard it from memory — do not store, upload, or persist the image anywhere. Display a brief on-screen confirmation that the photo was taken and deleted.",
-      "reqIds": [
-        "REQ-15"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-after-the-face-capture-step-completes-immediately-present-the-existing-age-verification-form-the-form-must-enforce-that-the-user-declares-an-age-between-10-and-18-inclusive-users-outside-this-range-must-be-shown-a-denial-message-and-blocked-from-accessing-the-app-this-replaces-any-standalone-age-verification-entry-point-the-camera-capture-and-age-form-must-flow-as-a-single-sequential-onboarding-sequence",
-      "title": "After the face-capture step completes, immediately present the existing age verification form. The form must enforce that the user declares an age between 10 and 18 (inclusive). Users outside this range must be shown a denial message and blocked from accessing the app. This replaces any standalone age verification entry point — the camera capture and age form must flow as a single sequential onboarding sequence.",
-      "reqIds": [
-        "REQ-16"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-use-the-generated-sonic-mania-themed-image-sonic-mania-icon-dim-512x512-png-as-the-application-favicon-and-pwa-icon-update-frontend-index-html-to-reference-it-as-the-favicon-link-rel-icon-and-add-any-necessary-apple-touch-icon-or-manifest-icon-references-so-the-icon-appears-in-browser-tabs-and-on-home-screen-installs",
-      "title": "Use the generated Sonic Mania-themed image (sonic-mania-icon.dim_512x512.png) as the application favicon and PWA icon. Update frontend/index.html to reference it as the favicon (link rel='icon') and add any necessary apple-touch-icon or manifest icon references so the icon appears in browser tabs and on home screen installs.",
-      "reqIds": [
-        "REQ-17"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-expand-the-games-page-gamespage-tsx-with-at-least-6-additional-playable-in-browser-mini-games-beyond-the-existing-block-blast-and-sonic-runner-new-games-should-include-a-variety-of-styles-e-g-a-sonic-themed-platformer-jump-game-a-ring-collecting-arcade-game-a-trivia-quiz-game-about-sonic-a-whack-a-mole-style-game-a-memory-card-matching-game-and-a-simple-racing-dodge-game-each-game-must-be-implemented-as-a-standalone-page-component-linked-from-the-games-page-card-grid-playable-fully-offline-without-any-network-connection-and-styled-consistently-with-the-sonic-visual-theme",
-      "title": "Expand the Games page (GamesPage.tsx) with at least 6 additional playable in-browser mini-games beyond the existing Block Blast and Sonic Runner. New games should include a variety of styles (e.g., a Sonic-themed platformer/jump game, a ring-collecting arcade game, a trivia/quiz game about Sonic, a whack-a-mole style game, a memory card matching game, and a simple racing/dodge game). Each game must be implemented as a standalone page/component, linked from the Games page card grid, playable fully offline without any network connection, and styled consistently with the Sonic visual theme.",
-      "reqIds": [
-        "REQ-19"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-comprehensive-lore-section-to-the-search-browse-page-searchpage-tsx-and-the-local-knowledge-base-data-populate-the-lore-tab-with-detailed-lore-entries-for-every-main-sonic-game-series-including-at-minimum-sonic-the-hedgehog-1991-sonic-the-hedgehog-2-1992-sonic-cd-sonic-3-knuckles-sonic-adventure-sonic-adventure-2-sonic-heroes-shadow-the-hedgehog-sonic-the-hedgehog-2006-sonic-unleashed-sonic-colors-sonic-generations-sonic-lost-world-sonic-forces-sonic-mania-sonic-frontiers-sonic-boom-game-series-sonic-prime-lore-tie-ins-and-the-classic-modern-continuity-split-each-lore-entry-must-include-game-arc-title-release-year-a-story-summary-2-4-sentences-key-characters-and-notable-events-the-lore-entries-must-be-queryable-via-the-existing-search-bar",
-      "title": "Add a comprehensive Lore section to the Search/Browse page (SearchPage.tsx) and the local knowledge base data. Populate the lore tab with detailed lore entries for every main Sonic game series, including at minimum: Sonic the Hedgehog (1991), Sonic the Hedgehog 2 (1992), Sonic CD, Sonic 3 & Knuckles, Sonic Adventure, Sonic Adventure 2, Sonic Heroes, Shadow the Hedgehog, Sonic the Hedgehog (2006), Sonic Unleashed, Sonic Colors, Sonic Generations, Sonic Lost World, Sonic Forces, Sonic Mania, Sonic Frontiers, Sonic Boom (game series), Sonic Prime (lore tie-ins), and the Classic/Modern continuity split. Each lore entry must include: game/arc title, release year, a story summary (2–4 sentences), key characters, and notable events. The lore entries must be queryable via the existing search bar.",
-      "reqIds": [
-        "REQ-20"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-full-catalogue-of-sonic-boom-videos-to-the-videos-page-videospage-tsx-include-curated-youtube-iframe-embeds-hardcoded-video-ids-covering-season-1-episodes-1-52-season-2-episodes-1-52-and-any-available-specials-or-shorts-organise-the-sonic-boom-entries-under-their-own-category-tab-or-collapsible-section-labelled-sonic-boom-with-season-sub-groupings-season-1-season-2-apply-kid-mode-filtering-consistently-all-video-entries-must-follow-the-existing-iframe-embed-pattern",
-      "title": "Add a full catalogue of Sonic Boom videos to the Videos page (VideosPage.tsx). Include curated YouTube iframe embeds (hardcoded video IDs) covering: Season 1 (episodes 1–52), Season 2 (episodes 1–52), and any available specials or shorts. Organise the Sonic Boom entries under their own category tab or collapsible section labelled 'Sonic Boom' with season sub-groupings (Season 1, Season 2). Apply kid-mode filtering consistently. All video entries must follow the existing iframe embed pattern.",
-      "reqIds": [
-        "REQ-21"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-full-catalogue-of-sonic-prime-videos-to-the-videos-page-videospage-tsx-include-curated-youtube-iframe-embeds-hardcoded-video-ids-covering-all-available-seasons-season-1-8-episodes-season-2-8-episodes-season-3-8-episodes-and-any-official-trailers-or-clips-organise-entries-under-a-sonic-prime-category-tab-or-collapsible-section-with-season-sub-groupings-apply-kid-mode-filtering-consistently",
-      "title": "Add a full catalogue of Sonic Prime videos to the Videos page (VideosPage.tsx). Include curated YouTube iframe embeds (hardcoded video IDs) covering all available seasons: Season 1 (8 episodes), Season 2 (8 episodes), Season 3 (8 episodes), and any official trailers or clips. Organise entries under a 'Sonic Prime' category tab or collapsible section with season sub-groupings. Apply kid-mode filtering consistently.",
-      "reqIds": [
-        "REQ-22"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-all-available-sonic-says-videos-to-the-videos-page-videospage-tsx-sonic-says-are-short-safety-educational-segments-that-aired-with-adventures-of-sonic-the-hedgehog-include-curated-youtube-iframe-embeds-hardcoded-video-ids-for-all-available-sonic-says-clips-organise-them-under-a-dedicated-sonic-says-category-tab-or-section-apply-kid-mode-filtering-sonic-says-content-should-be-visible-in-kid-mode-as-it-is-age-appropriate-educational-content",
-      "title": "Add all available 'Sonic Says' videos to the Videos page (VideosPage.tsx). Sonic Says are short safety/educational segments that aired with Adventures of Sonic the Hedgehog. Include curated YouTube iframe embeds (hardcoded video IDs) for all available Sonic Says clips. Organise them under a dedicated 'Sonic Says' category tab or section. Apply kid-mode filtering — Sonic Says content should be visible in kid mode as it is age-appropriate educational content.",
-      "reqIds": [
-        "REQ-23"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-the-local-knowledge-base-searchpage-tsx-and-supporting-data-files-add-enriched-search-entries-for-knuckles-so-that-when-a-user-searches-for-knuckles-the-results-include-1-knuckles-character-profile-card-2-dedicated-entries-for-knuckles-vs-shadow-knuckles-vs-sonic-knuckles-vs-rouge-and-other-notable-knuckles-character-matchups-interactions-drawn-from-the-sonic-franchise-lore-and-3-any-existing-lore-entries-that-prominently-feature-knuckles-each-entry-must-include-a-title-summary-key-characters-and-type-tag-so-it-renders-correctly-in-the-existing-searchresults-card-grid",
-      "title": "In the local knowledge base (SearchPage.tsx and supporting data files), add enriched search entries for 'Knuckles' so that when a user searches for 'Knuckles', the results include: (1) Knuckles' character profile card, (2) dedicated entries for Knuckles vs Shadow, Knuckles vs Sonic, Knuckles vs Rouge, and other notable Knuckles character matchups/interactions drawn from the Sonic franchise lore, and (3) any existing lore entries that prominently feature Knuckles. Each entry must include a title, summary, key characters, and type tag so it renders correctly in the existing SearchResults card grid.",
-      "reqIds": [
-        "REQ-24"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-the-videos-page-videospage-tsx-and-supporting-video-data-files-add-a-dedicated-knuckles-filter-tab-or-tag-that-surfaces-all-video-entries-featuring-knuckles-curate-and-hardcode-youtube-iframe-embed-entries-video-ids-for-knuckles-vs-shadow-battles-knuckles-vs-sonic-cutscenes-and-other-notable-knuckles-character-interaction-videos-from-the-sonic-franchise-when-a-user-searches-knuckles-on-the-videos-page-or-navigates-to-the-knuckles-video-section-these-videos-must-be-displayed-apply-existing-kid-mode-filtering-consistently",
-      "title": "In the Videos page (VideosPage.tsx) and supporting video data files, add a dedicated 'Knuckles' filter/tab or tag that surfaces all video entries featuring Knuckles. Curate and hardcode YouTube iframe embed entries (video IDs) for Knuckles vs Shadow battles, Knuckles vs Sonic cutscenes, and other notable Knuckles character interaction videos from the Sonic franchise. When a user searches 'Knuckles' on the Videos page (or navigates to the Knuckles video section), these videos must be displayed. Apply existing kid-mode filtering consistently.",
-      "reqIds": [
-        "REQ-25"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-searchpage-tsx-and-the-local-knowledge-base-data-add-a-special-case-handler-so-that-when-the-user-searches-youtube-case-insensitive-the-search-results-display-all-available-video-entries-from-the-entire-videospage-video-catalogue-sonic-boom-sonic-prime-sonic-says-knuckles-and-any-other-curated-categories-as-result-cards-rather-than-showing-filtered-or-limited-sonic-knowledge-base-entries-each-result-card-must-display-the-video-title-category-series-label-and-a-link-or-action-to-open-the-video-on-the-videos-page",
-      "title": "In SearchPage.tsx and the local knowledge base data, add a special-case handler so that when the user searches 'youtube' (case-insensitive), the search results display all available video entries from the entire VideosPage video catalogue (Sonic Boom, Sonic Prime, Sonic Says, Knuckles, and any other curated categories) as result cards, rather than showing filtered or limited Sonic knowledge base entries. Each result card must display the video title, category/series label, and a link or action to open the video on the Videos page.",
-      "reqIds": [
-        "REQ-26"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-expand-the-local-knowledge-base-in-searchpage-tsx-and-supporting-data-files-to-include-rich-profile-lore-result-cards-for-the-following-search-terms-shadow-sonic-tails-amy-chaos-emerald-dave-the-intern-rouge-sticks-sticks-the-badger-from-sonic-boom-eggman-robotnik-dr-ivo-robotnik-orbot-cubot-chili-dog-chilidogs-chili-dogs-amy-hammer-amys-hammer-amy-hammer-power-amys-hammer-power-strength-amys-strength-amys-power-amy-strength-amy-power-each-entry-must-include-a-title-summary-2-4-sentences-of-sonic-franchise-lore-key-characters-and-a-type-tag-e-g-character-item-ability-so-it-renders-correctly-in-the-existing-searchresults-card-grid-search-matching-must-be-case-insensitive-and-match-partial-terms-e-g-searching-amy-returns-amy-rose-character-card-and-amy-s-hammer-ability-card",
-      "title": "Expand the local knowledge base in SearchPage.tsx and supporting data files to include rich profile/lore result cards for the following search terms: 'shadow', 'sonic', 'tails', 'amy', 'chaos emerald', 'dave the intern', 'rouge', 'sticks' (Sticks the Badger from Sonic Boom), 'eggman' / 'robotnik' / 'dr ivo robotnik', 'orbot', 'cubot', 'chili dog' / 'chilidogs' / 'chili dogs', 'amy hammer' / 'amys hammer' / 'amy hammer power' / 'amys hammer power strength' / 'amys strength' / 'amys power' / 'amy strength' / 'amy power'. Each entry must include a title, summary (2–4 sentences of Sonic franchise lore), key characters, and a type tag (e.g. 'character', 'item', 'ability') so it renders correctly in the existing SearchResults card grid. Search matching must be case-insensitive and match partial terms (e.g. searching 'amy' returns Amy Rose character card AND Amy's hammer ability card).",
-      "reqIds": [
-        "REQ-27"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-youtube-channel-entry-for-https-www-youtube-com-teardropbfb-k3g-to-the-local-knowledge-base-so-that-searching-teardropbfb-or-similar-terms-matching-the-channel-name-in-searchpage-tsx-returns-a-result-card-displaying-the-channel-name-a-brief-description-and-a-clickable-link-opening-the-channel-url-in-a-new-browser-tab",
-      "title": "Add a YouTube channel entry for https://www.youtube.com/@Teardropbfb-k3g to the local knowledge base so that searching 'teardropbfb' (or similar terms matching the channel name) in SearchPage.tsx returns a result card displaying the channel name, a brief description, and a clickable link opening the channel URL in a new browser tab.",
-      "reqIds": [
-        "REQ-28"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-implement-a-client-side-search-query-warning-and-ban-system-in-searchpage-tsx-this-system-must-track-per-user-warning-counts-in-localstorage-keyed-by-principal-or-session-the-rules-are-1-searching-mha-case-insensitive-issues-1-warning-and-displays-an-in-page-warning-notice-showing-how-many-warnings-the-user-has-and-how-many-remain-before-a-ban-2-searching-any-anime-related-term-e-g-anime-naruto-dragon-ball-one-piece-attack-on-titan-bleach-demon-slayer-or-any-search-containing-the-word-anime-issues-1-warning-with-the-same-notice-3-if-the-user-has-accumulated-prior-anime-mha-warnings-and-searches-all-about-anime-their-account-is-banned-and-they-see-a-full-screen-ban-message-sorry-you-searched-too-many-inappropriate-and-unsafe-things-the-ban-is-stored-in-localstorage-and-blocks-further-use-of-the-search-page-4-searching-porn-case-insensitive-issues-2-warnings-at-once-5-if-the-user-searches-porn-again-after-already-having-2-or-more-warnings-from-prior-porn-searches-they-receive-a-permanent-ban-stored-in-localstorage-with-a-full-screen-ban-message-and-exactly-1-appeal-allowed-using-the-existing-ban-appeal-flow-warning-counts-must-persist-across-page-refreshes-via-localstorage",
-      "title": "Implement a client-side search query warning and ban system in SearchPage.tsx. This system must track per-user warning counts in localStorage (keyed by principal or session). The rules are: (1) Searching 'mha' (case-insensitive) issues 1 warning and displays an in-page warning notice showing how many warnings the user has and how many remain before a ban. (2) Searching any anime-related term (e.g. 'anime', 'naruto', 'dragon ball', 'one piece', 'attack on titan', 'bleach', 'demon slayer', or any search containing the word 'anime') issues 1 warning with the same notice. (3) If the user has accumulated prior anime/mha warnings and searches 'all about anime', their account is banned and they see a full-screen ban message: 'Sorry, you searched too many inappropriate and unsafe things.' The ban is stored in localStorage and blocks further use of the search page. (4) Searching 'porn' (case-insensitive) issues 2 warnings at once. (5) If the user searches 'porn' again after already having 2 or more warnings from prior 'porn' searches, they receive a permanent ban stored in localStorage with a full-screen ban message and exactly 1 appeal allowed (using the existing ban appeal flow). Warning counts must persist across page refreshes via localStorage.",
-      "reqIds": [
-        "REQ-29"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-on-the-existing-full-screen-ban-screen-searchbanscreen-tsx-add-a-clearly-visible-can-i-appeal-button-when-tapped-this-button-must-navigate-the-user-to-a-dedicated-appeal-page-route-appeal",
-      "title": "On the existing full-screen ban screen (SearchBanScreen.tsx), add a clearly visible 'Can I Appeal?' button. When tapped, this button must navigate the user to a dedicated Appeal page (route: /appeal).",
-      "reqIds": [
-        "REQ-30"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-create-a-new-appeal-page-frontend-src-pages-appealpage-tsx-accessible-at-the-appeal-route-the-page-must-display-an-appeal-submission-form-where-the-banned-user-can-write-and-submit-an-appeal-the-page-must-be-registered-in-app-tsx-s-route-tree-it-must-be-styled-consistently-with-the-existing-sonic-visual-theme",
-      "title": "Create a new Appeal page (frontend/src/pages/AppealPage.tsx) accessible at the /appeal route. The page must display an appeal submission form where the banned user can write and submit an appeal. The page must be registered in App.tsx's route tree. It must be styled consistently with the existing Sonic visual theme.",
-      "reqIds": [
-        "REQ-31"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-when-a-banned-user-submits-an-appeal-from-the-appeal-page-the-app-must-1-detect-that-the-submission-originates-from-https-yodelling-chocolate-q60-draft-caffeine-xyz-i-e-the-current-app-origin-2-immediately-grant-the-user-a-4th-warning-by-updating-their-warning-count-in-localstorage-to-reflect-a-warning-state-rather-than-a-full-ban-3-display-the-message-be-careful-for-what-you-search-now-on-prominently-to-the-user-and-4-restore-the-user-s-access-to-the-search-page-by-clearing-the-active-ban-flag-in-localstorage-so-they-can-search-again-the-appeal-may-only-be-used-once-after-the-appeal-is-consumed-the-user-cannot-appeal-again-from-the-same-session-localstorage-entry",
-      "title": "When a banned user submits an appeal from the Appeal page, the app must: (1) detect that the submission originates from https://yodelling-chocolate-q60-draft.caffeine.xyz/ (i.e. the current app origin), (2) immediately grant the user a '4th warning' by updating their warning count in localStorage to reflect a warning state rather than a full ban, (3) display the message 'Be careful for what you search now on' prominently to the user, and (4) restore the user's access to the search page by clearing the active ban flag in localStorage so they can search again. The appeal may only be used once — after the appeal is consumed, the user cannot appeal again from the same session/localStorage entry.",
-      "reqIds": [
-        "REQ-32"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-searchbanscreen-tsx-update-the-can-i-appeal-button-so-that-when-tapped-it-navigates-the-user-to-https-yodelling-chocolate-q60-draft-caffeine-xyz-in-the-current-tab-or-a-new-tab-instead-of-routing-to-the-internal-appeal-route",
-      "title": "In SearchBanScreen.tsx, update the 'Can I Appeal?' button so that when tapped it navigates the user to https://yodelling-chocolate-q60-draft.caffeine.xyz/ in the current tab (or a new tab), instead of routing to the internal /appeal route.",
-      "reqIds": [
-        "REQ-33"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-appealpage-tsx-update-the-appeal-acceptance-flow-so-that-when-an-appeal-is-successfully-submitted-from-https-yodelling-chocolate-q60-draft-caffeine-xyz-the-confirmation-message-displayed-to-the-user-reads-it-s-okay-just-search-more-stuff-that-is-safe-for-you-and-other-people-remember-you-matter-this-replaces-the-existing-acceptance-message-be-careful-for-what-you-search-now-on-all-other-appeal-logic-origin-check-localstorage-ban-flag-clearing-one-time-appeal-consumption-warning-count-update-must-remain-unchanged",
-      "title": "In AppealPage.tsx, update the appeal acceptance flow so that when an appeal is successfully submitted from https://yodelling-chocolate-q60-draft.caffeine.xyz/, the confirmation message displayed to the user reads: \"It's okay — just search more stuff that is safe for you and other people. Remember... you matter!\" This replaces the existing acceptance message (\"Be careful for what you search now on\"). All other appeal logic (origin check, localStorage ban flag clearing, one-time appeal consumption, warning count update) must remain unchanged.",
-      "reqIds": [
-        "REQ-34"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-appeal-origin-check-in-appealpage-tsx-so-that-the-appeal-is-automatically-approved-when-the-page-is-accessed-via-the-url-https-yodelling-chocolate-q60-draft-caffeine-xyz-caffeineadmintoken-92d4e50a4259ccf3ec3cef93ec8578bcfd3451203feaec1a59cf9f9b99962e35-the-admin-token-must-be-read-from-the-url-hash-using-the-existing-urlparams-utility-or-direct-hash-parsing-when-this-token-is-present-and-matches-the-expected-value-the-appeal-form-submission-must-be-immediately-accepted-without-requiring-manual-review-all-other-appeal-logic-must-remain-unchanged-localstorage-ban-flag-is-cleared-the-one-time-appeal-flag-is-set-warning-count-is-updated-to-reflect-a-warning-state-rather-than-a-full-ban-and-the-confirmation-message-displayed-is-it-s-okay-just-search-more-stuff-that-is-safe-for-you-and-other-people-remember-you-matter",
-      "title": "Update the appeal origin check in AppealPage.tsx so that the appeal is automatically approved when the page is accessed via the URL https://yodelling-chocolate-q60-draft.caffeine.xyz/#caffeineAdminToken=92d4e50a4259ccf3ec3cef93ec8578bcfd3451203feaec1a59cf9f9b99962e35. The admin token must be read from the URL hash (using the existing urlParams utility or direct hash parsing). When this token is present and matches the expected value, the appeal form submission must be immediately accepted without requiring manual review. All other appeal logic must remain unchanged: localStorage ban flag is cleared, the one-time appeal flag is set, warning count is updated to reflect a warning state rather than a full ban, and the confirmation message displayed is: It's okay - just search more stuff that is safe for you and other people. Remember... you matter!",
-      "reqIds": [
-        "REQ-35"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-can-i-appeal-button-url-in-searchbanscreen-tsx-from-https-yodelling-chocolate-q60-draft-caffeine-xyz-to-https-yodelling-chocolate-q60-draft-caffeine-xyz-caffeineadmintoken-92d4e50a4259ccf3ec3cef93ec8578bcfd3451203feaec1a59cf9f9b99962e35-so-that-clicking-the-button-opens-the-appeal-page-with-the-admin-token-pre-populated-in-the-url-hash",
-      "title": "Update the Can I Appeal button URL in SearchBanScreen.tsx from https://yodelling-chocolate-q60-draft.caffeine.xyz/ to https://yodelling-chocolate-q60-draft.caffeine.xyz/#caffeineAdminToken=92d4e50a4259ccf3ec3cef93ec8578bcfd3451203feaec1a59cf9f9b99962e35 so that clicking the button opens the appeal page with the admin token pre-populated in the URL hash.",
-      "reqIds": [
-        "REQ-36"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-searchbanscreen-tsx-update-the-can-i-appeal-button-url-from-https-yodelling-chocolate-q60-draft-caffeine-xyz-to-https-yodelling-chocolate-q60-draft-caffeine-xyz-caffeineadmintoken-92d4e50a4259ccf3ec3cef93ec8578bcfd3451203feaec1a59cf9f9b99962e35-so-that-clicking-the-button-opens-the-appeal-page-with-the-admin-token-pre-populated-in-the-url-hash",
-      "title": "In SearchBanScreen.tsx, update the 'Can I Appeal?' button URL from https://yodelling-chocolate-q60-draft.caffeine.xyz/ to https://yodelling-chocolate-q60-draft.caffeine.xyz/#caffeineAdminToken=92d4e50a4259ccf3ec3cef93ec8578bcfd3451203feaec1a59cf9f9b99962e35 so that clicking the button opens the appeal page with the admin token pre-populated in the URL hash.",
-      "reqIds": [
-        "REQ-37"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-searchbanscreen-tsx-update-the-can-i-appeal-button-so-that-it-navigates-the-user-to-https-yodelling-chocolate-q60-draft-caffeine-xyz-without-the-admin-token-hash-parameter-instead-of-the-current-url-that-includes-the-caffeineadmintoken-hash-fragment",
-      "title": "In SearchBanScreen.tsx, update the 'Can I Appeal?' button so that it navigates the user to https://yodelling-chocolate-q60-draft.caffeine.xyz/ (without the admin token hash parameter) instead of the current URL that includes the #caffeineAdminToken hash fragment.",
-      "reqIds": [
-        "REQ-38"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-real-time-clock-and-date-display-to-the-top-of-the-navigation-bar-in-layout-tsx-the-clock-must-display-the-current-local-time-hours-minutes-and-seconds-and-the-current-date-day-month-year-updating-live-every-second-using-a-setinterval-or-equivalent-react-pattern-style-it-consistently-with-the-existing-sonic-visual-theme-cobalt-blue-yellow-palette-fredoka-one-or-nunito-font",
-      "title": "Add a real-time clock and date display to the top of the navigation bar in Layout.tsx. The clock must display the current local time (hours, minutes, and seconds) and the current date (day, month, year), updating live every second using a setInterval or equivalent React pattern. Style it consistently with the existing Sonic visual theme (cobalt blue/yellow palette, Fredoka One or Nunito font).",
-      "reqIds": [
-        "REQ-43"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-ban-appeal-acceptance-flow-in-appealpage-tsx-so-that-when-an-appeal-is-successfully-submitted-the-app-grants-the-user-2-extra-warning-described-as-1-life-restored-instead-of-the-current-behaviour-and-displays-the-message-1-life-do-not-do-it-again-search-something-that-s-safe-and-sonic-related-this-message-replaces-the-existing-acceptance-message-it-s-okay-just-search-more-stuff-that-is-safe-for-you-and-other-people-remember-you-matter-all-other-appeal-logic-must-remain-unchanged-localstorage-ban-flag-is-cleared-the-one-time-appeal-flag-is-set-and-the-user-s-access-to-the-search-page-is-restored",
-      "title": "Update the ban appeal acceptance flow in AppealPage.tsx so that when an appeal is successfully submitted, the app grants the user +2% extra warning (described as 1 life restored) instead of the current behaviour, and displays the message: '1+ life — do not do it again, search something that's safe and Sonic related'. This message replaces the existing acceptance message ('It's okay — just search more stuff that is safe for you and other people. Remember... you matter!'). All other appeal logic must remain unchanged: localStorage ban flag is cleared, the one-time appeal flag is set, and the user's access to the search page is restored.",
-      "reqIds": [
-        "REQ-44"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-searchpage-tsx-add-a-sidebar-or-secondary-results-panel-that-displays-google-and-duckduckgo-as-fallback-alternative-search-options-when-the-user-enters-a-search-query-render-two-clearly-labelled-buttons-or-cards-search-google-and-search-duckduckgo-that-open-the-respective-search-engine-in-a-new-browser-tab-with-the-user-s-query-pre-filled-e-g-https-www-google-com-search-q-query-and-https-duckduckgo-com-q-query-these-buttons-must-be-visible-regardless-of-whether-the-user-is-signed-in-or-not-and-must-be-styled-consistently-with-the-existing-sonic-visual-theme",
-      "title": "In SearchPage.tsx, add a sidebar or secondary results panel that displays Google and DuckDuckGo as fallback/alternative search options. When the user enters a search query, render two clearly labelled buttons or cards — 'Search Google' and 'Search DuckDuckGo' — that open the respective search engine in a new browser tab with the user's query pre-filled (e.g. https://www.google.com/search?q=<query> and https://duckduckgo.com/?q=<query>). These buttons must be visible regardless of whether the user is signed in or not, and must be styled consistently with the existing Sonic visual theme.",
-      "reqIds": [
-        "REQ-45"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-dr-ivo-robotnik-laugh-sound-effect-that-plays-client-side-whenever-the-user-clicks-the-search-google-or-search-duckduckgo-buttons-on-the-search-page-the-sound-must-play-immediately-on-click-using-the-web-audio-api-or-an-html-audio-element-the-audio-file-must-be-a-short-laugh-clip-robotnik-eggman-laugh-embedded-as-a-base64-data-uri-or-stored-as-a-static-asset-under-frontend-public-assets-audio-so-it-works-fully-offline-the-laugh-must-not-block-navigation-to-the-external-search-url",
-      "title": "Add a Dr. Ivo Robotnik laugh sound effect that plays client-side whenever the user clicks the 'Search Google' or 'Search DuckDuckGo' buttons on the Search page. The sound must play immediately on click using the Web Audio API or an HTML Audio element. The audio file must be a short laugh clip (Robotnik/Eggman laugh) embedded as a base64 data URI or stored as a static asset under frontend/public/assets/audio so it works fully offline. The laugh must not block navigation to the external search URL.",
-      "reqIds": [
-        "REQ-46"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-friends-mode-button-to-the-bottom-navigation-bar-in-layout-tsx-visible-to-all-authenticated-users-the-button-must-be-styled-consistently-with-the-existing-sonic-visual-theme-cobalt-blue-yellow-fredoka-one-or-nunito-font-rounded-styling",
-      "title": "Add a 'Friends Mode' button to the bottom navigation bar in Layout.tsx, visible to all authenticated users. The button must be styled consistently with the existing Sonic visual theme (cobalt blue/yellow, Fredoka One or Nunito font, rounded styling).",
-      "reqIds": [
-        "REQ-47"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-create-a-new-friends-mode-page-frontend-src-pages-friendsmodepage-tsx-accessible-via-a-route-e-g-friends-the-first-screen-must-display-a-birthdate-entry-form-with-a-mm-dd-yyyy-date-input-and-a-submit-button-on-submission-the-birthdate-and-the-user-s-principal-are-stored-in-the-backend-as-a-pending-eligibility-request-with-status-pending-the-user-is-shown-a-confirmation-message-your-request-has-been-submitted-the-owner-will-review-it-you-will-be-notified-within-1-2-days-register-the-route-in-app-tsx",
-      "title": "Create a new Friends Mode page (frontend/src/pages/FriendsModePage.tsx) accessible via a route (e.g. /friends). The first screen must display a birthdate entry form with a MM/DD/YYYY date input and a submit button. On submission, the birthdate and the user's principal are stored in the backend as a pending eligibility request with status 'pending'. The user is shown a confirmation message: 'Your request has been submitted! The owner will review it. You will be notified within 1–2 days.' Register the route in App.tsx.",
-      "reqIds": [
-        "REQ-48"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-friendsmodepage-tsx-after-a-user-s-eligibility-request-is-approved-status-approved-show-a-second-screen-prompting-the-user-to-type-or-choose-a-display-name-once-a-display-name-is-set-show-an-age-matched-peers-screen-that-displays-other-approved-friends-mode-users-who-share-the-same-birth-year-fetched-from-the-backend-the-display-name-and-approval-status-should-be-shown-on-this-screen",
-      "title": "In FriendsModePage.tsx, after a user's eligibility request is approved (status === 'approved'), show a second screen prompting the user to type or choose a display name. Once a display name is set, show an age-matched peers screen that displays other approved Friends Mode users who share the same birth year, fetched from the backend. The display name and approval status should be shown on this screen.",
-      "reqIds": [
-        "REQ-50"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-friends-mode-admin-panel-to-the-existing-moderationdashboard-tsx-or-a-dedicated-sub-section-within-it-accessible-to-admins-the-panel-must-list-all-pending-friends-mode-requests-with-each-user-s-principal-and-submitted-birthdate-the-admin-must-be-able-to-approve-or-deny-each-request-with-a-single-button-press-calling-the-reviewfriendsmoderequest-backend-function",
-      "title": "Add a Friends Mode admin panel to the existing ModerationDashboard.tsx (or a dedicated sub-section within it, accessible to admins). The panel must list all pending Friends Mode requests with each user's principal and submitted birthdate. The admin must be able to approve or deny each request with a single button press, calling the reviewFriendsModeRequest backend function.",
-      "reqIds": [
-        "REQ-51"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-friendsmodepage-tsx-implement-a-polling-mechanism-using-react-query-s-refetch-interval-or-a-useeffect-based-interval-every-30-seconds-that-re-fetches-the-user-s-friends-mode-request-status-via-getfriendsmodestatus-when-the-status-transitions-from-pending-to-approved-display-a-prominent-in-app-notification-banner-great-news-you-are-eligible-for-friends-mode-welcome-when-the-status-is-denied-display-sorry-your-friends-mode-request-was-not-approved-at-this-time",
-      "title": "In FriendsModePage.tsx, implement a polling mechanism (using React Query's refetch interval or a useEffect-based interval, every 30 seconds) that re-fetches the user's Friends Mode request status via getFriendsModeStatus(). When the status transitions from 'pending' to 'approved', display a prominent in-app notification banner: 'Great news! You are eligible for Friends Mode. Welcome!' When the status is 'denied', display: 'Sorry, your Friends Mode request was not approved at this time.'",
-      "reqIds": [
-        "REQ-52"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-numeric-only-password-field-to-account-settings-in-settingspage-tsx-the-password-must-be-exactly-4-or-6-digits-numbers-only-on-mobile-and-tablet-ipad-the-input-must-trigger-a-numeric-keyboard-inputmode-numeric-or-type-tel-the-password-must-be-stored-in-the-backend-on-the-user-s-profile-include-a-set-password-and-change-password-flow-with-confirmation",
-      "title": "Add a numeric-only password field to account settings in SettingsPage.tsx. The password must be exactly 4 or 6 digits (numbers only). On mobile and tablet (iPad), the input must trigger a numeric keyboard (inputMode='numeric' or type='tel'). The password must be stored in the backend on the user's profile. Include a 'Set Password' and 'Change Password' flow with confirmation.",
-      "reqIds": [
-        "REQ-53"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-video-upload-feature-to-the-app-users-must-be-able-to-upload-a-video-file-from-their-device-the-upload-must-enforce-a-maximum-duration-limit-of-1000-seconds-if-the-selected-video-exceeds-1000-seconds-show-a-clear-error-message-and-reject-the-upload-uploaded-videos-are-stored-in-the-backend-associated-with-the-user-s-principal-add-a-my-videos-section-to-settingspage-tsx-or-a-dedicated-upload-page-accessible-from-the-navigation",
-      "title": "Add a video upload feature to the app. Users must be able to upload a video file from their device. The upload must enforce a maximum duration limit of 1000 seconds. If the selected video exceeds 1000 seconds, show a clear error message and reject the upload. Uploaded videos are stored in the backend associated with the user's principal. Add a 'My Videos' section to SettingsPage.tsx or a dedicated upload page accessible from the navigation.",
-      "reqIds": [
-        "REQ-54"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-more-games-bar-or-button-on-gamespage-tsx-below-the-existing-game-card-grid-when-tapped-or-clicked-it-must-open-https-kbhgames-com-s-mobile-in-a-new-browser-tab-style-it-consistently-with-the-sonic-visual-theme-cobalt-blue-yellow-fredoka-one-or-nunito-font-rounded-styling",
-      "title": "Add a 'More Games' bar or button on GamesPage.tsx below the existing game card grid. When tapped or clicked, it must open https://kbhgames.com/?s=Mobile in a new browser tab. Style it consistently with the Sonic visual theme (cobalt blue/yellow, Fredoka One or Nunito font, rounded styling).",
-      "reqIds": [
-        "REQ-55"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-coming-soon-bar-or-button-on-gamespage-tsx-or-in-the-main-navigation-settings-area-when-tapped-or-clicked-display-a-dismissible-modal-or-inline-message-that-reads-sorry-this-area-is-being-thought-about-please-send-in-ideas-style-it-consistently-with-the-sonic-visual-theme",
-      "title": "Add a 'Coming Soon' bar or button on GamesPage.tsx (or in the main navigation/settings area). When tapped or clicked, display a dismissible modal or inline message that reads: 'Sorry, this area is being thought about. Please send in ideas.' Style it consistently with the Sonic visual theme.",
-      "reqIds": [
-        "REQ-56"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-an-ideas-submission-section-to-settingspage-tsx-visually-styled-similarly-to-the-existing-appeals-section-label-it-send-your-best-ideas-as-a-sonic-fan-the-section-must-include-a-textarea-limited-to-600-characters-accepting-words-only-no-special-characters-or-spam-when-submitted-the-idea-including-the-submitting-user-s-display-name-or-principal-is-stored-in-the-backend-and-flagged-for-admin-jourdain-rodriguez-review-show-a-confirmation-message-after-submission-add-the-necessary-backend-function-to-store-and-retrieve-submitted-ideas-admin-only-retrieval",
-      "title": "Add an 'Ideas' submission section to SettingsPage.tsx, visually styled similarly to the existing appeals section. Label it 'Send your best ideas as a Sonic fan'. The section must include a textarea limited to 600 characters, accepting words only (no special characters or spam). When submitted, the idea (including the submitting user's display name or principal) is stored in the backend and flagged for admin (Jourdain Rodriguez) review. Show a confirmation message after submission. Add the necessary backend function to store and retrieve submitted ideas (admin-only retrieval).",
-      "reqIds": [
-        "REQ-57"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-settingspage-tsx-add-an-apply-to-be-a-moderator-section-visually-styled-similarly-to-the-existing-appeals-ideas-sections-distinct-label-not-identical-to-either-the-section-must-contain-a-textarea-limited-to-1000-characters-where-the-user-types-why-they-want-to-become-a-moderator-the-textarea-must-accept-plain-text-only-include-a-character-counter-showing-how-many-characters-remain-include-a-clearly-labelled-submit-button",
-      "title": "In SettingsPage.tsx, add an 'Apply to be a Moderator' section visually styled similarly to the existing appeals/ideas sections (distinct label, not identical to either). The section must contain a textarea limited to 1000 characters where the user types why they want to become a moderator. The textarea must accept plain text only. Include a character counter showing how many characters remain. Include a clearly labelled submit button.",
-      "reqIds": [
-        "REQ-58"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-when-the-user-submits-the-moderator-application-form-in-settingspage-tsx-open-the-url-https-scrambly-moderator-lq2-caffeine-xyz-caffeineadmintoken-d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4-in-a-new-browser-tab-the-application-message-and-the-submitting-user-s-principal-or-display-name-must-be-appended-to-the-url-e-g-as-additional-hash-parameters-or-query-parameters-so-the-moderator-review-destination-receives-the-submission-details-after-submission-display-an-in-page-confirmation-message-to-the-user-e-g-your-application-has-been-submitted-a-moderator-will-review-it-soon",
-      "title": "When the user submits the moderator application form in SettingsPage.tsx, open the URL https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 in a new browser tab. The application message and the submitting user's principal or display name must be appended to the URL (e.g. as additional hash parameters or query parameters) so the moderator review destination receives the submission details. After submission, display an in-page confirmation message to the user (e.g. 'Your application has been submitted! A moderator will review it soon.').",
-      "reqIds": [
-        "REQ-59"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-friendsmodepage-tsx-add-a-persistent-chat-bar-ui-element-positioned-below-the-user-s-profile-section-the-bar-must-display-a-friends-label-or-chat-icon-and-be-tappable-clickable-to-open-a-friends-panel-or-drawer",
-      "title": "In FriendsModePage.tsx, add a persistent chat bar UI element positioned below the user's profile section. The bar must display a 'Friends' label or chat icon and be tappable/clickable to open a friends panel or drawer.",
-      "reqIds": [
-        "REQ-60"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-when-the-friends-panel-is-opened-and-the-user-has-no-friends-display-a-clear-no-friends-empty-state-message-with-a-friendly-prompt-encouraging-them-to-add-friends",
-      "title": "When the friends panel is opened and the user has no friends, display a clear 'No Friends' empty state message with a friendly prompt encouraging them to add friends.",
-      "reqIds": [
-        "REQ-61"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-when-the-user-has-one-or-more-friends-display-the-friend-list-in-the-friends-panel-enforce-a-maximum-friend-limit-of-1000-if-the-user-already-has-1000-friends-prevent-adding-any-more-and-show-a-friend-limit-reached-1000-1000-message-store-the-friend-relationships-in-the-backend-associated-with-each-user-s-principal",
-      "title": "When the user has one or more friends, display the friend list in the friends panel. Enforce a maximum friend limit of 1000 — if the user already has 1000 friends, prevent adding any more and show a 'Friend limit reached (1000/1000)' message. Store the friend relationships in the backend, associated with each user's principal.",
-      "reqIds": [
-        "REQ-62"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-in-the-friends-panel-on-friendsmodepage-tsx-display-incoming-pending-friend-requests-as-a-separate-section-labelled-friend-requests-each-pending-request-must-show-the-requester-s-display-name-and-two-action-buttons-accept-calls-respondtofriendrequest-with-accept-true-and-decline-calls-respondtofriendrequest-with-accept-false-after-accepting-the-new-friend-appears-in-the-friends-list-immediately",
-      "title": "In the friends panel on FriendsModePage.tsx, display incoming pending friend requests as a separate section labelled 'Friend Requests'. Each pending request must show the requester's display name and two action buttons: 'Accept' (calls respondToFriendRequest with accept=true) and 'Decline' (calls respondToFriendRequest with accept=false). After accepting, the new friend appears in the friends list immediately.",
-      "reqIds": [
-        "REQ-64"
       ],
       "version": 1
     }
@@ -453,293 +62,69 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Sonic-themed search engine and browser with offline search support",
+      "summary": "Replace Videos page with Sonic speedrun/gameplay videos: Sonic 3, Sonic Mania, Sonic 1, Sonic 2",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Mobile games library including Block Blast, Sonic Forces, and other playable games with offline support",
+      "summary": "Set default parental control PIN to 1234, allow parents to change it to 3-4 character custom PIN",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-3",
-      "summary": "Social/community features: connect users with random people of the same age, community warnings/kicks for inappropriate behavior, offline and emergency calling",
+      "summary": "Add face scan to verify parent identity for parental controls access, then delete the scan",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-4",
-      "summary": "Parental controls: usage timer, kid detection/lockout, age verification with camera-based eligibility check on every login",
+      "summary": "Admin panel for owner TailsTheBeast124 with ban, warn, unban, and moderation tools; ban list shows count up to 100000000000000; warn list up to 100000000000000",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-5",
-      "summary": "Ad blocker built into the app",
+      "summary": "Auto-instant-ban users who post anime pictures or spam porn/inappropriate anime/anime keywords in search",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-6",
-      "summary": "Integrate YouTube (or YouTube-like video browsing) into Scrambly for entertainment/boredom relief",
+      "summary": "When admin searches inappropriate terms, show only Sonic the Hedgehog vs Metal Sonic results; when sonic.exe vs metal sonic is searched show all YouTube results for that query",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-7",
-      "summary": "School accounts support: restrict content to educational material only, auto ad blocker enabled for school accounts, educational games only shown",
+      "summary": "Moderator promotion flow: owner types username and reason, grants mod role; mod sees 'Yay you're a mod' message",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-8",
-      "summary": "Account device lock: prevent using another account on the same device (phone, computer, VR, tablet, iPad) — one account per device",
+      "summary": "Do not auto-warn users for regular posts; only auto-ban for anime pictures or inappropriate spam",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-9",
-      "summary": "Ban appeal system: permanently banned users get 2 appeals only before permanent denial",
+      "summary": "Settings bar: all buttons styled as Sonic Mania monitor boxes with spindash press animation, peel-out release animation, and persistent small Sonic sprite on bar",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-10",
-      "summary": "Moderator application system: users apply for mod by answering Sonic trivia (when Sonic 1 and 2 came out); 5 applicants required",
+      "summary": "Add 'Chat with Friends' button in Settings linking to specified admin token URL; add separate settings link button to draft URL",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-11",
-      "summary": "Add a 'school account' mode to Scrambly. When a user's account is marked as a school account, the app must: (1) restrict all visible content to educational material only (educational search results, educational games, educational videos), (2) automatically enable the ad blocker with no option to disable it, and (3) hide any non-educational content sections. The backend must store a boolean `isSchoolAccount` flag on user profiles. School accounts of any permission level (including highest-privilege school accounts) are allowed to use the app.",
-      "reqIds": [
-        "REQ-10"
-      ],
       "status": "pending"
     },
     {
       "id": "AR-12",
-      "summary": "Implement a device-binding lock so that once an account is associated with a device (via a locally stored device fingerprint/UUID stored in localStorage), no other account can be used on that same device. If a different principal attempts to log in from a device already bound to another account, show a clear error message and prevent access. Account bypass must be disabled — users cannot use a second account on the same phone, computer, VR headset, tablet, or iPad.",
+      "summary": "Update the parental control PIN system in PINEntryModal.tsx so that: (1) the default PIN is '1234', (2) parents can change the PIN to any value between 3 and 4 characters (digits or alphanumeric), and (3) the PIN change UI enforces the 3–4 character length limit with validation feedback.",
       "reqIds": [
-        "REQ-11"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-13",
-      "summary": "Implement a ban appeal system for permanently banned users. A banned user must be able to submit an appeal from the locked account screen. Each account is allowed exactly 2 appeals. After both appeals are denied (or if the account has used both appeals), the ban becomes permanently irrevocable and an appropriate 'permanently denied' message is shown. The backend must track appeal count and appeal status per user.",
-      "reqIds": [
-        "REQ-12"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-14",
-      "summary": "Implement a moderator application system. Users can apply to become a moderator by correctly answering a Sonic trivia question: 'When did Sonic the Hedgehog 1 and Sonic the Hedgehog 2 come out?' (correct answers: Sonic 1 — 1991, Sonic 2 — 1992). The backend must queue applicants. Once 5 users have submitted correct answers, they are all elevated to moderator status. Incorrect answers are rejected with a message. The application form must be accessible from the Settings or Community page.",
-      "reqIds": [
-        "REQ-13"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-15",
-      "summary": "When a video is played in the app, play 'Oil Ocean Act 2' music from Sonic Mania as background music",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-16",
-      "summary": "Add a Sonic Mania image as the application icon",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-17",
-      "summary": "Replace the existing Sonic Mania app icon image with a newly generated image that clearly features Sonic the Hedgehog (not Eggman/Dr. Robotnik). Update frontend/index.html to reference the new icon file as the favicon (link rel='icon') and Apple touch icon, replacing all references to the old sonic-mania-icon.dim_512x512.png.",
-      "reqIds": [
-        "REQ-18"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-18",
-      "summary": "Expand games library with more mobile and computer games beyond the current selection",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-19",
-      "summary": "Add lore section with comprehensive lore entries for all Sonic games",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-20",
-      "summary": "Add videos for Sonic Boom (all seasons and episodes), Sonic Prime (all seasons and episodes), and Sonic Says (all available videos) to the videos page",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-21",
-      "summary": "When 'Knuckles' is searched in the app, show search results and videos featuring Knuckles vs Shadow and other character matchups/interactions",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-22",
-      "summary": "When 'youtube' is searched in the app, show all available YouTube video results (not filtered/curated)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-23",
-      "summary": "Add enriched search results for all major Sonic characters and items: Shadow, Sonic, Tails, Amy, Chaos Emerald, Dave the Intern, Rouge, Sticks (Sonic Boom), Dr. Ivo Robotnik/Eggman, Orbot, Cubot, chili dogs, Amy's hammer/power/strength — each returning relevant profile/lore cards",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-24",
-      "summary": "Add a YouTube channel link/entry for https://www.youtube.com/@Teardropbfb-k3g in search results or videos page",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-25",
-      "summary": "Implement a content moderation/warning system for search queries: searching 'mha' gives 1 warning; searching any anime-related term gives 1 warning with a message showing warnings remaining; searching 'all about anime' (after prior warnings) results in a ban with message 'sorry you searched too many inappropriate and unsafe things'; searching 'porn' gives 2 warnings; searching 'porn' again after 2 warnings results in a permanent ban with only 1 appeal allowed",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-26",
-      "summary": "When a user is banned, show a 'Can I Appeal?' button that navigates to an appeal page. When Scrambly receives an appeal submission, grant the user a 4th warning with the message 'Be careful for what you search now on' and restore their search access.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-27",
-      "summary": "When an appeal is submitted from https://yodelling-chocolate-q60-draft.caffeine.xyz/, automatically accept it and display the message: 'It's okay — just search more stuff that is safe for you and other people. Remember... you matter!'",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-29",
-      "summary": "In AppealPage.tsx, remove the admin token auto-approval logic that checks for the #caffeineAdminToken hash parameter. The appeal flow must revert to requiring standard form submission from the origin https://yodelling-chocolate-q60-draft.caffeine.xyz/ without any automatic token-based bypass. All other appeal logic must remain unchanged: localStorage ban flag is cleared, the one-time appeal flag is set, warning count is updated to reflect a warning state rather than a full ban, and the confirmation message displayed remains 'It's okay — just search more stuff that is safe for you and other people. Remember... you matter!'",
-      "reqIds": [
-        "REQ-39"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-30",
-      "summary": "Audit and repair all broken or degraded UI across every page and component in the app. Fix any layout issues, broken styling, misaligned elements, overlapping content, invisible text, broken navigation, and any components that fail to render correctly. Ensure every page (Search, Games, Community, Videos, Settings, Parental Dashboard, Appeal, Moderation Dashboard, Age Matcher, all game pages) displays correctly and is fully usable.",
-      "reqIds": [
-        "REQ-40"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-31",
-      "summary": "Ensure the Layout component (Layout.tsx) correctly applies the Sonic visual theme to the sticky header and navigation. All nav links must be visible, correctly coloured, and not overflow or wrap in a way that breaks the header. The ad blocker badge, usage timer, and SOS button must not overlap each other or other header elements.",
-      "reqIds": [
-        "REQ-41"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-32",
-      "summary": "Fix any broken Tailwind CSS utility classes or custom CSS custom-property references in frontend/src/index.css and frontend/index.css so that all design tokens (sonic-blue, sonic-yellow, sonic-red, custom fonts, border radii, shadows, animations) resolve correctly and are applied throughout the app.",
-      "reqIds": [
-        "REQ-42"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-33",
-      "summary": "Add a real-time clock and date display to the top navigation bar, updating live every second.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-34",
-      "summary": "Update the ban appeal flow: when a banned user appeals, grant them +2% extra warning (1 life restored) and display the message '1+ life — do not do it again, search something that's safe and Sonic related' instead of the current acceptance message.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-35",
-      "summary": "Add Google as a side/fallback search result on the search page. If the user can't sign into Scrambly, show Google (and/or DuckDuckGo) as alternative search options.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-36",
-      "summary": "Play Dr. Ivo Robotnik's laugh sound effect when the user clicks the Google Search or DuckDuckGo search buttons.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-37",
-      "summary": "Add a 'Friends Mode' button in the bottom navigation bar. Flow: (1) User taps Friends Mode, (2) First screen asks for birthdate (MM/DD/YYYY), (3) Submission stored in backend as 'pending review' for owner approval, (4) Owner approves/denies eligibility, (5) User receives in-app notification within 1-2 days confirming eligibility, (6) Once approved, user enters/chooses a display name and gets matched with same-age peers. Face scanning replaced with birthdate form due to privacy/legal concerns.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-40",
-      "summary": "In the backend (backend/main.mo), add a FriendsModeRequest record type containing: principal (Text), birthdate (Text), status (Text — 'pending', 'approved', or 'denied'), and submittedAt (Int timestamp). Add a stable array to persist these records. Expose the following update functions: submitFriendsModeRequest(birthdate: Text) — creates a new pending request for the calling principal; reviewFriendsModeRequest(principal: Text, status: Text) — allows the admin/owner to set status to 'approved' or 'denied'; getFriendsModeStatus() — returns the calling user's request status (or null if none); getAllFriendsModeRequests() — admin-only, returns all pending requests.",
-      "reqIds": [
-        "REQ-49"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-41",
-      "summary": "Add account settings: password (4 or 6 numeric characters only, numbers-only keyboard on iPad/phone/computer)",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-42",
-      "summary": "Allow users to upload videos with a 1000-second limit",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-43",
-      "summary": "Add a 'More Games' bar/button on the Games page that links to https://kbhgames.com/?s=Mobile for Sonic-compatible games",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-44",
-      "summary": "Add a 'Coming Soon' bar/button; when pressed shows message: 'Sorry, this area is being thought about. Please send in ideas.'",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-45",
-      "summary": "Add an 'Ideas' bar in Settings (styled like Appeals) labelled 'Send your best ideas as a Sonic fan'. User can type up to 600 characters (words only). Submitted ideas go to admin (Jourdain Rodriguez) for review and the user's name is included with the submission.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-46",
-      "summary": "Add an 'Apply to be a Moderator' button in SettingsPage.tsx. Opens a form styled like the appeals section (but distinct). User types up to 1000 characters explaining why they want to be a moderator. On submission, the application (including user's principal/display name and message) is sent to https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4 for moderator review.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-47",
-      "summary": "Add a chat bar below the profile. When pressed, show 'No Friends' if user has no friends. When user has friends, display them with a max friend limit of 1000. Include friend search by name/display name, ability to add trusted friends with accept/decline request flow, and chat with friends or age-matched people.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-51",
-      "summary": "Add a backend data model and functions for friend relationships: a FriendRequest record type with fields requesterId (Text), recipientId (Text), status (Text — 'pending', 'accepted', 'declined'), and sentAt (Int timestamp). Expose the following functions: sendFriendRequest(recipientPrincipal: Text) — creates a pending request; respondToFriendRequest(requesterId: Text, accept: Bool) — accepts or declines a request; getFriends() — returns all accepted friends of the calling principal; getFriendRequests() — returns all incoming pending requests for the calling principal. Enforce the 1000-friend cap in sendFriendRequest.",
-      "reqIds": [
-        "REQ-63"
+        "REQ-2"
       ],
       "status": "pending"
     }

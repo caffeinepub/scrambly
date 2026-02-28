@@ -1,296 +1,384 @@
-import { useState } from 'react';
-import { useGetCallerUserProfile, useSetRemainingUsageTime } from '../hooks/useQueries';
-import { useIsCallerAdmin } from '../hooks/useQueries';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import PINEntryModal from '../components/PINEntryModal';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { Shield, Clock, Lock, Zap, User } from 'lucide-react';
-import { toast } from 'sonner';
-import { Principal } from '@dfinity/principal';
-import { getAge } from '../components/KidModeWrapper';
+import React, { useState, useEffect } from "react";
+import { Shield, Clock, Eye, EyeOff, Lock, Unlock, Save, Key, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import ParentalFaceScanModal from "../components/ParentalFaceScanModal";
+
+const PARENTAL_PIN_KEY = "scrambly_parental_pin";
+const DEFAULT_PIN = "1234";
+
+function getStoredPin(): string {
+  const stored = localStorage.getItem(PARENTAL_PIN_KEY);
+  if (!stored) {
+    localStorage.setItem(PARENTAL_PIN_KEY, DEFAULT_PIN);
+    return DEFAULT_PIN;
+  }
+  return stored;
+}
+
+interface ParentalSettings {
+  usageTimerMinutes: number;
+  hideChat: boolean;
+  hideFindFriends: boolean;
+  ageRestrictVideos: boolean;
+  searchTimeLimitMinutes: number;
+}
+
+const DEFAULT_SETTINGS: ParentalSettings = {
+  usageTimerMinutes: 720, // 12 hours
+  hideChat: false,
+  hideFindFriends: false,
+  ageRestrictVideos: false,
+  searchTimeLimitMinutes: 60,
+};
+
+function loadSettings(): ParentalSettings {
+  try {
+    const stored = localStorage.getItem("scrambly_parental_settings");
+    if (stored) return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+  } catch {}
+  return DEFAULT_SETTINGS;
+}
+
+function saveSettings(settings: ParentalSettings) {
+  localStorage.setItem("scrambly_parental_settings", JSON.stringify(settings));
+}
 
 export default function ParentalDashboard() {
-  const [pinUnlocked, setPinUnlocked] = useState(false);
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [targetPrincipal, setTargetPrincipal] = useState('');
-  const [timeMinutes, setTimeMinutes] = useState(60);
+  const [faceScanDone, setFaceScanDone] = useState(false);
+  const [showFaceScan, setShowFaceScan] = useState(false);
+  const [pinVerified, setPinVerified] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [showDashboard, setShowDashboard] = useState(false);
 
-  const { data: profile } = useGetCallerUserProfile();
-  const { data: isAdmin } = useIsCallerAdmin();
-  const { identity } = useInternetIdentity();
-  const setUsageTime = useSetRemainingUsageTime();
+  // PIN change
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [pinChangeError, setPinChangeError] = useState("");
+  const [pinChangeSuccess, setPinChangeSuccess] = useState(false);
 
-  const userAge = getAge(profile);
-  const usageRemaining = profile?.usageTimeRemaining !== undefined && profile.usageTimeRemaining !== null
-    ? Number(profile.usageTimeRemaining)
-    : null;
+  // Settings
+  const [settings, setSettings] = useState<ParentalSettings>(loadSettings());
 
-  const formatTime = (secs: number) => {
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    const s = secs % 60;
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${s}s`;
-    return `${s}s`;
+  // On mount, show face scan first
+  useEffect(() => {
+    if (!faceScanDone && !pinVerified) {
+      setShowFaceScan(true);
+    }
+  }, []);
+
+  const handleFaceScanComplete = () => {
+    setFaceScanDone(true);
+    setShowFaceScan(false);
   };
 
-  const handleSetTime = async () => {
-    if (!targetPrincipal.trim()) {
-      toast.error('Please enter a user principal ID.');
+  const handleFaceScanSkip = () => {
+    setFaceScanDone(true);
+    setShowFaceScan(false);
+  };
+
+  const handlePinSubmit = () => {
+    const storedPin = getStoredPin();
+    if (pinInput === storedPin) {
+      setPinVerified(true);
+      setShowDashboard(true);
+      setPinError("");
+    } else {
+      setPinError("Incorrect PIN. Please try again.");
+      setPinInput("");
+    }
+  };
+
+  const handlePinChange = () => {
+    setPinChangeError("");
+    setPinChangeSuccess(false);
+
+    if (newPin.length < 3 || newPin.length > 4) {
+      setPinChangeError("PIN must be 3 or 4 characters long.");
       return;
     }
-    try {
-      const user = Principal.fromText(targetPrincipal.trim());
-      const seconds = BigInt(timeMinutes * 60);
-      await setUsageTime.mutateAsync({ user, timeRemaining: seconds });
-      toast.success(`Usage time set to ${timeMinutes} minutes!`);
-      setTargetPrincipal('');
-    } catch (err) {
-      toast.error('Failed to set usage time. Check the principal ID.');
-    }
-  };
-
-  const handleSetMyTime = async () => {
-    if (!identity) {
-      toast.error('Not logged in.');
+    if (newPin !== confirmPin) {
+      setPinChangeError("PINs do not match.");
       return;
     }
-    try {
-      const user = identity.getPrincipal();
-      const seconds = BigInt(timeMinutes * 60);
-      await setUsageTime.mutateAsync({ user, timeRemaining: seconds });
-      toast.success(`Your usage time set to ${timeMinutes} minutes!`);
-    } catch (err) {
-      toast.error('Failed to set usage time. Admin access required.');
-    }
+
+    localStorage.setItem(PARENTAL_PIN_KEY, newPin);
+    setPinChangeSuccess(true);
+    setNewPin("");
+    setConfirmPin("");
+    toast.success("PIN updated successfully!");
   };
 
-  if (!pinUnlocked) {
+  const handleSettingChange = <K extends keyof ParentalSettings>(key: K, value: ParentalSettings[K]) => {
+    const updated = { ...settings, [key]: value };
+    setSettings(updated);
+    saveSettings(updated);
+    toast.success("Setting saved!");
+  };
+
+  // Show face scan modal
+  if (showFaceScan && !faceScanDone) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-secondary/20 rounded-2xl flex items-center justify-center">
-            <img
-              src="/assets/generated/parental-shield-icon.dim_128x128.png"
-              alt="Parental Controls"
-              className="w-10 h-10 object-contain"
+      <ParentalFaceScanModal
+        onComplete={handleFaceScanComplete}
+        onSkip={handleFaceScanSkip}
+      />
+    );
+  }
+
+  // Show PIN entry
+  if (!pinVerified) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="bg-card rounded-2xl p-8 max-w-sm w-full shadow-xl border border-border text-center">
+          <img
+            src="/assets/generated/parental-shield-icon.dim_128x128.png"
+            alt="Parental Controls"
+            className="w-16 h-16 mx-auto mb-4"
+          />
+          <h1 className="text-2xl font-bold text-foreground mb-2">Parental Controls</h1>
+          <p className="text-muted-foreground mb-6">Enter your PIN to access parental settings.</p>
+
+          <div className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Enter PIN"
+              value={pinInput}
+              onChange={(e) => setPinInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handlePinSubmit()}
+              maxLength={4}
+              className="text-center text-xl tracking-widest"
             />
+            {pinError && <p className="text-destructive text-sm">{pinError}</p>}
+            <Button onClick={handlePinSubmit} className="w-full">
+              <Lock className="w-4 h-4 mr-2" />
+              Unlock
+            </Button>
           </div>
-          <div>
-            <h1 className="text-3xl font-fredoka text-foreground">Parental Controls</h1>
-            <p className="text-muted-foreground font-nunito text-sm">PIN-protected parent dashboard</p>
-          </div>
-        </div>
 
-        <div className="sonic-card p-8 text-center max-w-md mx-auto">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock size={40} className="text-primary" />
-          </div>
-          <h2 className="text-2xl font-fredoka text-foreground mb-2">Parent Access Required</h2>
-          <p className="text-muted-foreground font-nunito text-sm mb-6">
-            This area is for parents and guardians only. Enter your PIN to access parental controls.
-          </p>
-          <Button
-            onClick={() => setShowPinModal(true)}
-            className="w-full rounded-full font-fredoka text-lg bg-primary text-primary-foreground"
-          >
-            <Shield size={16} className="mr-2" />
-            Enter Parent PIN
-          </Button>
-          <p className="text-xs text-muted-foreground font-nunito mt-3">
-            Default PIN: 1234 (change it after first login)
-          </p>
+          <p className="text-xs text-muted-foreground mt-4">Default PIN: 1234</p>
         </div>
-
-        <PINEntryModal
-          open={showPinModal}
-          onSuccess={() => { setPinUnlocked(true); setShowPinModal(false); }}
-          onClose={() => setShowPinModal(false)}
-        />
       </div>
     );
   }
 
+  // Show full dashboard
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <img
-            src="/assets/generated/parental-shield-icon.dim_128x128.png"
-            alt="Parental Controls"
-            className="w-12 h-12 object-contain"
-          />
+    <div className="min-h-screen bg-background">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <Shield className="w-8 h-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-fredoka text-foreground">Parental Controls</h1>
-            <p className="text-muted-foreground font-nunito text-sm">Manage your child's Scrambly experience</p>
+            <h1 className="text-3xl font-bold text-foreground">Parental Controls</h1>
+            <p className="text-muted-foreground">Manage your child's Scrambly experience</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setPinUnlocked(false)}
-          className="rounded-full font-nunito font-700 text-sm"
-        >
-          <Lock size={14} className="mr-1" /> Lock Dashboard
-        </Button>
-      </div>
 
-      {/* Current User Stats */}
-      {profile && (
-        <div className="sonic-card p-5">
-          <h2 className="font-fredoka text-lg text-foreground mb-3 flex items-center gap-2">
-            <User size={18} className="text-primary" />
-            Current User Stats
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-muted rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground font-nunito uppercase tracking-wide mb-1">Name</p>
-              <p className="font-fredoka text-foreground">{profile.name}</p>
-            </div>
-            <div className="bg-muted rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground font-nunito uppercase tracking-wide mb-1">Age</p>
-              <p className="font-fredoka text-foreground">{userAge !== null ? `${userAge} yrs` : 'N/A'}</p>
-            </div>
-            <div className="bg-muted rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground font-nunito uppercase tracking-wide mb-1">Warnings</p>
-              <p className={`font-fredoka ${Number(profile.warnings) > 0 ? 'text-destructive' : 'text-foreground'}`}>
-                {Number(profile.warnings)} / 3
-              </p>
-            </div>
-            <div className="bg-muted rounded-xl p-3 text-center">
-              <p className="text-xs text-muted-foreground font-nunito uppercase tracking-wide mb-1">Time Left</p>
-              <p className="font-fredoka text-foreground">
-                {usageRemaining !== null ? formatTime(usageRemaining) : 'Unlimited'}
-              </p>
-            </div>
+        {/* Usage Timer */}
+        <div className="bg-card rounded-xl p-6 border border-border mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Usage Timer</h2>
           </div>
-          {userAge !== null && userAge <= 12 && (
-            <div className="mt-3 bg-secondary/20 rounded-xl p-3 flex items-center gap-2">
-              <Zap size={16} className="text-secondary-foreground" />
-              <p className="text-sm font-nunito font-700 text-secondary-foreground">
-                Kid Mode is active for this user (age {userAge})
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Set My Own Timer */}
-      <div className="sonic-card p-5 space-y-4">
-        <h2 className="font-fredoka text-xl text-foreground flex items-center gap-2">
-          <Clock size={20} className="text-primary" />
-          Set My Usage Timer
-        </h2>
-        <p className="text-sm font-nunito text-muted-foreground">
-          Set a daily screen time limit for your own account.
-        </p>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="font-nunito font-700">Time Limit</Label>
-            <span className="font-fredoka text-primary text-lg">{timeMinutes} min</span>
-          </div>
-          <Slider
-            value={[timeMinutes]}
-            onValueChange={(v) => setTimeMinutes(v[0])}
-            min={5}
-            max={240}
-            step={5}
-            className="w-full"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground font-nunito">
-            <span>5 min</span>
-            <span>1 hour</span>
-            <span>2 hours</span>
-            <span>4 hours</span>
-          </div>
-          <Button
-            onClick={handleSetMyTime}
-            disabled={setUsageTime.isPending || !isAdmin}
-            className="w-full rounded-full font-fredoka bg-primary text-primary-foreground"
-          >
-            <Clock size={14} className="mr-1" />
-            {setUsageTime.isPending ? 'Setting...' : `Set ${timeMinutes} Minute Timer`}
-          </Button>
-          {!isAdmin && (
-            <p className="text-xs text-muted-foreground font-nunito text-center">
-              Admin access required to set usage timers.
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Set Timer for Another User (Admin only) */}
-      {isAdmin && (
-        <div className="sonic-card p-5 space-y-4">
-          <h2 className="font-fredoka text-xl text-foreground flex items-center gap-2">
-            <Shield size={20} className="text-destructive" />
-            Set Timer for Another User
-          </h2>
-          <p className="text-sm font-nunito text-muted-foreground">
-            Admin: Set a usage time limit for any user by their principal ID.
+          <p className="text-muted-foreground text-sm mb-3">
+            Set how many minutes per day your child can use Scrambly (max 720 min = 12 hours).
           </p>
-          <div className="space-y-3">
-            <div>
-              <Label className="font-nunito font-700">User Principal ID</Label>
-              <Input
-                placeholder="Enter user's principal ID..."
-                value={targetPrincipal}
-                onChange={(e) => setTargetPrincipal(e.target.value)}
-                className="mt-1 rounded-xl font-nunito text-sm"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <Label className="font-nunito font-700">Time Limit</Label>
-              <span className="font-fredoka text-primary text-lg">{timeMinutes} min</span>
-            </div>
-            <Slider
-              value={[timeMinutes]}
-              onValueChange={(v) => setTimeMinutes(v[0])}
-              min={5}
-              max={240}
-              step={5}
-              className="w-full"
+          <div className="flex gap-3 items-center">
+            <Input
+              type="number"
+              min={1}
+              max={720}
+              value={settings.usageTimerMinutes}
+              onChange={(e) =>
+                setSettings((s) => ({ ...s, usageTimerMinutes: Math.min(720, Math.max(1, Number(e.target.value))) }))
+              }
+              className="w-32"
             />
-            <Button
-              onClick={handleSetTime}
-              disabled={setUsageTime.isPending || !targetPrincipal.trim()}
-              variant="destructive"
-              className="w-full rounded-full font-fredoka"
-            >
-              <Clock size={14} className="mr-1" />
-              {setUsageTime.isPending ? 'Setting...' : `Set ${timeMinutes} Min for User`}
+            <span className="text-muted-foreground">minutes</span>
+            <Button size="sm" onClick={() => handleSettingChange("usageTimerMinutes", settings.usageTimerMinutes)}>
+              <Save className="w-4 h-4 mr-1" />
+              Save
             </Button>
           </div>
         </div>
-      )}
 
-      {/* Kid Mode Info */}
-      <div className="bg-secondary/10 border border-secondary/30 rounded-2xl p-4 space-y-2">
-        <h3 className="font-nunito font-700 text-foreground flex items-center gap-2">
-          <Zap size={16} className="text-secondary-foreground" />
-          Kid Mode (Ages 10–12)
-        </h3>
-        <ul className="text-sm font-nunito text-muted-foreground space-y-1 list-disc list-inside">
-          <li>Automatically activated for users aged 10–12</li>
-          <li>Community features are hidden</li>
-          <li>Only age-appropriate games and search are shown</li>
-          <li>A "Kid Mode Active" banner is displayed</li>
-        </ul>
-      </div>
+        {/* Search Time Limit */}
+        <div className="bg-card rounded-xl p-6 border border-border mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-5 h-5 text-yellow-500" />
+            <h2 className="text-lg font-semibold text-foreground">Search Time Limit</h2>
+          </div>
+          <p className="text-muted-foreground text-sm mb-3">
+            Limit how many minutes per session your child can actively search.
+          </p>
+          <div className="flex gap-3 items-center">
+            <Input
+              type="number"
+              min={1}
+              max={720}
+              value={settings.searchTimeLimitMinutes}
+              onChange={(e) =>
+                setSettings((s) => ({
+                  ...s,
+                  searchTimeLimitMinutes: Math.min(720, Math.max(1, Number(e.target.value))),
+                }))
+              }
+              className="w-32"
+            />
+            <span className="text-muted-foreground">minutes</span>
+            <Button
+              size="sm"
+              onClick={() => handleSettingChange("searchTimeLimitMinutes", settings.searchTimeLimitMinutes)}
+            >
+              <Save className="w-4 h-4 mr-1" />
+              Save
+            </Button>
+          </div>
+        </div>
 
-      {/* Safety Tips */}
-      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-2">
-        <h3 className="font-nunito font-700 text-foreground">🛡️ Safety Tips for Parents</h3>
-        <ul className="text-sm font-nunito text-muted-foreground space-y-1 list-disc list-inside">
-          <li>Set a daily time limit to encourage healthy screen habits</li>
-          <li>Review community posts with your child regularly</li>
-          <li>Change the default PIN (1234) to something only you know</li>
-          <li>The SOS button is always visible for emergencies</li>
-          <li>Ad Blocker is ON by default to keep the experience clean</li>
-        </ul>
+        {/* Hide Chat */}
+        <div className="bg-card rounded-xl p-6 border border-border mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {settings.hideChat ? (
+                <EyeOff className="w-5 h-5 text-destructive" />
+              ) : (
+                <Eye className="w-5 h-5 text-green-500" />
+              )}
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Hide Chat</h2>
+                <p className="text-muted-foreground text-sm">Hide the chat bar and Friends Mode chat from your child.</p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.hideChat}
+              onCheckedChange={(val) => handleSettingChange("hideChat", val)}
+            />
+          </div>
+        </div>
+
+        {/* Hide Find Friends */}
+        <div className="bg-card rounded-xl p-6 border border-border mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {settings.hideFindFriends ? (
+                <EyeOff className="w-5 h-5 text-destructive" />
+              ) : (
+                <Eye className="w-5 h-5 text-green-500" />
+              )}
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Hide Find Friends</h2>
+                <p className="text-muted-foreground text-sm">
+                  Remove the Find Friends / Friends Mode button from navigation.
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.hideFindFriends}
+              onCheckedChange={(val) => handleSettingChange("hideFindFriends", val)}
+            />
+          </div>
+        </div>
+
+        {/* Age Restrict Videos */}
+        <div className="bg-card rounded-xl p-6 border border-border mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {settings.ageRestrictVideos ? (
+                <Lock className="w-5 h-5 text-destructive" />
+              ) : (
+                <Unlock className="w-5 h-5 text-green-500" />
+              )}
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Age-Restrict Videos</h2>
+                <p className="text-muted-foreground text-sm">
+                  Show only kid-friendly Sonic Says content on the Videos page.
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={settings.ageRestrictVideos}
+              onCheckedChange={(val) => handleSettingChange("ageRestrictVideos", val)}
+            />
+          </div>
+        </div>
+
+        {/* Change PIN */}
+        <div className="bg-card rounded-xl p-6 border border-border mb-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Key className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Change PIN</h2>
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">
+            Set a new PIN (3–4 characters). Default is <strong>1234</strong>.
+          </p>
+          <div className="space-y-3">
+            <Input
+              type="password"
+              placeholder="New PIN (3-4 characters)"
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value.slice(0, 4))}
+              maxLength={4}
+            />
+            <Input
+              type="password"
+              placeholder="Confirm new PIN"
+              value={confirmPin}
+              onChange={(e) => setConfirmPin(e.target.value.slice(0, 4))}
+              maxLength={4}
+            />
+            {pinChangeError && <p className="text-destructive text-sm">{pinChangeError}</p>}
+            {pinChangeSuccess && <p className="text-green-500 text-sm">✅ PIN changed successfully!</p>}
+            <Button onClick={handlePinChange} className="w-full">
+              <Key className="w-4 h-4 mr-2" />
+              Update PIN
+            </Button>
+          </div>
+        </div>
+
+        {/* Parent Review Panel Link */}
+        <div className="bg-card rounded-xl p-6 border border-border mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <ExternalLink className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Parent Review Panel</h2>
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">
+            Access the parent review panel for additional controls.
+          </p>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() =>
+              window.open(
+                "https://widespread-crimson-c6q-draft.caffeine.xyz/#caffeineAdminToken=7c4623260dccffc21ab80a4d967ff00efa0fca2d013781ab3aad1fe300afbfce",
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Open Parent Review Panel
+          </Button>
+        </div>
+
+        {/* Lock Dashboard */}
+        <Button
+          variant="outline"
+          className="w-full mt-4"
+          onClick={() => {
+            setPinVerified(false);
+            setFaceScanDone(false);
+            setPinInput("");
+            setShowFaceScan(true);
+          }}
+        >
+          <Lock className="w-4 h-4 mr-2" />
+          Lock Parental Controls
+        </Button>
       </div>
     </div>
   );

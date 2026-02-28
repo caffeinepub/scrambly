@@ -211,12 +211,16 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addSonicEntry(entry: SonicKnowledgeEntry): Promise<void>;
+    adminBanUser(target: Principal): Promise<void>;
+    adminUnbanUser(target: Principal): Promise<void>;
+    adminWarnUser(target: Principal): Promise<void>;
     applyForModerator(answers: string): Promise<ModeratorApplicationResult>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCommunityPost(message: string): Promise<void>;
     getAllEntriesByType(content_type: string): Promise<Array<SonicKnowledgeEntry>>;
     getAllFriendsModeRequests(): Promise<Array<FriendsModeRequest>>;
     getAllIdeas(): Promise<Array<Idea>>;
+    getBanList(): Promise<Array<Principal>>;
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCommunityPosts(): Promise<Array<PostContent>>;
@@ -227,12 +231,16 @@ export interface backendInterface {
     getRemainingUsageTime(user: Principal): Promise<bigint | null>;
     getUserProfile(user: Principal): Promise<Profile>;
     getUsersByAge(fromYear: bigint, toYear: bigint): Promise<Array<Profile>>;
+    getWarnList(): Promise<Array<Principal>>;
     isCallerAdmin(): Promise<boolean>;
     isCallerApproved(): Promise<boolean>;
+    isCallerBanned(): Promise<boolean>;
     isSchoolAccount(user: Principal): Promise<boolean>;
+    isUserModerator(user: Principal): Promise<boolean>;
     issueWarning(target: Principal, reason: string): Promise<bigint>;
     listApprovals(): Promise<Array<UserApprovalInfo>>;
     markIdeaReviewed(index: bigint): Promise<void>;
+    promoteUserToModerator(target: Principal): Promise<void>;
     requestApproval(): Promise<void>;
     respondToFriendRequest(requesterId: Principal, accept: boolean): Promise<string>;
     reviewAppeal(user: Principal, approve: boolean, adminNote: string | null): Promise<AppealStatus>;
@@ -367,6 +375,48 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async adminBanUser(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminBanUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminBanUser(arg0);
+            return result;
+        }
+    }
+    async adminUnbanUser(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminUnbanUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminUnbanUser(arg0);
+            return result;
+        }
+    }
+    async adminWarnUser(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.adminWarnUser(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.adminWarnUser(arg0);
+            return result;
+        }
+    }
     async applyForModerator(arg0: string): Promise<ModeratorApplicationResult> {
         if (this.processError) {
             try {
@@ -448,6 +498,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getAllIdeas();
+            return result;
+        }
+    }
+    async getBanList(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getBanList();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getBanList();
             return result;
         }
     }
@@ -591,6 +655,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n23(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getWarnList(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getWarnList();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getWarnList();
+            return result;
+        }
+    }
     async isCallerAdmin(): Promise<boolean> {
         if (this.processError) {
             try {
@@ -619,6 +697,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async isCallerBanned(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isCallerBanned();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isCallerBanned();
+            return result;
+        }
+    }
     async isSchoolAccount(arg0: Principal): Promise<boolean> {
         if (this.processError) {
             try {
@@ -630,6 +722,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isSchoolAccount(arg0);
+            return result;
+        }
+    }
+    async isUserModerator(arg0: Principal): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isUserModerator(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isUserModerator(arg0);
             return result;
         }
     }
@@ -672,6 +778,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.markIdeaReviewed(arg0);
+            return result;
+        }
+    }
+    async promoteUserToModerator(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.promoteUserToModerator(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.promoteUserToModerator(arg0);
             return result;
         }
     }

@@ -1,38 +1,43 @@
-import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet, Link } from '@tanstack/react-router';
-import { Toaster } from '@/components/ui/sonner';
-import Layout from './components/Layout';
-import SearchPage from './pages/SearchPage';
-import GamesPage from './pages/GamesPage';
-import BlockBlastGame from './pages/BlockBlastGame';
-import SonicRunnerGame from './pages/SonicRunnerGame';
-import CommunityPage from './pages/CommunityPage';
-import AgeMatcher from './pages/AgeMatcher';
-import ModerationDashboard from './pages/ModerationDashboard';
-import ParentalDashboard from './pages/ParentalDashboard';
-import SettingsPage from './pages/SettingsPage';
-import VideosPage from './pages/VideosPage';
-import AppealPage from './pages/AppealPage';
-import FriendsModePage from './pages/FriendsModePage';
-import AuthGate from './components/AuthGate';
+import React from "react";
+import {
+  createRouter,
+  createRoute,
+  createRootRoute,
+  RouterProvider,
+  Outlet,
+} from "@tanstack/react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "next-themes";
 
-// Root route with Layout (requires auth)
-const rootRoute = createRootRoute({
-  component: () => (
-    <Outlet />
-  ),
-  notFoundComponent: () => (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-      <div className="text-6xl font-fredoka text-primary">404</div>
-      <p className="text-muted-foreground font-nunito text-lg">Page not found!</p>
-      <Link to="/" className="sonic-btn-primary">Go Home</Link>
-    </div>
-  ),
+import Layout from "./components/Layout";
+import AuthGate from "./components/AuthGate";
+
+// Pages
+import HomePage from "./pages/HomePage";
+import SearchPage from "./pages/SearchPage";
+import VideosPage from "./pages/VideosPage";
+import GamesPage from "./pages/GamesPage";
+import CommunityPage from "./pages/CommunityPage";
+import FriendsModePage from "./pages/FriendsModePage";
+import SettingsPage from "./pages/SettingsPage";
+import ParentalDashboard from "./pages/ParentalDashboard";
+import AdminPanel from "./pages/AdminPanel";
+import AppealPage from "./pages/AppealPage";
+import AgeMatcher from "./pages/AgeMatcher";
+import ModerationDashboard from "./pages/ModerationDashboard";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    },
+  },
 });
 
-// Auth-gated layout route — wraps all normal pages
-const authLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: 'auth-layout',
+// Root route with Layout
+const rootRoute = createRootRoute({
   component: () => (
     <AuthGate>
       <Layout>
@@ -43,98 +48,95 @@ const authLayoutRoute = createRoute({
 });
 
 const indexRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/',
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: HomePage,
+});
+
+const searchRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/search",
   component: SearchPage,
 });
 
+const videosRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/videos",
+  component: VideosPage,
+});
+
 const gamesRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/games',
+  getParentRoute: () => rootRoute,
+  path: "/games",
   component: GamesPage,
 });
 
-const blockBlastRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/games/blockblast',
-  component: BlockBlastGame,
-});
-
-const sonicRunnerRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/games/sonicrunner',
-  component: SonicRunnerGame,
-});
-
 const communityRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/community',
+  getParentRoute: () => rootRoute,
+  path: "/community",
   component: CommunityPage,
 });
 
-const ageMatchRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/community/match',
+const friendsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/friends",
+  component: FriendsModePage,
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings",
+  component: SettingsPage,
+});
+
+const parentalRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/parental",
+  component: ParentalDashboard,
+});
+
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminPanel,
+});
+
+const appealRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/appeal",
+  component: AppealPage,
+});
+
+const ageMatcherRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/age-matcher",
   component: AgeMatcher,
 });
 
 const moderationRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/admin/moderation',
+  getParentRoute: () => rootRoute,
+  path: "/moderation",
   component: ModerationDashboard,
 });
 
-const parentalRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/parental',
-  component: ParentalDashboard,
-});
-
-const settingsRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/settings',
-  component: SettingsPage,
-});
-
-const videosRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/videos',
-  component: VideosPage,
-});
-
-const friendsModeRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: '/friends',
-  component: FriendsModePage,
-});
-
-// Appeal route — accessible without auth gate so banned users can reach it
-const appealRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/appeal',
-  component: AppealPage,
-});
-
 const routeTree = rootRoute.addChildren([
-  authLayoutRoute.addChildren([
-    indexRoute,
-    gamesRoute,
-    blockBlastRoute,
-    sonicRunnerRoute,
-    communityRoute,
-    ageMatchRoute,
-    moderationRoute,
-    parentalRoute,
-    settingsRoute,
-    videosRoute,
-    friendsModeRoute,
-  ]),
+  indexRoute,
+  searchRoute,
+  videosRoute,
+  gamesRoute,
+  communityRoute,
+  friendsRoute,
+  settingsRoute,
+  parentalRoute,
+  adminRoute,
   appealRoute,
+  ageMatcherRoute,
+  moderationRoute,
 ]);
 
 const router = createRouter({ routeTree });
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
@@ -142,9 +144,11 @@ declare module '@tanstack/react-router' {
 
 export default function App() {
   return (
-    <>
-      <RouterProvider router={router} />
-      <Toaster richColors position="top-right" />
-    </>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster richColors position="top-right" />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

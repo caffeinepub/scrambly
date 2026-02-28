@@ -1,74 +1,112 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-25T12:45:39.028Z",
+  "generatedAt": "2026-02-28T08:50:37.484Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 4,
+    "total": 7,
+    "implemented": 6,
     "items": [
       {
-        "id": "REQ-60",
-        "summary": "In FriendsModePage.tsx, add a persistent chat bar UI element positioned below the user's profile section. The bar must display a 'Friends' label or chat icon and be tappable/clickable to open a friends panel or drawer.",
+        "id": "REQ-1",
+        "summary": "Replace the current video content on the Videos page with curated Sonic speedrun and gameplay videos covering four categories: 'How to Speed Run Sonic 1', 'How to Speed Run Sonic 2', 'How to Speed Run Sonic 3', and 'How to Speed Run Sonic Mania'. Update the static video data files (knucklesVideos.ts, sonicBoomVideos.ts, sonicPrimeVideos.ts, sonicSaysVideos.ts, or a new speedrunVideos.ts) to include real YouTube video entries for each of these four Sonic game speedrun/gameplay categories. Replace old video lists with these new entries and update VideosPage.tsx category filters accordingly.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/FriendsModePage.tsx",
-          "frontend/src/components/FriendsPanel.tsx"
+          "frontend/src/data/speedrunVideos.ts",
+          "frontend/src/pages/VideosPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/FriendsModePage.tsx",
-          "frontend/src/components/FriendsPanel.tsx"
+          "frontend/src/data/speedrunVideos.ts",
+          "frontend/src/pages/VideosPage.tsx"
         ]
       },
       {
-        "id": "REQ-61",
-        "summary": "When the friends panel is opened and the user has no friends, display a clear 'No Friends' empty state message with a friendly prompt encouraging them to add friends.",
-        "status": "implemented",
+        "id": "REQ-2",
+        "summary": "Update the parental control PIN system in PINEntryModal.tsx so that: (1) the default PIN is '1234', (2) parents can change the PIN to any value between 3 and 4 characters (digits or alphanumeric), and (3) the PIN change UI enforces the 3–4 character length limit with validation feedback.",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/components/FriendsPanel.tsx"
+          "frontend/src/components/PINEntryModal.tsx"
         ],
-        "matchedFiles": [
-          "frontend/src/components/FriendsPanel.tsx"
-        ]
-      },
-      {
-        "id": "REQ-62",
-        "summary": "When the user has one or more friends, display the friend list in the friends panel. Enforce a maximum friend limit of 1000 — if the user already has 1000 friends, prevent adding any more and show a 'Friend limit reached (1000/1000)' message. Store the friend relationships in the backend, associated with each user's principal.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/FriendListItem.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/FriendListItem.tsx"
-        ]
-      },
-      {
-        "id": "REQ-63",
-        "summary": "Add a backend data model and functions for friend relationships: a FriendRequest record type with fields requesterId (Text), recipientId (Text), status (Text — 'pending', 'accepted', 'declined'), and sentAt (Int timestamp). Expose the following functions: sendFriendRequest(recipientPrincipal: Text) — creates a pending request; respondToFriendRequest(requesterId: Text, accept: Bool) — accepts or declines a request; getFriends() — returns all accepted friends of the calling principal; getFriendRequests() — returns all incoming pending requests for the calling principal. Enforce the 1000-friend cap in sendFriendRequest.",
-        "status": "unknown",
-        "plannedFiles": [],
         "matchedFiles": []
       },
       {
-        "id": "REQ-64",
-        "summary": "In the friends panel on FriendsModePage.tsx, display incoming pending friend requests as a separate section labelled 'Friend Requests'. Each pending request must show the requester's display name and two action buttons: 'Accept' (calls respondToFriendRequest with accept=true) and 'Decline' (calls respondToFriendRequest with accept=false). After accepting, the new friend appears in the friends list immediately.",
+        "id": "REQ-3",
+        "summary": "Add a face scan step to the parental controls access flow. When a parent attempts to open the parental controls dashboard, show a camera modal that briefly captures a frame (liveness check), displays a 'Verifying parent identity...' message, then immediately discards the image data and grants access. The captured image must never be stored or sent to the backend. After the scan completes, close the camera and proceed to the PIN entry step.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/FriendRequestItem.tsx"
+          "frontend/src/components/ParentalFaceScanModal.tsx",
+          "frontend/src/pages/ParentalDashboard.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/components/ParentalFaceScanModal.tsx",
+          "frontend/src/pages/ParentalDashboard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Create a dedicated Admin Panel page accessible only to the user with username 'TailsTheBeast124'. Add a route '/admin' to App.tsx gated by admin identity check. The panel must include: (1) a Ban section with a text input for username and a 'Ban' button that bans the typed user; (2) a Warn section with a text input for username and a 'Warn' button that sends a warning to that user; (3) an Unban section that shows a scrollable list of currently banned users by username with an 'Unban' button next to each entry; (4) a Ban List display that shows 'Nobody' when zero users are banned, or 'X person(s) banned' when any are banned, up to a display cap of 100,000,000,000,000; (5) a Warn List display showing the total number of warned users up to 100,000,000,000,000.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/AdminPanel.tsx",
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/FriendRequestItem.tsx"
+          "frontend/src/App.tsx",
+          "frontend/src/components/Layout.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/AdminPanel.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/Layout.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Add a Moderation Promotion tool to the Admin Panel. The owner (TailsTheBeast124) must be able to type a target username and a reason, then press 'Make Moderator' to grant that user the moderator role. When a user is successfully granted the moderator role, upon their next page load or navigation they should see a celebratory message: 'Yay, you're a mod! Help with Scrambly to make it better!'",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/pages/AdminPanel.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/ModeratorWelcomeBanner.tsx",
+          "frontend/src/components/Layout.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/AdminPanel.tsx",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/ModeratorWelcomeBanner.tsx",
+          "frontend/src/components/Layout.tsx"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "Update post moderation logic: do NOT auto-warn users for any regular text post. However, instantly ban any user who posts content containing or attaching anime images, or who spams the words 'porn', 'anime', 'inappropriate anime', or other clearly inappropriate terms in their post body. The auto-ban must trigger before the post is saved and must display a clear ban reason to the affected user.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/CommunityPostForm.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/CommunityPostForm.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-7",
+        "summary": "Update the search moderation logic in useSearchModerator.ts: when the admin (TailsTheBeast124) searches for inappropriate terms (porn, anime, inappropriate content), do not block or warn — instead silently replace the results with Sonic the Hedgehog vs Metal Sonic content. When any user (including admin) searches for 'sonic.exe vs metal sonic', show all YouTube video results for that exact query by embedding matching video entries from a new static data file containing 'sonic.exe vs metal sonic' YouTube entries.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/data/sonicVsMetalSonicVideos.ts",
+          "frontend/src/data/sonicExeVsMetalSonicVideos.ts",
+          "frontend/src/hooks/useSearchModerator.ts",
+          "frontend/src/pages/SearchPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/data/sonicVsMetalSonicVideos.ts",
+          "frontend/src/data/sonicExeVsMetalSonicVideos.ts",
+          "frontend/src/hooks/useSearchModerator.ts",
+          "frontend/src/pages/SearchPage.tsx"
         ]
       }
     ]
@@ -77,18 +115,33 @@
     "backend/main.mo",
     "backend/migration.mo",
     "build-request.json",
+    "build-template/README.md",
+    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/FriendListItem.tsx",
-    "frontend/src/components/FriendRequestItem.tsx",
-    "frontend/src/components/FriendsPanel.tsx",
+    "frontend/src/components/CommunityPostForm.tsx",
+    "frontend/src/components/Layout.tsx",
+    "frontend/src/components/ModeratorWelcomeBanner.tsx",
+    "frontend/src/components/ParentalFaceScanModal.tsx",
+    "frontend/src/data/sonicExeVsMetalSonicVideos.ts",
+    "frontend/src/data/sonicVsMetalSonicVideos.ts",
+    "frontend/src/data/speedrunVideos.ts",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/pages/FriendsModePage.tsx",
+    "frontend/src/hooks/useSearchModerator.ts",
+    "frontend/src/pages/AdminPanel.tsx",
+    "frontend/src/pages/AgeMatcher.tsx",
+    "frontend/src/pages/CommunityPage.tsx",
+    "frontend/src/pages/HomePage.tsx",
+    "frontend/src/pages/ParentalDashboard.tsx",
+    "frontend/src/pages/SearchPage.tsx",
+    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/src/pages/VideosPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

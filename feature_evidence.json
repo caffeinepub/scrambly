@@ -2,11 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-in-friendsmodepage-tsx-add-a-persistent-chat-bar-ui-element-positioned-below-the-user-s-profile-section-the-bar-must-display-a-friends-label-or-chat-icon-and-be-tappable-clickable-to-open-a-friends-panel-or-drawer",
-      "featureTitle": "In FriendsModePage.tsx, add a persistent chat bar UI element positioned below the user's profile section. The bar must display a 'Friends' label or chat icon and be tappable/clickable to open a friends panel or drawer.",
+      "featureId": "feature-replace-the-current-video-content-on-the-videos-page-with-curated-sonic-speedrun-and-gameplay-videos-covering-four-categories-how-to-speed-run-sonic-1-how-to-speed-run-sonic-2-how-to-speed-run-sonic-3-and-how-to-speed-run-sonic-mania-update-the-static-video-data-files-knucklesvideos-ts-sonicboomvideos-ts-sonicprimevideos-ts-sonicsaysvideos-ts-or-a-new-speedrunvideos-ts-to-include-real-youtube-video-entries-for-each-of-these-four-sonic-game-speedrun-gameplay-categories-replace-old-video-lists-with-these-new-entries-and-update-videospage-tsx-category-filters-accordingly",
+      "featureTitle": "Replace the current video content on the Videos page with curated Sonic speedrun and gameplay videos covering four categories: 'How to Speed Run Sonic 1', 'How to Speed Run Sonic 2', 'How to Speed Run Sonic 3', and 'How to Speed Run Sonic Mania'. Update the static video data files (knucklesVideos.ts, sonicBoomVideos.ts, sonicPrimeVideos.ts, sonicSaysVideos.ts, or a new speedrunVideos.ts) to include real YouTube video entries for each of these four Sonic game speedrun/gameplay categories. Replace old video lists with these new entries and update VideosPage.tsx category filters accordingly.",
       "files": [
-        "frontend/src/components/FriendsPanel.tsx",
-        "frontend/src/pages/FriendsModePage.tsx"
+        "frontend/src/data/speedrunVideos.ts",
+        "frontend/src/pages/VideosPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -20,15 +20,16 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-60"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-when-the-friends-panel-is-opened-and-the-user-has-no-friends-display-a-clear-no-friends-empty-state-message-with-a-friendly-prompt-encouraging-them-to-add-friends",
-      "featureTitle": "When the friends panel is opened and the user has no friends, display a clear 'No Friends' empty state message with a friendly prompt encouraging them to add friends.",
+      "featureId": "feature-add-a-face-scan-step-to-the-parental-controls-access-flow-when-a-parent-attempts-to-open-the-parental-controls-dashboard-show-a-camera-modal-that-briefly-captures-a-frame-liveness-check-displays-a-verifying-parent-identity-message-then-immediately-discards-the-image-data-and-grants-access-the-captured-image-must-never-be-stored-or-sent-to-the-backend-after-the-scan-completes-close-the-camera-and-proceed-to-the-pin-entry-step",
+      "featureTitle": "Add a face scan step to the parental controls access flow. When a parent attempts to open the parental controls dashboard, show a camera modal that briefly captures a frame (liveness check), displays a 'Verifying parent identity...' message, then immediately discards the image data and grants access. The captured image must never be stored or sent to the backend. After the scan completes, close the camera and proceed to the PIN entry step.",
       "files": [
-        "frontend/src/components/FriendsPanel.tsx"
+        "frontend/src/components/ParentalFaceScanModal.tsx",
+        "frontend/src/pages/ParentalDashboard.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -42,16 +43,65 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-61"
+        "REQ-3"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-when-the-user-has-one-or-more-friends-display-the-friend-list-in-the-friends-panel-enforce-a-maximum-friend-limit-of-1000-if-the-user-already-has-1000-friends-prevent-adding-any-more-and-show-a-friend-limit-reached-1000-1000-message-store-the-friend-relationships-in-the-backend-associated-with-each-user-s-principal",
-      "featureTitle": "When the user has one or more friends, display the friend list in the friends panel. Enforce a maximum friend limit of 1000 — if the user already has 1000 friends, prevent adding any more and show a 'Friend limit reached (1000/1000)' message. Store the friend relationships in the backend, associated with each user's principal.",
+      "featureId": "feature-create-a-dedicated-admin-panel-page-accessible-only-to-the-user-with-username-tailsthebeast124-add-a-route-admin-to-app-tsx-gated-by-admin-identity-check-the-panel-must-include-1-a-ban-section-with-a-text-input-for-username-and-a-ban-button-that-bans-the-typed-user-2-a-warn-section-with-a-text-input-for-username-and-a-warn-button-that-sends-a-warning-to-that-user-3-an-unban-section-that-shows-a-scrollable-list-of-currently-banned-users-by-username-with-an-unban-button-next-to-each-entry-4-a-ban-list-display-that-shows-nobody-when-zero-users-are-banned-or-x-person-s-banned-when-any-are-banned-up-to-a-display-cap-of-100-000-000-000-000-5-a-warn-list-display-showing-the-total-number-of-warned-users-up-to-100-000-000-000-000",
+      "featureTitle": "Create a dedicated Admin Panel page accessible only to the user with username 'TailsTheBeast124'. Add a route '/admin' to App.tsx gated by admin identity check. The panel must include: (1) a Ban section with a text input for username and a 'Ban' button that bans the typed user; (2) a Warn section with a text input for username and a 'Warn' button that sends a warning to that user; (3) an Unban section that shows a scrollable list of currently banned users by username with an 'Unban' button next to each entry; (4) a Ban List display that shows 'Nobody' when zero users are banned, or 'X person(s) banned' when any are banned, up to a display cap of 100,000,000,000,000; (5) a Warn List display showing the total number of warned users up to 100,000,000,000,000.",
       "files": [
-        "frontend/src/components/FriendListItem.tsx",
-        "frontend/src/components/FriendsPanel.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/AdminPanel.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "user-approval@3.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-a-moderation-promotion-tool-to-the-admin-panel-the-owner-tailsthebeast124-must-be-able-to-type-a-target-username-and-a-reason-then-press-make-moderator-to-grant-that-user-the-moderator-role-when-a-user-is-successfully-granted-the-moderator-role-upon-their-next-page-load-or-navigation-they-should-see-a-celebratory-message-yay-you-re-a-mod-help-with-scrambly-to-make-it-better",
+      "featureTitle": "Add a Moderation Promotion tool to the Admin Panel. The owner (TailsTheBeast124) must be able to type a target username and a reason, then press 'Make Moderator' to grant that user the moderator role. When a user is successfully granted the moderator role, upon their next page load or navigation they should see a celebratory message: 'Yay, you're a mod! Help with Scrambly to make it better!'",
+      "files": [
+        "frontend/src/components/Layout.tsx",
+        "frontend/src/components/ModeratorWelcomeBanner.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/AdminPanel.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "user-approval@3.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-post-moderation-logic-do-not-auto-warn-users-for-any-regular-text-post-however-instantly-ban-any-user-who-posts-content-containing-or-attaching-anime-images-or-who-spams-the-words-porn-anime-inappropriate-anime-or-other-clearly-inappropriate-terms-in-their-post-body-the-auto-ban-must-trigger-before-the-post-is-saved-and-must-display-a-clear-ban-reason-to-the-affected-user",
+      "featureTitle": "Update post moderation logic: do NOT auto-warn users for any regular text post. However, instantly ban any user who posts content containing or attaching anime images, or who spams the words 'porn', 'anime', 'inappropriate anime', or other clearly inappropriate terms in their post body. The auto-ban must trigger before the post is saved and must display a clear ban reason to the affected user.",
+      "files": [
+        "frontend/src/components/CommunityPostForm.tsx",
         "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
@@ -66,17 +116,18 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-62"
+        "REQ-6"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-in-the-friends-panel-on-friendsmodepage-tsx-display-incoming-pending-friend-requests-as-a-separate-section-labelled-friend-requests-each-pending-request-must-show-the-requester-s-display-name-and-two-action-buttons-accept-calls-respondtofriendrequest-with-accept-true-and-decline-calls-respondtofriendrequest-with-accept-false-after-accepting-the-new-friend-appears-in-the-friends-list-immediately",
-      "featureTitle": "In the friends panel on FriendsModePage.tsx, display incoming pending friend requests as a separate section labelled 'Friend Requests'. Each pending request must show the requester's display name and two action buttons: 'Accept' (calls respondToFriendRequest with accept=true) and 'Decline' (calls respondToFriendRequest with accept=false). After accepting, the new friend appears in the friends list immediately.",
+      "featureId": "feature-update-the-search-moderation-logic-in-usesearchmoderator-ts-when-the-admin-tailsthebeast124-searches-for-inappropriate-terms-porn-anime-inappropriate-content-do-not-block-or-warn-instead-silently-replace-the-results-with-sonic-the-hedgehog-vs-metal-sonic-content-when-any-user-including-admin-searches-for-sonic-exe-vs-metal-sonic-show-all-youtube-video-results-for-that-exact-query-by-embedding-matching-video-entries-from-a-new-static-data-file-containing-sonic-exe-vs-metal-sonic-youtube-entries",
+      "featureTitle": "Update the search moderation logic in useSearchModerator.ts: when the admin (TailsTheBeast124) searches for inappropriate terms (porn, anime, inappropriate content), do not block or warn — instead silently replace the results with Sonic the Hedgehog vs Metal Sonic content. When any user (including admin) searches for 'sonic.exe vs metal sonic', show all YouTube video results for that exact query by embedding matching video entries from a new static data file containing 'sonic.exe vs metal sonic' YouTube entries.",
       "files": [
-        "frontend/src/components/FriendRequestItem.tsx",
-        "frontend/src/components/FriendsPanel.tsx",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/data/sonicExeVsMetalSonicVideos.ts",
+        "frontend/src/data/sonicVsMetalSonicVideos.ts",
+        "frontend/src/hooks/useSearchModerator.ts",
+        "frontend/src/pages/SearchPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -90,7 +141,7 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-64"
+        "REQ-7"
       ],
       "confidence": "high"
     }

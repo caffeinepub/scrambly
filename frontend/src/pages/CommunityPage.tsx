@@ -37,7 +37,7 @@ export default function CommunityPage() {
           </div>
         </div>
         <Link
-          to="/community/match"
+          to="/age-matcher"
           className="flex items-center gap-2 bg-secondary text-secondary-foreground font-fredoka px-4 py-2 rounded-full hover:opacity-90 transition-opacity text-sm"
         >
           <UserSearch size={16} />
@@ -77,7 +77,7 @@ export default function CommunityPage() {
       {/* Post Form */}
       <div>
         <h2 className="text-xl font-fredoka text-foreground mb-3">Share with the Community</h2>
-        <CommunityPostForm profile={profile} />
+        <CommunityPostForm />
       </div>
 
       {/* Feed */}

@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { Profile, SonicKnowledgeEntry, PostContent, FriendsModeRequest, Video, Idea, FriendRequest } from '../backend';
-import { Principal } from '@dfinity/principal';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useActor } from "./useActor";
+import type { Profile, SonicKnowledgeEntry, AgeCheckResult, AppealStatus, Idea, FriendsModeRequest, FriendRequest } from "../backend";
+import { Principal } from "@dfinity/principal";
 
 // ─── Profile ────────────────────────────────────────────────────────────────
 
@@ -9,9 +9,9 @@ export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
   const query = useQuery<Profile | null>({
-    queryKey: ['currentUserProfile'],
+    queryKey: ["currentUserProfile"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getCallerUserProfile();
     },
     enabled: !!actor && !actorFetching,
@@ -25,153 +25,90 @@ export function useGetCallerUserProfile() {
   };
 }
 
+export function useGetUserProfile(user: Principal | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery<Profile>({
+    queryKey: ["userProfile", user?.toText()],
+    queryFn: async () => {
+      if (!actor || !user) throw new Error("Actor or user not available");
+      return actor.getUserProfile(user);
+    },
+    enabled: !!actor && !isFetching && !!user,
+    retry: false,
+  });
+}
+
 export function useSaveCallerUserProfile() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (profile: Profile) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
+
+// ─── Age Verification ────────────────────────────────────────────────────────
 
 export function useVerifyAge() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ name, birthYear }: { name: string; birthYear: bigint }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.verifyAge(name, birthYear);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
 
-export function useGetCallerUserRole() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['callerUserRole'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getCallerUserRole();
-    },
-    enabled: !!actor && !actorFetching,
-    retry: false,
-  });
-}
+// ─── Admin ───────────────────────────────────────────────────────────────────
 
 export function useIsCallerAdmin() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery({
-    queryKey: ['isCallerAdmin'],
+  const { actor, isFetching } = useActor();
+  return useQuery<boolean>({
+    queryKey: ["isCallerAdmin"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) return false;
       return actor.isCallerAdmin();
     },
-    enabled: !!actor && !actorFetching,
-    retry: false,
+    enabled: !!actor && !isFetching,
   });
 }
 
-// ─── Community Posts ─────────────────────────────────────────────────────────
+// ─── Users by Age ────────────────────────────────────────────────────────────
 
-export function useGetCommunityPosts() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<PostContent[]>({
-    queryKey: ['communityPosts'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getCommunityPosts();
-    },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: 15000,
-  });
-}
-
-export function useCreateCommunityPost() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (message: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.createCommunityPost(message);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['communityPosts'] });
-    },
-  });
-}
-
-// ─── Moderation ──────────────────────────────────────────────────────────────
-
-export function useIssueWarning() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ target, reason }: { target: Principal; reason: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.issueWarning(target, reason);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['communityPosts'] });
-    },
-  });
-}
-
-export function useGetUsersByAge(fromYear: bigint, toYear: bigint, enabled: boolean) {
-  const { actor, isFetching: actorFetching } = useActor();
-
+export function useGetUsersByAge(fromYear: bigint, toYear: bigint) {
+  const { actor, isFetching } = useActor();
   return useQuery<Profile[]>({
-    queryKey: ['usersByAge', fromYear.toString(), toYear.toString()],
+    queryKey: ["usersByAge", fromYear.toString(), toYear.toString()],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getUsersByAge(fromYear, toYear);
     },
-    enabled: !!actor && !actorFetching && enabled,
+    enabled: !!actor && !isFetching,
   });
 }
 
-// ─── Sonic Search ────────────────────────────────────────────────────────────
+// ─── Warnings ────────────────────────────────────────────────────────────────
 
-export function useSearchSonicContent(searchText: string) {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<SonicKnowledgeEntry[]>({
-    queryKey: ['sonicSearch', searchText],
-    queryFn: async () => {
-      if (!actor) return [];
-      if (!searchText.trim()) return [];
-      return actor.searchSonicContent(searchText);
+export function useIssueWarning() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ target, reason }: { target: Principal; reason: string }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.issueWarning(target, reason);
     },
-    enabled: !!actor && !actorFetching && searchText.trim().length > 0,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useGetAllEntriesByType(contentType: string) {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<SonicKnowledgeEntry[]>({
-    queryKey: ['sonicEntries', contentType],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllEntriesByType(contentType);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
-    enabled: !!actor && !actorFetching,
-    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -180,27 +117,137 @@ export function useGetAllEntriesByType(contentType: string) {
 export function useSetRemainingUsageTime() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ user, timeRemaining }: { user: Principal; timeRemaining: bigint }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.setRemainingUsageTime(user, timeRemaining);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
 
-// ─── Ban Appeal ──────────────────────────────────────────────────────────────
+export function useGetRemainingUsageTime(user: Principal | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery<bigint | null>({
+    queryKey: ["remainingUsageTime", user?.toText()],
+    queryFn: async () => {
+      if (!actor || !user) return null;
+      return actor.getRemainingUsageTime(user);
+    },
+    enabled: !!actor && !isFetching && !!user,
+  });
+}
+
+// ─── Sonic Content ───────────────────────────────────────────────────────────
+
+export function useSearchSonicContent(searchText: string) {
+  const { actor, isFetching } = useActor();
+  return useQuery<SonicKnowledgeEntry[]>({
+    queryKey: ["sonicContent", searchText],
+    queryFn: async () => {
+      if (!actor || !searchText.trim()) return [];
+      return actor.searchSonicContent(searchText);
+    },
+    enabled: !!actor && !isFetching && !!searchText.trim(),
+  });
+}
+
+export function useGetAllEntriesByType(content_type: string) {
+  const { actor, isFetching } = useActor();
+  return useQuery<SonicKnowledgeEntry[]>({
+    queryKey: ["sonicEntriesByType", content_type],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllEntriesByType(content_type);
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// ─── Community Posts ─────────────────────────────────────────────────────────
+
+export function useGetCommunityPosts() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["communityPosts"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getCommunityPosts();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useCreateCommunityPost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (message: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.createCommunityPost(message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["communityPosts"] });
+    },
+    onError: () => {
+      // Invalidate profile to pick up any ban state changes
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+// ─── Appeals ─────────────────────────────────────────────────────────────────
 
 export function useSubmitBanAppeal() {
   const { actor } = useActor();
-
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (reason: string) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.submitBanAppeal(reason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+export function useReviewAppeal() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      user,
+      approve,
+      adminNote,
+    }: {
+      user: Principal;
+      approve: boolean;
+      adminNote: string | null;
+    }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.reviewAppeal(user, approve, adminNote);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+// ─── Moderator Application ───────────────────────────────────────────────────
+
+export function useApplyForModerator() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (answers: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.applyForModerator(answers);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
@@ -208,60 +255,291 @@ export function useSubmitBanAppeal() {
 // ─── Friends Mode ─────────────────────────────────────────────────────────────
 
 export function useGetFriendsModeStatus() {
-  const { actor, isFetching: actorFetching } = useActor();
-
+  const { actor, isFetching } = useActor();
   return useQuery<string | null>({
-    queryKey: ['friendsModeStatus'],
+    queryKey: ["friendsModeStatus"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) return null;
       return actor.getFriendsModeStatus();
     },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: 30000,
-    retry: false,
+    enabled: !!actor && !isFetching,
   });
 }
 
 export function useSubmitFriendsModeRequest() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (birthdate: string) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.submitFriendsModeRequest(birthdate);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['friendsModeStatus'] });
+      queryClient.invalidateQueries({ queryKey: ["friendsModeStatus"] });
     },
   });
 }
 
 export function useGetAllFriendsModeRequests() {
-  const { actor, isFetching: actorFetching } = useActor();
-
+  const { actor, isFetching } = useActor();
   return useQuery<FriendsModeRequest[]>({
-    queryKey: ['allFriendsModeRequests'],
+    queryKey: ["allFriendsModeRequests"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) return [];
       return actor.getAllFriendsModeRequests();
     },
-    enabled: !!actor && !actorFetching,
-    retry: false,
+    enabled: !!actor && !isFetching,
   });
 }
 
 export function useReviewFriendsModeRequest() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ principal, status }: { principal: string; status: string }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.reviewFriendsModeRequest(principal, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allFriendsModeRequests'] });
+      queryClient.invalidateQueries({ queryKey: ["allFriendsModeRequests"] });
+    },
+  });
+}
+
+// ─── Ideas ────────────────────────────────────────────────────────────────────
+
+export function useSubmitIdea() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (content: string) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.submitIdea(content);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allIdeas"] });
+    },
+  });
+}
+
+export function useGetAllIdeas() {
+  const { actor, isFetching } = useActor();
+  return useQuery<Idea[]>({
+    queryKey: ["allIdeas"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllIdeas();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useMarkIdeaReviewed() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (index: bigint) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.markIdeaReviewed(index);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allIdeas"] });
+    },
+  });
+}
+
+// ─── Friends ──────────────────────────────────────────────────────────────────
+
+export function useGetFriends() {
+  const { actor, isFetching } = useActor();
+  return useQuery<Principal[]>({
+    queryKey: ["friends"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getFriends();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetFriendRequests() {
+  const { actor, isFetching } = useActor();
+  return useQuery<FriendRequest[]>({
+    queryKey: ["friendRequests"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getFriendRequests();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSendFriendRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (recipientPrincipal: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.sendFriendRequest(recipientPrincipal);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+    },
+  });
+}
+
+export function useRespondToFriendRequest() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ requesterId, accept }: { requesterId: Principal; accept: boolean }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.respondToFriendRequest(requesterId, accept);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      queryClient.invalidateQueries({ queryKey: ["friendRequests"] });
+    },
+  });
+}
+
+// ─── Delete Account ───────────────────────────────────────────────────────────
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      // Client-side only: clear all cached data
+      queryClient.clear();
+    },
+  });
+}
+
+// ─── Admin Ban/Warn/Unban ─────────────────────────────────────────────────────
+
+export function useAdminBanUser() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminBanUser(target);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banList"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+export function useAdminWarnUser() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminWarnUser(target);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["warnList"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+export function useAdminUnbanUser() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.adminUnbanUser(target);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["banList"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+export function useGetBanList() {
+  const { actor, isFetching } = useActor();
+  return useQuery<Principal[]>({
+    queryKey: ["banList"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getBanList();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetWarnList() {
+  const { actor, isFetching } = useActor();
+  return useQuery<Principal[]>({
+    queryKey: ["warnList"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getWarnList();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+// ─── Moderator ────────────────────────────────────────────────────────────────
+
+export function usePromoteUserToModerator() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (target: Principal) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.promoteUserToModerator(target);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["isUserModerator"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
+    },
+  });
+}
+
+export function useIsUserModerator(user: Principal | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery<boolean>({
+    queryKey: ["isUserModerator", user?.toText()],
+    queryFn: async () => {
+      if (!actor || !user) return false;
+      return actor.isUserModerator(user);
+    },
+    enabled: !!actor && !isFetching && !!user,
+  });
+}
+
+// ─── School Account ───────────────────────────────────────────────────────────
+
+export function useIsSchoolAccount(user: Principal | null) {
+  const { actor, isFetching } = useActor();
+  return useQuery<boolean>({
+    queryKey: ["isSchoolAccount", user?.toText()],
+    queryFn: async () => {
+      if (!actor || !user) return false;
+      return actor.isSchoolAccount(user);
+    },
+    enabled: !!actor && !isFetching && !!user,
+  });
+}
+
+export function useSetSchoolAccountMode() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ user, enabled }: { user: Principal; enabled: boolean }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.setSchoolAccountMode(user, enabled);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["isSchoolAccount"] });
     },
   });
 }
@@ -271,143 +549,91 @@ export function useReviewFriendsModeRequest() {
 export function useSetPassword() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (password: string) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.setPassword(password);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
 
 export function useVerifyPassword() {
   const { actor } = useActor();
-
   return useMutation({
     mutationFn: async (password: string) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.verifyPassword(password);
     },
   });
 }
 
-// ─── Videos ───────────────────────────────────────────────────────────────────
+// ─── Approvals ────────────────────────────────────────────────────────────────
 
-export function useGetMyVideos() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<Video[]>({
-    queryKey: ['myVideos'],
+export function useIsCallerApproved() {
+  const { actor, isFetching } = useActor();
+  return useQuery<boolean>({
+    queryKey: ["isCallerApproved"],
     queryFn: async () => {
-      if (!actor) return [];
-      return actor.getMyVideos();
+      if (!actor) return false;
+      return actor.isCallerApproved();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !isFetching,
   });
 }
 
-export function useUploadVideo() {
+export function useRequestApproval() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async ({ title, blob }: { title: string; blob: import('../backend').ExternalBlob }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.uploadVideo(title, blob);
+    mutationFn: async () => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.requestApproval();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['myVideos'] });
+      queryClient.invalidateQueries({ queryKey: ["isCallerApproved"] });
     },
   });
 }
 
-// ─── Ideas ────────────────────────────────────────────────────────────────────
-
-export function useSubmitIdea() {
-  const { actor } = useActor();
-
-  return useMutation({
-    mutationFn: async (content: string) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.submitIdea(content);
-    },
-  });
-}
-
-export function useGetAllIdeas() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<Idea[]>({
-    queryKey: ['allIdeas'],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getAllIdeas();
-    },
-    enabled: !!actor && !actorFetching,
-    retry: false,
-  });
-}
-
-export function useMarkIdeaReviewed() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (index: bigint) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.markIdeaReviewed(index);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['allIdeas'] });
-    },
-  });
-}
-
-// ─── Friends ──────────────────────────────────────────────────────────────────
-
-export function useGetFriends() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<Principal[]>({
-    queryKey: ['friends'],
+export function useListApprovals() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["listApprovals"],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getFriends();
+      return actor.listApprovals();
     },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: 30000,
+    enabled: !!actor && !isFetching,
   });
 }
 
-export function useGetFriendRequests() {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<FriendRequest[]>({
-    queryKey: ['friendRequests'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getFriendRequests();
-    },
-    enabled: !!actor && !actorFetching,
-    refetchInterval: 30000,
-  });
-}
-
-export function useRespondToFriendRequest() {
+export function useSetApproval() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async ({ requesterId, accept }: { requesterId: Principal; accept: boolean }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.respondToFriendRequest(requesterId, accept);
+    mutationFn: async ({ user, status }: { user: Principal; status: any }) => {
+      if (!actor) throw new Error("Actor not available");
+      return actor.setApproval(user, status);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['friendRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      queryClient.invalidateQueries({ queryKey: ["listApprovals"] });
     },
+  });
+}
+
+// ─── Caller Banned ────────────────────────────────────────────────────────────
+
+export function useIsCallerBanned() {
+  const { actor, isFetching } = useActor();
+  return useQuery<boolean>({
+    queryKey: ["isCallerBanned"],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerBanned();
+    },
+    enabled: !!actor && !isFetching,
   });
 }

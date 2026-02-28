@@ -1,253 +1,145 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
+import { useGetCallerUserProfile } from "./useQueries";
 
-const STORAGE_KEY = 'scrambly_search_moderation';
+const ADMIN_USERNAME = "TailsTheBeast124";
 
-interface ModerationState {
-  warningCount: number;
-  pornWarningCount: number;
-  banStatus: null | 'anime' | 'porn';
-  appealUsed: boolean;
-  postAppeal: boolean; // true after a successful appeal (post-appeal state)
-}
+const INAPPROPRIATE_TERMS = [
+  "porn",
+  "hentai",
+  "nsfw",
+  "explicit",
+  "nude",
+  "naked",
+  "xxx",
+  "adult content",
+  "inappropriate anime",
+  "anime",
+];
 
-interface WarningResult {
+const MAX_WARNINGS_BEFORE_BAN = 5;
+
+export interface SearchModerationResult {
   allowed: boolean;
-  warning?: {
-    count: number;
-    remaining: number;
-    message: string;
-  };
-  ban?: {
-    type: 'anime' | 'porn';
-    message: string;
-  };
+  warningCount: number;
+  isBanned: boolean;
+  shouldReplaceResults: boolean;
 }
 
-const MAX_WARNINGS_BEFORE_BAN = 3;
+const WARN_KEY = "scrambly_search_warnings";
+const BAN_KEY = "scrambly_search_banned";
+const APPEAL_KEY = "scrambly_search_appeal_used";
 
-// +2% of max warnings = 0.02 * 3 = 0.06 → represented as a fractional life restore.
-// In integer terms, the appeal sets warningCount to MAX - 1 (one warning below ban),
-// giving the user back 1 "life" slot (the +2% partial restore).
-const APPEAL_WARNING_RESTORE = MAX_WARNINGS_BEFORE_BAN - 1; // = 2
-
-function loadState(): ModerationState {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        warningCount: parsed.warningCount ?? 0,
-        pornWarningCount: parsed.pornWarningCount ?? 0,
-        banStatus: parsed.banStatus ?? null,
-        appealUsed: parsed.appealUsed ?? false,
-        postAppeal: parsed.postAppeal ?? false,
-      };
-    }
-  } catch {
-    // ignore
-  }
-  return { warningCount: 0, pornWarningCount: 0, banStatus: null, appealUsed: false, postAppeal: false };
+function getWarnings(): number {
+  return parseInt(localStorage.getItem(WARN_KEY) || "0", 10);
 }
 
-function saveState(state: ModerationState) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    // ignore
-  }
+function setWarnings(count: number) {
+  localStorage.setItem(WARN_KEY, String(count));
+}
+
+function isBanned(): boolean {
+  return localStorage.getItem(BAN_KEY) === "true";
+}
+
+function setBanned(val: boolean) {
+  localStorage.setItem(BAN_KEY, val ? "true" : "false");
+}
+
+function isAppealUsed(): boolean {
+  return localStorage.getItem(APPEAL_KEY) === "true";
+}
+
+function setAppealUsed(val: boolean) {
+  localStorage.setItem(APPEAL_KEY, val ? "true" : "false");
 }
 
 export function useSearchModerator() {
-  const [state, setState] = useState<ModerationState>(loadState);
+  const { data: profile } = useGetCallerUserProfile();
+  const [warningCount, setWarningCount] = useState(getWarnings());
+  const [banned, setBannedState] = useState(isBanned());
+  const [appealUsed, setAppealUsedState] = useState(isAppealUsed());
 
-  const updateState = useCallback((updater: (prev: ModerationState) => ModerationState) => {
-    setState((prev) => {
-      const next = updater(prev);
-      saveState(next);
-      return next;
-    });
-  }, []);
+  const isAdmin = profile?.name === ADMIN_USERNAME;
 
-  const checkQuery = useCallback(
-    (query: string): WarningResult => {
-      const lower = query.trim().toLowerCase();
+  const validateSearch = useCallback(
+    (query: string): SearchModerationResult => {
+      const lower = query.toLowerCase().trim();
+      const hasInappropriate = INAPPROPRIATE_TERMS.some((term) => lower.includes(term));
 
-      // Already banned — block everything
-      if (state.banStatus) {
+      // Admin: allow everything, replace results with Sonic vs Metal Sonic
+      if (isAdmin && hasInappropriate) {
         return {
-          allowed: false,
-          ban: {
-            type: state.banStatus,
-            message:
-              state.banStatus === 'porn'
-                ? 'You have been permanently banned due to searching for inappropriate content.'
-                : 'Sorry, you searched too many inappropriate and unsafe things.',
-          },
+          allowed: true,
+          warningCount,
+          isBanned: false,
+          shouldReplaceResults: true,
         };
       }
 
-      // ── Porn check ──────────────────────────────────────────────────────────
-      if (lower === 'porn' || lower.includes('porn')) {
-        const newPornCount = state.pornWarningCount + 1;
-        const newTotal = state.warningCount + 2;
-
-        // Second porn search (already had porn warnings) → permanent ban
-        if (state.pornWarningCount >= 1) {
-          const next: ModerationState = {
-            ...state,
-            warningCount: newTotal,
-            pornWarningCount: newPornCount,
-            banStatus: 'porn',
-          };
-          updateState(() => next);
-          return {
-            allowed: false,
-            ban: {
-              type: 'porn',
-              message: 'You have been permanently banned due to searching for inappropriate content.',
-            },
-          };
-        }
-
-        // First porn search → 2 warnings
-        updateState((prev) => ({
-          ...prev,
-          warningCount: prev.warningCount + 2,
-          pornWarningCount: prev.pornWarningCount + 1,
-        }));
-
-        const remaining = Math.max(0, MAX_WARNINGS_BEFORE_BAN - newTotal);
+      if (!hasInappropriate) {
         return {
-          allowed: false,
-          warning: {
-            count: newTotal,
-            remaining,
-            message: `⚠️ Warning! Searching for inappropriate content is not allowed. You now have ${newTotal} warning${newTotal !== 1 ? 's' : ''}. ${remaining > 0 ? `${remaining} warning${remaining !== 1 ? 's' : ''} remaining before a ban.` : 'You are close to being banned!'}`,
-          },
+          allowed: true,
+          warningCount,
+          isBanned: banned,
+          shouldReplaceResults: false,
         };
       }
 
-      // ── "All about anime" ban trigger ────────────────────────────────────────
-      if (lower === 'all about anime' && state.warningCount >= 1) {
-        const next: ModerationState = {
-          ...state,
-          warningCount: state.warningCount + 1,
-          banStatus: 'anime',
-        };
-        updateState(() => next);
+      if (banned) {
         return {
           allowed: false,
-          ban: {
-            type: 'anime',
-            message: 'Sorry, you searched too many inappropriate and unsafe things.',
-          },
+          warningCount,
+          isBanned: true,
+          shouldReplaceResults: false,
         };
       }
 
-      // ── MHA check ────────────────────────────────────────────────────────────
-      if (lower === 'mha') {
-        const newCount = state.warningCount + 1;
-        updateState((prev) => ({ ...prev, warningCount: prev.warningCount + 1 }));
+      // Issue warning
+      const newCount = warningCount + 1;
+      setWarnings(newCount);
+      setWarningCount(newCount);
 
-        // Check if this triggers an anime ban
-        if (newCount >= MAX_WARNINGS_BEFORE_BAN) {
-          updateState((prev) => ({ ...prev, banStatus: 'anime' }));
-          return {
-            allowed: false,
-            ban: {
-              type: 'anime',
-              message: 'Sorry, you searched too many inappropriate and unsafe things.',
-            },
-          };
-        }
-
-        const remaining = Math.max(0, MAX_WARNINGS_BEFORE_BAN - newCount);
+      if (newCount >= MAX_WARNINGS_BEFORE_BAN) {
+        setBanned(true);
+        setBannedState(true);
         return {
           allowed: false,
-          warning: {
-            count: newCount,
-            remaining,
-            message: `⚠️ Warning! MHA (My Hero Academia) content is not allowed on this platform. You now have ${newCount} warning${newCount !== 1 ? 's' : ''}. ${remaining > 0 ? `${remaining} warning${remaining !== 1 ? 's' : ''} remaining before a ban.` : 'One more violation will result in a ban!'}`,
-          },
+          warningCount: newCount,
+          isBanned: true,
+          shouldReplaceResults: false,
         };
       }
 
-      // ── Anime check ──────────────────────────────────────────────────────────
-      if (lower.includes('anime')) {
-        const newCount = state.warningCount + 1;
-        updateState((prev) => ({ ...prev, warningCount: prev.warningCount + 1 }));
-
-        // Check if this triggers a ban
-        if (newCount >= MAX_WARNINGS_BEFORE_BAN) {
-          updateState((prev) => ({ ...prev, banStatus: 'anime' }));
-          return {
-            allowed: false,
-            ban: {
-              type: 'anime',
-              message: 'Sorry, you searched too many inappropriate and unsafe things.',
-            },
-          };
-        }
-
-        const remaining = Math.max(0, MAX_WARNINGS_BEFORE_BAN - newCount);
-        return {
-          allowed: false,
-          warning: {
-            count: newCount,
-            remaining,
-            message: `⚠️ Warning! Anime content is not allowed on this platform. You now have ${newCount} warning${newCount !== 1 ? 's' : ''}. ${remaining > 0 ? `${remaining} warning${remaining !== 1 ? 's' : ''} remaining before a ban.` : 'One more violation will result in a ban!'}`,
-          },
-        };
-      }
-
-      return { allowed: true };
+      return {
+        allowed: false,
+        warningCount: newCount,
+        isBanned: false,
+        shouldReplaceResults: false,
+      };
     },
-    [state, updateState]
+    [isAdmin, warningCount, banned]
   );
 
-  const resetBan = useCallback(() => {
-    updateState((prev) => ({ ...prev, banStatus: null }));
-  }, [updateState]);
-
-  const markAppealUsed = useCallback(() => {
-    updateState((prev) => ({ ...prev, appealUsed: true }));
-  }, [updateState]);
-
-  /**
-   * Process a successful appeal:
-   * - Clears the ban
-   * - Grants +2% life by setting warningCount to MAX_WARNINGS_BEFORE_BAN - 1
-   *   (one warning slot below the ban threshold — a partial life restore)
-   * - Marks appeal as used (one-time only)
-   * - Sets postAppeal flag
-   */
   const processAppeal = useCallback(() => {
-    updateState((prev) => ({
-      ...prev,
-      banStatus: null,
-      warningCount: APPEAL_WARNING_RESTORE,
-      appealUsed: true,
-      postAppeal: true,
-    }));
-  }, [updateState]);
-
-  /**
-   * Returns true if the user can appeal their current ban.
-   * Only allowed on the first ban and only if the appeal hasn't been used yet.
-   */
-  const isAppealAvailable = !state.appealUsed && state.banStatus !== null;
+    if (isAppealUsed()) return false;
+    // Grant +2% life: set warning count to MAX_WARNINGS_BEFORE_BAN - 1
+    const restoredCount = MAX_WARNINGS_BEFORE_BAN - 1;
+    setWarnings(restoredCount);
+    setWarningCount(restoredCount);
+    setBanned(false);
+    setBannedState(false);
+    setAppealUsed(true);
+    setAppealUsedState(true);
+    return true;
+  }, []);
 
   return {
-    state,
-    checkQuery,
-    resetBan,
-    markAppealUsed,
+    warningCount,
+    isBanned: banned,
+    isAppealAvailable: !appealUsed && banned,
+    appealUsed,
+    validateSearch,
     processAppeal,
-    isBanned: state.banStatus !== null,
-    banType: state.banStatus,
-    warningCount: state.warningCount,
-    appealUsed: state.appealUsed,
-    postAppeal: state.postAppeal,
-    isAppealAvailable,
+    maxWarnings: MAX_WARNINGS_BEFORE_BAN,
   };
 }

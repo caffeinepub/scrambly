@@ -1,98 +1,188 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add Friends Chat Bar with Friend List and 1000 Friend Limit",
+  "title": "Sonic Speedrun Videos, Parental PIN Update, Admin Panel with Ban/Warn/Mod Tools",
   "requirements": [
     {
-      "id": "REQ-60",
-      "summary": "Add a persistent chat bar UI element below the user profile section on FriendsModePage that opens a friends panel or drawer when clicked",
+      "id": "REQ-1",
+      "summary": "Replace Videos page content with Sonic speedrun videos for Sonic 1, 2, 3, and Mania",
       "acceptanceCriteria": [
-        "A chat/friends bar is visible below the user profile section on FriendsModePage.tsx",
-        "Tapping or clicking the bar opens a friends panel or slide-up drawer",
-        "The bar is styled consistently with the Sonic visual theme (cobalt blue/yellow, Fredoka One or Nunito font, rounded styling)"
+        "Videos page shows four categories: Sonic 1 Speedruns, Sonic 2 Speedruns, Sonic 3 Speedruns, Sonic Mania Speedruns",
+        "Each category contains at least 3 YouTube video entries with valid YouTube IDs and titles",
+        "Old unrelated video entries (Sonic Boom episodes, Sonic Says PSAs, Sonic Prime, etc.) are removed or replaced",
+        "Category filter buttons on VideosPage update the displayed video list correctly"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/FriendsModePage.tsx",
-          "operation": "modify",
-          "description": "Add a persistent chat bar UI component below the existing profile section. The bar should display a 'Friends' label with a chat/users icon. On click, toggle a slide-up drawer or panel component that overlays the page content. Style the bar using Sonic theme colors (cobalt blue background, yellow accent, Fredoka One font) with rounded corners. Ensure the bar remains visible and accessible at all times on the page."
+          "path": "frontend/src/data/speedrunVideos.ts",
+          "operation": "create",
+          "description": "Create a new static data file exporting an array of Sonic speedrun VideoEntry objects organized into four categories: 'Sonic 1 Speedruns', 'Sonic 2 Speedruns', 'Sonic 3 Speedruns', and 'Sonic Mania Speedruns'. Each category must contain at least 3 entries with real YouTube video IDs, titles, category labels, and kidFriendly flags set to true."
         },
         {
-          "path": "frontend/src/components/FriendsPanel.tsx",
-          "operation": "create",
-          "description": "Create a drawer/panel component that slides up from the bottom (mobile) or appears as a modal overlay (desktop) when the chat bar is clicked. Include a close button, a header showing 'Friends', and a scrollable content area. Use Sonic-themed styling with rounded corners, blue/yellow color scheme, and shadcn/ui Sheet or Dialog primitives for accessibility. The component should accept isOpen and onClose props for controlled state."
+          "path": "frontend/src/pages/VideosPage.tsx",
+          "operation": "modify",
+          "description": "Replace the current video imports (knucklesVideos, sonicBoomVideos, sonicPrimeVideos, sonicSaysVideos) with the new speedrunVideos import. Update the category filter state and buttons to reflect the four new speedrun categories. Update the video rendering logic to display videos from the speedrunVideos array filtered by selected category."
         }
       ]
     },
     {
-      "id": "REQ-61",
-      "summary": "Display a 'No Friends' empty state message in the friends panel when the user has zero accepted friends",
+      "id": "REQ-2",
+      "summary": "Update parental control PIN system with default '1234', allow 3-4 character PIN changes with validation",
       "acceptanceCriteria": [
-        "When the authenticated user has zero accepted friends, the panel shows a 'No Friends' empty state message",
-        "The empty state is styled consistently with the Sonic visual theme",
-        "No friend list items are rendered when the friend count is zero"
+        "Default PIN stored in localStorage is '1234' if none was previously set",
+        "PIN change input validates that the new PIN is 3 or 4 characters; shows error if shorter or longer",
+        "Parent can successfully change the PIN to a new 3–4 character value",
+        "After change, the new PIN is required to access parental controls"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/FriendsPanel.tsx",
+          "path": "frontend/src/components/PINEntryModal.tsx",
           "operation": "modify",
-          "description": "Add conditional rendering logic: when the friends list is empty (length === 0), display a centered empty state component with a friendly message such as 'No Friends Yet' and a subtitle encouraging the user to add friends. Use Sonic-themed icons (e.g., a Sonic character silhouette or ring icon) and maintain consistent typography (Nunito body text). Ensure no friend list items render when the count is zero."
+          "description": "Update the localStorage initialization logic to set a default PIN of '1234' if no PIN exists. Add a PIN change section with input and validation that enforces 3-4 character length (digits or alphanumeric). Display validation error messages when the new PIN is too short or too long. Update the PIN verification logic to use the stored/changed PIN value."
         }
       ]
     },
     {
-      "id": "REQ-62",
-      "summary": "Display the friend list with a maximum of 1000 friends and show a 'Friend limit reached (1000/1000)' message when the cap is hit",
+      "id": "REQ-3",
+      "summary": "Add face scan liveness check before parental controls PIN entry, immediately discard image",
       "acceptanceCriteria": [
-        "The friends panel lists all accepted friends when the user has at least one friend",
-        "The total number of displayed friends cannot exceed 1000",
-        "When the friend count reaches 1000, the 'Add Friend' action is disabled and a 'Friend limit reached (1000/1000)' notice is shown",
-        "Friend relationships are persisted in the backend keyed by the user's principal",
-        "The backend enforces the 1000-friend cap and returns an error if exceeded"
+        "Opening Parental Controls triggers a camera modal before PIN entry",
+        "Camera auto-starts and captures a frame after a brief countdown",
+        "Image data is immediately discarded (not stored in state, localStorage, or sent to backend)",
+        "After scan, camera stops and user proceeds to PIN entry",
+        "If camera permission is denied, show an error and fall back to PIN-only entry"
       ],
       "file_operations": [
+        {
+          "path": "frontend/src/components/ParentalFaceScanModal.tsx",
+          "operation": "create",
+          "description": "Use the camera component to create a modal that auto-starts the camera for a liveness check. Display a countdown (3-2-1), capture a single frame using capturePhoto from the useCamera hook, show 'Verifying parent identity...' message, then immediately discard the captured image without storing it in state, localStorage, or sending to backend. Stop the camera and call an onComplete callback to proceed. If camera permission is denied, show an error message and provide a 'Skip to PIN' button. Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/ParentalDashboard.tsx",
+          "operation": "modify",
+          "description": "Add state to track whether the face scan step is completed (initially false). When the parental controls dashboard is opened, first show the ParentalFaceScanModal if the scan is not completed. After the face scan completes successfully, set the scan completion flag and proceed to show the PINEntryModal. If the scan is skipped due to camera errors, proceed directly to PIN entry."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Create Admin Panel page for TailsTheBeast124 with ban, warn, unban, and list capabilities",
+      "acceptanceCriteria": [
+        "'/admin' route is only accessible to TailsTheBeast124; all others are redirected",
+        "Ban input + button: typing a username and pressing Ban bans that user account in the backend",
+        "Warn input + button: typing a username and pressing Warn sends a warning to that user in the backend",
+        "Unban section shows a list of all currently banned users with an Unban button per user",
+        "Ban list shows 'Nobody' when ban count is 0, '1 person banned' when 1, 'N people banned' for N>1",
+        "Ban list and warn list counters display up to 100,000,000,000,000"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/AdminPanel.tsx",
+          "operation": "create",
+          "description": "Create an admin-only page with four sections: (1) Ban User section with a text input for username and a 'Ban' button that calls adminBanUser mutation with the target user's principal; (2) Warn User section with a text input for username and a 'Warn' button that calls adminWarnUser mutation; (3) Unban section that fetches the ban list via getBanList query and displays a scrollable list of banned users by principal with an 'Unban' button calling adminUnbanUser for each; (4) Ban List display showing 'Nobody' when count is 0, '1 person banned' when 1, or 'N people banned' for N>1, with a max display of 100,000,000,000,000; (5) Warn List display showing total warned users count up to 100,000,000,000,000 via getWarnList query. Use toast notifications for success/error feedback."
+        },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a useGetFriends hook that calls the backend getFriends() method and returns an array of Principal objects representing accepted friends. Use React Query with appropriate caching and error handling. The hook should be enabled only when the user is authenticated. Include a isFetching state for loading UI."
+          "description": "Add React Query hooks for adminBanUser, adminWarnUser, adminUnbanUser, getBanList, and getWarnList that wrap the corresponding backend actor methods. Include invalidation logic so that getBanList and getWarnList queries are invalidated after ban/warn/unban mutations complete."
         },
         {
-          "path": "frontend/src/components/FriendsPanel.tsx",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Use the useGetFriends hook to fetch and display the friend list. Map over the friends array and render each friend as a list item showing their display name (fetch via getUserProfile for each Principal). Display a friend count badge in the panel header (e.g., 'Friends (5)'). When the friend count reaches 1000, display a warning banner at the top of the panel: 'Friend limit reached (1000/1000)' styled with a yellow background. Disable any 'Add Friend' UI elements when the count is 1000. Show loading skeletons while fetching friends."
+          "description": "Add a new route '/admin' that renders the AdminPanel page component. Wrap the route with an admin identity guard that checks if the current user's profile name is 'TailsTheBeast124' (or use backend isCallerAdmin if available). Redirect non-admin users to the homepage if they attempt to access the admin route."
         },
         {
-          "path": "frontend/src/components/FriendListItem.tsx",
-          "operation": "create",
-          "description": "Create a reusable component that renders a single friend item. Accept a Principal prop, fetch the user profile via useQuery and getUserProfile, and display the friend's name. Include a placeholder avatar (use a Sonic-themed icon or generated asset). Style the item with hover effects, rounded corners, and Sonic theme colors. Handle loading and error states gracefully."
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Add a navigation link to '/admin' in the header navigation menu that is only visible when the current user's profile name is 'TailsTheBeast124' or the backend isCallerAdmin returns true. Place the link in an admin-only section of the navigation bar."
         }
       ]
     },
     {
-      "id": "REQ-64",
-      "summary": "Display incoming pending friend requests in a 'Friend Requests' section with Accept and Decline buttons",
+      "id": "REQ-5",
+      "summary": "Add moderation promotion tool to Admin Panel with celebratory message for new moderators",
       "acceptanceCriteria": [
-        "A 'Friend Requests' section is shown in the friends panel when there are pending incoming requests",
-        "Each pending request shows the requester's display name",
-        "Accept and Decline buttons are present for each request",
-        "Accepting a request moves the user into the friends list without a full page reload",
-        "Declining a request removes it from the pending list"
+        "Admin Panel has a Moderation section with username input, reason input, and 'Make Moderator' button",
+        "Pressing Make Moderator calls the backend to grant the mod role to the specified user",
+        "When a newly-promoted moderator loads the app, a banner or modal shows: 'Yay, you're a mod! Help with Scrambly to make it better!'",
+        "The celebratory message is shown only once (dismissed or session-flagged after first display)"
       ],
       "file_operations": [
         {
+          "path": "frontend/src/pages/AdminPanel.tsx",
+          "operation": "modify",
+          "description": "Add a new Moderation Promotion section with a text input for target username (principal), a text input for reason, and a 'Make Moderator' button. When the button is clicked, call the promoteUserToModerator mutation with the target principal. Display toast notification on success or error."
+        },
+        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add useGetFriendRequests and useRespondToFriendRequest hooks. useGetFriendRequests calls backend getFriendRequests() and returns an array of FriendRequest objects. useRespondToFriendRequest is a mutation hook that calls backend respondToFriendRequest(requesterId: Principal, accept: boolean), invalidates the friend requests and friends queries on success, and shows a toast notification. Include proper error handling and optimistic updates."
+          "description": "Add a React Query mutation hook for promoteUserToModerator that wraps the backend actor's promoteUserToModerator method. Invalidate the user role and profile queries after successful promotion."
         },
         {
-          "path": "frontend/src/components/FriendsPanel.tsx",
-          "operation": "modify",
-          "description": "Add a 'Friend Requests' section above the friends list in the panel. Use the useGetFriendRequests hook to fetch pending requests. Conditionally render this section only when there are pending requests (length > 0). Display a section header 'Friend Requests' with a count badge. Map over the requests and render each using a FriendRequestItem component. Ensure the section is visually distinct from the friends list (e.g., lighter background or border separator)."
-        },
-        {
-          "path": "frontend/src/components/FriendRequestItem.tsx",
+          "path": "frontend/src/components/ModeratorWelcomeBanner.tsx",
           "operation": "create",
-          "description": "Create a component that renders a single friend request. Accept a FriendRequest prop, fetch the requester's profile via getUserProfile to display their name. Include two action buttons: 'Accept' (green, calls respondToFriendRequest with accept=true) and 'Decline' (red/gray, calls respondToFriendRequest with accept=false). Use the useRespondToFriendRequest mutation hook. Disable buttons while the mutation is pending. Style consistently with the Sonic theme using rounded buttons and appropriate spacing."
+          "description": "Create a celebratory banner component that checks if the current user was recently promoted to moderator by querying isUserModerator. If true and the banner has not been dismissed in sessionStorage, display a full-width banner with the message: 'Yay, you're a mod! Help with Scrambly to make it better!' Include a dismiss button that sets a sessionStorage flag to prevent re-showing the banner during the same session."
+        },
+        {
+          "path": "frontend/src/components/Layout.tsx",
+          "operation": "modify",
+          "description": "Import and render the ModeratorWelcomeBanner component at the top of the Layout (above the main content area) so it is visible on any page load for newly-promoted moderators. The banner will self-manage visibility based on sessionStorage and user role."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Update post moderation to not auto-warn for text posts, but instantly ban for anime images or prohibited spam keywords",
+      "acceptanceCriteria": [
+        "Submitting a regular text post does not trigger any automatic warning",
+        "Submitting a post with an attached anime image triggers an instant ban before the post is saved",
+        "Submitting a post body containing 'porn', 'anime', 'inappropriate anime', or equivalent terms triggers an instant ban",
+        "Banned user sees an AccountLockedMessage with reason explaining the ban",
+        "Post is rejected and not saved when an auto-ban is triggered"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/CommunityPostForm.tsx",
+          "operation": "modify",
+          "description": "Before submitting a post via the createCommunityPost mutation, add client-side validation that checks the post message for prohibited keywords ('porn', 'anime', 'inappropriate anime'). If any are detected, immediately show an error toast stating the user is banned for inappropriate content and do not call the backend. Remove any existing auto-warn logic for regular text posts. Note: backend will handle anime image detection and banning on its side; frontend should display the resulting ban state via AccountLockedMessage."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update the createCommunityPost mutation to handle backend errors that indicate an instant ban (e.g., trap message containing 'banned'). On such errors, invalidate the user profile query to trigger a re-fetch of the accountLocked status, causing the AuthGate to show the AccountLockedMessage with the ban reason."
+        }
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "summary": "Update search moderation to show Sonic vs Metal Sonic results for admin inappropriate searches, and all sonic.exe vs metal sonic YouTube results for that exact query",
+      "acceptanceCriteria": [
+        "When TailsTheBeast124 searches an inappropriate term, results show Sonic vs Metal Sonic videos without any warning or block",
+        "When any user searches 'sonic.exe vs metal sonic', results display a list of YouTube video entries for that topic",
+        "Non-admin users searching inappropriate terms still trigger the existing warn/ban moderation flow",
+        "A static data file (sonicExeVsMetalSonicVideos.ts or similar) contains multiple sonic.exe vs metal sonic YouTube entries"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/data/sonicVsMetalSonicVideos.ts",
+          "operation": "create",
+          "description": "Create a static data file exporting an array of VideoEntry objects for 'Sonic the Hedgehog vs Metal Sonic' themed videos. Include at least 5 entries with real YouTube IDs, titles, category set to 'Sonic vs Metal Sonic', and kidFriendly flags. This file will be used as replacement results for admin inappropriate searches."
+        },
+        {
+          "path": "frontend/src/data/sonicExeVsMetalSonicVideos.ts",
+          "operation": "create",
+          "description": "Create a static data file exporting an array of VideoEntry objects specifically for 'sonic.exe vs metal sonic' searches. Include at least 5 entries with real YouTube IDs, titles, category set to 'Sonic.exe vs Metal Sonic', and kidFriendly flags. These entries will be displayed when any user searches for 'sonic.exe vs metal sonic'."
+        },
+        {
+          "path": "frontend/src/hooks/useSearchModerator.ts",
+          "operation": "modify",
+          "description": "Update the validateSearch function to check if the current user is admin (TailsTheBeast124) via profile name or isCallerAdmin. If admin and query contains inappropriate terms, return a success validation result but set a flag indicating results should be replaced. Add logic to the hook's return value that provides a shouldReplaceResults flag and replacementResults array. When shouldReplaceResults is true, return the Sonic vs Metal Sonic video entries from sonicVsMetalSonicVideos.ts."
+        },
+        {
+          "path": "frontend/src/pages/SearchPage.tsx",
+          "operation": "modify",
+          "description": "Update the search results rendering logic to check if the search query exactly matches 'sonic.exe vs metal sonic' (case-insensitive). If so, display the video entries from sonicExeVsMetalSonicVideos.ts in the Videos tab. Also, check the useSearchModerator hook's shouldReplaceResults flag. If true (admin searching inappropriate term), display the replacement results from sonicVsMetalSonicVideos.ts instead of the actual search results, without showing any warning or ban screen."
         }
       ]
     }

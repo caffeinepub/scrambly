@@ -1,785 +1,386 @@
-import { useState, useRef } from 'react';
-import AdBlockerToggle from '../components/AdBlockerToggle';
-import {
-  useGetCallerUserProfile,
-  useSetPassword,
-  useVerifyPassword,
-  useGetMyVideos,
-  useUploadVideo,
-  useSubmitIdea,
-} from '../hooks/useQueries';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Settings,
-  User,
-  Shield,
-  LogOut,
-  Info,
-  Zap,
-  Lock,
-  KeyRound,
-  Video,
-  Upload,
-  Lightbulb,
-  CheckCircle,
-  Loader2,
-  Eye,
-  EyeOff,
-  Play,
-  Star,
-  Send,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
-import { getAge, isKidMode } from '../components/KidModeWrapper';
-import { Link } from '@tanstack/react-router';
+  useGetCallerUserProfile,
+  useSaveCallerUserProfile,
+  useSetPassword,
+  useVerifyPassword,
+  useSubmitIdea,
+  useApplyForModerator,
+} from '../hooks/useQueries';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { Loader2, Save, Lock, Video, Lightbulb, Shield, Trash2, AlertTriangle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
-import { ExternalBlob } from '../backend';
 
-// ─── Password Section ─────────────────────────────────────────────────────────
+function getAge(profile: { birthYear: bigint } | null | undefined): number {
+  if (!profile) return 0;
+  return 2024 - Number(profile.birthYear);
+}
 
-function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
-  const [mode, setMode] = useState<'idle' | 'set' | 'change-verify' | 'change-new'>('idle');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [validationError, setValidationError] = useState('');
+function isKidMode(profile: { birthYear: bigint } | null | undefined): boolean {
+  if (!profile) return false;
+  const age = getAge(profile);
+  return age < 13;
+}
 
+export default function SettingsPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { identity, clear } = useInternetIdentity();
+  const { data: profile, isLoading: profileLoading } = useGetCallerUserProfile();
+  const saveProfile = useSaveCallerUserProfile();
   const setPasswordMutation = useSetPassword();
   const verifyPasswordMutation = useVerifyPassword();
+  const submitIdeaMutation = useSubmitIdea();
+  const applyModeratorMutation = useApplyForModerator();
 
-  const validatePassword = (val: string): string => {
-    if (!/^\d+$/.test(val) && val.length > 0) return 'Password must contain numbers only.';
-    if (val.length > 0 && val.length !== 4 && val.length !== 6) return 'Password must be exactly 4 or 6 digits.';
-    return '';
-  };
+  // Profile form state
+  const [name, setName] = useState('');
+  const [birthYear, setBirthYear] = useState('');
 
-  const handlePasswordInput = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 6);
-    setPassword(digits);
-    setValidationError(validatePassword(digits));
-  };
+  // Password state
+  const [newPassword, setNewPassword] = useState('');
+  const [verifyPasswordInput, setVerifyPasswordInput] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState('');
 
-  const handleConfirmInput = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 6);
-    setConfirmPassword(digits);
-  };
+  // Idea state
+  const [ideaContent, setIdeaContent] = useState('');
+  const [ideaMessage, setIdeaMessage] = useState('');
 
-  const handleCurrentInput = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 6);
-    setCurrentPassword(digits);
+  // Moderator application state
+  const [modAnswers, setModAnswers] = useState('');
+  const [modMessage, setModMessage] = useState('');
+
+  // Delete account state
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name || '');
+      setBirthYear(profile.birthYear ? String(profile.birthYear) : '');
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    try {
+      await saveProfile.mutateAsync({
+        ...profile,
+        name,
+        birthYear: BigInt(birthYear || '0'),
+      });
+      toast.success('Profile saved!');
+    } catch (e: any) {
+      toast.error('Failed to save profile: ' + (e?.message || 'Unknown error'));
+    }
   };
 
   const handleSetPassword = async () => {
-    const err = validatePassword(password);
-    if (err) { setValidationError(err); return; }
-    if (password !== confirmPassword) { setValidationError('Passwords do not match.'); return; }
-
+    setPasswordMessage('');
     try {
-      await setPasswordMutation.mutateAsync(password);
-      toast.success('Password set successfully! 🔒');
-      setMode('idle');
-      setPassword('');
-      setConfirmPassword('');
-      setValidationError('');
-    } catch {
-      toast.error('Failed to set password. Please try again.');
+      await setPasswordMutation.mutateAsync(newPassword);
+      setPasswordMessage('Password set successfully!');
+      setNewPassword('');
+    } catch (e: any) {
+      setPasswordMessage('Error: ' + (e?.message || 'Unknown error'));
     }
   };
 
-  const handleVerifyCurrentPassword = async () => {
+  const handleVerifyPassword = async () => {
+    setPasswordMessage('');
     try {
-      const ok = await verifyPasswordMutation.mutateAsync(currentPassword);
-      if (ok) {
-        setMode('change-new');
-        setCurrentPassword('');
-      } else {
-        toast.error('Incorrect password. Please try again.');
+      const result = await verifyPasswordMutation.mutateAsync(verifyPasswordInput);
+      setPasswordMessage(result ? '✅ Password correct!' : '❌ Incorrect password');
+      setVerifyPasswordInput('');
+    } catch (e: any) {
+      setPasswordMessage('Error: ' + (e?.message || 'Unknown error'));
+    }
+  };
+
+  const handleSubmitIdea = async () => {
+    setIdeaMessage('');
+    try {
+      await submitIdeaMutation.mutateAsync(ideaContent);
+      setIdeaMessage('✅ Idea submitted! Thanks for your suggestion.');
+      setIdeaContent('');
+    } catch (e: any) {
+      setIdeaMessage('Error: ' + (e?.message || 'Unknown error'));
+    }
+  };
+
+  const handleApplyModerator = async () => {
+    setModMessage('');
+    try {
+      const result = await applyModeratorMutation.mutateAsync(modAnswers);
+      if (result === 'success') {
+        setModMessage('✅ Application submitted successfully!');
+      } else if (result === 'incorrectAnswers') {
+        setModMessage('❌ Incorrect answers. Please try again.');
+      } else if (result === 'applicationFull') {
+        setModMessage('ℹ️ Applications are currently full. Try again later.');
       }
-    } catch {
-      toast.error('Failed to verify password.');
+      setModAnswers('');
+    } catch (e: any) {
+      setModMessage('Error: ' + (e?.message || 'Unknown error'));
     }
   };
 
-  const handleChangePassword = async () => {
-    const err = validatePassword(password);
-    if (err) { setValidationError(err); return; }
-    if (password !== confirmPassword) { setValidationError('Passwords do not match.'); return; }
-
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setDeleteError('');
+    setIsDeleting(true);
     try {
-      await setPasswordMutation.mutateAsync(password);
-      toast.success('Password changed successfully! 🔒');
-      setMode('idle');
-      setPassword('');
-      setConfirmPassword('');
-      setValidationError('');
-    } catch {
-      toast.error('Failed to change password. Please try again.');
+      await clear();
+      queryClient.clear();
+      navigate({ to: '/' });
+    } catch (e: any) {
+      setDeleteError('Failed to delete account: ' + (e?.message || 'Unknown error'));
+      setIsDeleting(false);
     }
-  };
-
-  const handleCancel = () => {
-    setMode('idle');
-    setPassword('');
-    setConfirmPassword('');
-    setCurrentPassword('');
-    setValidationError('');
-  };
-
-  return (
-    <div className="sonic-card p-5 space-y-4">
-      <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2">
-        <KeyRound size={18} className="text-primary" />
-        Account Password
-      </h2>
-
-      {mode === 'idle' && (
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-nunito text-sm text-foreground">
-              {hasPassword ? '🔒 Password is set' : '🔓 No password set'}
-            </p>
-            <p className="font-nunito text-xs text-muted-foreground mt-0.5">
-              4 or 6 digit numeric PIN
-            </p>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => setMode(hasPassword ? 'change-verify' : 'set')}
-            className="rounded-full font-fredoka text-sm"
-          >
-            {hasPassword ? 'Change Password' : 'Set Password'}
-          </Button>
-        </div>
-      )}
-
-      {mode === 'set' && (
-        <div className="space-y-3">
-          <div>
-            <Label className="font-nunito font-700 text-sm">New Password (4 or 6 digits)</Label>
-            <div className="relative mt-1">
-              <Input
-                type={showPassword ? 'text' : 'tel'}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="Enter 4 or 6 digit PIN"
-                value={password}
-                onChange={(e) => handlePasswordInput(e.target.value)}
-                maxLength={6}
-                className="rounded-xl font-nunito text-sm pr-10 tracking-widest"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <Label className="font-nunito font-700 text-sm">Confirm Password</Label>
-            <Input
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              placeholder="Re-enter PIN"
-              value={confirmPassword}
-              onChange={(e) => handleConfirmInput(e.target.value)}
-              maxLength={6}
-              className="mt-1 rounded-xl font-nunito text-sm tracking-widest"
-            />
-          </div>
-          {validationError && (
-            <p className="text-xs text-destructive font-nunito">{validationError}</p>
-          )}
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={handleSetPassword}
-              disabled={setPasswordMutation.isPending || password.length < 4}
-              className="rounded-full font-fredoka"
-            >
-              {setPasswordMutation.isPending ? (
-                <><Loader2 size={14} className="animate-spin mr-1" />Saving...</>
-              ) : (
-                <><Lock size={14} className="mr-1" />Set Password</>
-              )}
-            </Button>
-            <Button size="sm" variant="outline" onClick={handleCancel} className="rounded-full font-nunito text-sm">
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {mode === 'change-verify' && (
-        <div className="space-y-3">
-          <div>
-            <Label className="font-nunito font-700 text-sm">Current Password</Label>
-            <Input
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              placeholder="Enter current PIN"
-              value={currentPassword}
-              onChange={(e) => handleCurrentInput(e.target.value)}
-              maxLength={6}
-              className="mt-1 rounded-xl font-nunito text-sm tracking-widest"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={handleVerifyCurrentPassword}
-              disabled={verifyPasswordMutation.isPending || currentPassword.length < 4}
-              className="rounded-full font-fredoka"
-            >
-              {verifyPasswordMutation.isPending ? (
-                <><Loader2 size={14} className="animate-spin mr-1" />Verifying...</>
-              ) : 'Verify'}
-            </Button>
-            <Button size="sm" variant="outline" onClick={handleCancel} className="rounded-full font-nunito text-sm">
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {mode === 'change-new' && (
-        <div className="space-y-3">
-          <div>
-            <Label className="font-nunito font-700 text-sm">New Password (4 or 6 digits)</Label>
-            <div className="relative mt-1">
-              <Input
-                type={showPassword ? 'text' : 'tel'}
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="Enter new 4 or 6 digit PIN"
-                value={password}
-                onChange={(e) => handlePasswordInput(e.target.value)}
-                maxLength={6}
-                className="rounded-xl font-nunito text-sm pr-10 tracking-widest"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <Label className="font-nunito font-700 text-sm">Confirm New Password</Label>
-            <Input
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              placeholder="Re-enter new PIN"
-              value={confirmPassword}
-              onChange={(e) => handleConfirmInput(e.target.value)}
-              maxLength={6}
-              className="mt-1 rounded-xl font-nunito text-sm tracking-widest"
-            />
-          </div>
-          {validationError && (
-            <p className="text-xs text-destructive font-nunito">{validationError}</p>
-          )}
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={handleChangePassword}
-              disabled={setPasswordMutation.isPending || password.length < 4}
-              className="rounded-full font-fredoka"
-            >
-              {setPasswordMutation.isPending ? (
-                <><Loader2 size={14} className="animate-spin mr-1" />Saving...</>
-              ) : (
-                <><Lock size={14} className="mr-1" />Change Password</>
-              )}
-            </Button>
-            <Button size="sm" variant="outline" onClick={handleCancel} className="rounded-full font-nunito text-sm">
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Video Upload Section ─────────────────────────────────────────────────────
-
-function VideoUploadSection() {
-  const { data: myVideos, isLoading: videosLoading } = useGetMyVideos();
-  const uploadVideoMutation = useUploadVideo();
-
-  const [videoTitle, setVideoTitle] = useState('');
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [durationError, setDurationError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setDurationError('');
-
-    const url = URL.createObjectURL(file);
-    const videoEl = document.createElement('video');
-    videoEl.preload = 'metadata';
-
-    await new Promise<void>((resolve) => {
-      videoEl.onloadedmetadata = () => resolve();
-      videoEl.onerror = () => resolve();
-      videoEl.src = url;
-    });
-
-    const duration = videoEl.duration;
-    URL.revokeObjectURL(url);
-
-    if (isNaN(duration) || duration > 1000) {
-      setDurationError(
-        isNaN(duration)
-          ? 'Could not read video duration. Please try a different file.'
-          : `Video is too long (${Math.round(duration)}s). Maximum allowed is 1000 seconds.`
-      );
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    if (!videoTitle.trim()) {
-      toast.error('Please enter a title for your video first.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) => {
-        setUploadProgress(pct);
-      });
-
-      await uploadVideoMutation.mutateAsync({ title: videoTitle.trim(), blob });
-      toast.success('Video uploaded successfully! 🎬');
-      setVideoTitle('');
-      setUploadProgress(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch {
-      toast.error('Failed to upload video. Please try again.');
-      setUploadProgress(null);
-    }
-  };
-
-  return (
-    <div className="sonic-card p-5 space-y-4">
-      <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2">
-        <Video size={18} className="text-primary" />
-        My Videos
-      </h2>
-
-      {/* Upload Form */}
-      <div className="space-y-3 border border-border rounded-xl p-4 bg-muted/30">
-        <p className="font-nunito font-700 text-sm text-foreground">Upload a Video</p>
-        <p className="font-nunito text-xs text-muted-foreground">Maximum duration: 1000 seconds</p>
-        <div>
-          <Label className="font-nunito font-700 text-sm">Video Title</Label>
-          <Input
-            placeholder="Enter a title..."
-            value={videoTitle}
-            onChange={(e) => setVideoTitle(e.target.value)}
-            className="mt-1 rounded-xl font-nunito text-sm"
-            maxLength={100}
-          />
-        </div>
-        {durationError && (
-          <p className="text-xs text-destructive font-nunito">{durationError}</p>
-        )}
-        {uploadProgress !== null && (
-          <div className="space-y-1">
-            <p className="text-xs font-nunito text-muted-foreground">Uploading... {uploadProgress}%</p>
-            <Progress value={uploadProgress} className="h-2" />
-          </div>
-        )}
-        <Button
-          size="sm"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadVideoMutation.isPending || !videoTitle.trim()}
-          className="rounded-full font-fredoka"
-        >
-          {uploadVideoMutation.isPending ? (
-            <><Loader2 size={14} className="animate-spin mr-1" />Uploading...</>
-          ) : (
-            <><Upload size={14} className="mr-1" />Choose Video File</>
-          )}
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="video/*"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
-      </div>
-
-      {/* Video List */}
-      {videosLoading ? (
-        <div className="flex items-center gap-2 text-muted-foreground py-2">
-          <Loader2 size={16} className="animate-spin" />
-          <span className="font-nunito text-sm">Loading videos...</span>
-        </div>
-      ) : !myVideos || myVideos.length === 0 ? (
-        <p className="font-nunito text-sm text-muted-foreground text-center py-4">
-          No videos uploaded yet.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {myVideos.map((video, i) => (
-            <div key={i} className="border border-border rounded-xl overflow-hidden">
-              <div className="flex items-center gap-3 p-3 bg-muted/20">
-                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Play size={14} className="text-primary" />
-                </div>
-                <p className="font-nunito font-700 text-sm text-foreground flex-1 truncate">{video.title}</p>
-              </div>
-              <video
-                src={video.blob.getDirectURL()}
-                controls
-                className="w-full max-h-48 bg-black"
-                preload="metadata"
-              />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Ideas Section ────────────────────────────────────────────────────────────
-
-function IdeasSection() {
-  const [ideaText, setIdeaText] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const submitIdeaMutation = useSubmitIdea();
-
-  const MAX_CHARS = 600;
-
-  const handleSubmit = async () => {
-    const trimmed = ideaText.trim();
-    if (!trimmed) return;
-
-    try {
-      await submitIdeaMutation.mutateAsync(trimmed);
-      toast.success('Thank you! Your idea has been submitted. 💡');
-      setIdeaText('');
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 5000);
-    } catch {
-      toast.error('Failed to submit idea. Please try again.');
-    }
-  };
-
-  return (
-    <div className="sonic-card p-5 space-y-4">
-      <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2">
-        <Lightbulb size={18} className="text-primary" />
-        Send Your Best Ideas as a Sonic Fan
-      </h2>
-      <p className="font-nunito text-sm text-muted-foreground">
-        Have a great idea for Scrambly? Share it with us! The admin (Jourdain Rodriguez) will review your idea and may use it.
-      </p>
-
-      {submitted && (
-        <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-xl p-3">
-          <CheckCircle size={16} className="text-green-600 shrink-0" />
-          <p className="font-nunito text-sm text-green-700 dark:text-green-400">
-            Your idea has been submitted! Thanks for sharing. ✨
-          </p>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Textarea
-          placeholder="Share your idea here... (e.g. new features, content ideas, improvements)"
-          value={ideaText}
-          onChange={(e) => setIdeaText(e.target.value.slice(0, MAX_CHARS))}
-          className="rounded-xl font-nunito text-sm min-h-[120px] resize-none"
-        />
-        <div className="flex items-center justify-between">
-          <span className={`font-nunito text-xs ${ideaText.length >= MAX_CHARS - 50 ? 'text-destructive' : 'text-muted-foreground'}`}>
-            {ideaText.length} / {MAX_CHARS}
-          </span>
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            disabled={submitIdeaMutation.isPending || !ideaText.trim()}
-            className="rounded-full font-fredoka"
-          >
-            {submitIdeaMutation.isPending ? (
-              <><Loader2 size={14} className="animate-spin mr-1" />Submitting...</>
-            ) : (
-              <><Send size={14} className="mr-1" />Submit Idea</>
-            )}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Moderator Application Section ───────────────────────────────────────────
-
-const MODERATOR_URL = 'https://scrambly-moderator-lq2.caffeine.xyz/#caffeineAdminToken=d56558c15a1ee884ff360f38b77d9e18b6876ade2990f07ccf750d3a64b064b4';
-const MOD_MAX_CHARS = 1000;
-
-function ModeratorApplicationSection({ principalId }: { principalId: string }) {
-  const [applicationText, setApplicationText] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const isDisabled = !applicationText.trim();
-
-  const handleSubmit = () => {
-    const trimmed = applicationText.trim();
-    if (!trimmed) return;
-
-    const encodedMessage = encodeURIComponent(trimmed);
-    const encodedUser = encodeURIComponent(principalId);
-    const fullUrl = `${MODERATOR_URL}&message=${encodedMessage}&user=${encodedUser}`;
-
-    window.open(fullUrl, '_blank', 'noopener,noreferrer');
-
-    toast.success('Your application has been submitted! A moderator will review it soon. 🌟');
-    setApplicationText('');
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 6000);
-  };
-
-  return (
-    <div className="sonic-card p-5 space-y-4 border-2 border-sonic-yellow/40">
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-sonic-yellow/20 flex items-center justify-center shrink-0 mt-0.5">
-          <Star size={20} className="text-sonic-yellow fill-sonic-yellow" />
-        </div>
-        <div>
-          <h2 className="font-fredoka text-lg text-foreground">
-            Apply to be a Moderator
-          </h2>
-          <p className="font-nunito text-xs text-muted-foreground mt-0.5">
-            Think you'd make a great Scrambly moderator? Tell us why!
-          </p>
-        </div>
-      </div>
-
-      <p className="font-nunito text-sm text-muted-foreground">
-        Moderators help keep Scrambly safe and fun for everyone. If you're passionate about the Sonic community and want to help out, write us a message below explaining why you'd be a great fit.
-      </p>
-
-      {/* Confirmation banner */}
-      {submitted && (
-        <div className="flex items-center gap-2 bg-sonic-yellow/10 border border-sonic-yellow/40 rounded-xl p-3">
-          <CheckCircle size={16} className="text-sonic-yellow shrink-0" />
-          <p className="font-nunito text-sm text-foreground">
-            Application sent! We'll review it and get back to you. 🌟
-          </p>
-        </div>
-      )}
-
-      {/* Textarea */}
-      <div className="space-y-2">
-        <Label className="font-nunito font-700 text-sm text-foreground">
-          Why do you want to be a moderator?
-        </Label>
-        <Textarea
-          placeholder="Tell us about yourself, why you want to moderate, and what makes you a good fit for the Scrambly community..."
-          value={applicationText}
-          onChange={(e) => setApplicationText(e.target.value.slice(0, MOD_MAX_CHARS))}
-          className="rounded-xl font-nunito text-sm min-h-[160px] resize-none border-sonic-yellow/30 focus-visible:ring-sonic-yellow/50"
-        />
-        <div className="flex items-center justify-between">
-          <span className={`font-nunito text-xs ${applicationText.length >= MOD_MAX_CHARS - 100 ? 'text-destructive' : 'text-muted-foreground'}`}>
-            {applicationText.length} / {MOD_MAX_CHARS}
-          </span>
-          <Button
-            size="sm"
-            onClick={handleSubmit}
-            disabled={isDisabled}
-            className="rounded-full font-fredoka bg-sonic-yellow text-sonic-dark hover:bg-sonic-yellow/90 disabled:opacity-50"
-          >
-            <Send size={14} className="mr-1" />
-            Submit Application
-          </Button>
-        </div>
-      </div>
-
-      <p className="font-nunito text-xs text-muted-foreground">
-        By submitting, your message will be sent to the Scrambly moderation team for review.
-      </p>
-    </div>
-  );
-}
-
-// ─── Main Settings Page ───────────────────────────────────────────────────────
-
-export default function SettingsPage() {
-  const { data: profile, isLoading: profileLoading } = useGetCallerUserProfile();
-  const { identity, clear } = useInternetIdentity();
-  const queryClient = useQueryClient();
-
-  const principalId = identity?.getPrincipal().toString() ?? '';
-  // Pass the full profile object to getAge and isKidMode as they expect Profile | null | undefined
-  const age = getAge(profile);
-  const kidMode = isKidMode(profile);
-  const hasPassword = !!profile?.password;
-
-  const handleLogout = async () => {
-    await clear();
-    queryClient.clear();
   };
 
   if (profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <Loader2 size={24} className="animate-spin" />
-          <span className="font-nunito text-base">Loading settings...</span>
-        </div>
+        <Loader2 className="animate-spin text-primary w-10 h-10" />
       </div>
     );
   }
 
-  return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <Settings size={20} className="text-primary" />
-        </div>
-        <div>
-          <h1 className="font-fredoka text-2xl text-foreground">Settings</h1>
-          <p className="font-nunito text-sm text-muted-foreground">Manage your Scrambly account</p>
-        </div>
-      </div>
+  const age = getAge(profile);
+  const kidMode = isKidMode(profile);
 
-      {/* Profile Info */}
-      {profile && (
-        <div className="sonic-card p-5 space-y-3">
-          <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2">
-            <User size={18} className="text-primary" />
-            Account Settings
-          </h2>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="font-fredoka text-xl text-primary">
-                {profile.name.charAt(0).toUpperCase()}
-              </span>
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <h1 className="text-3xl font-bold text-primary font-display">Settings</h1>
+
+      {/* Account Settings */}
+      <section className="sonic-card p-6 space-y-4">
+        <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+          <Shield className="w-5 h-5 text-primary" />
+          Account Settings
+        </h2>
+        {profile ? (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Display Name</label>
+              <input
+                className="sonic-input w-full"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+              />
             </div>
             <div>
-              <p className="font-fredoka text-base text-foreground">{profile.name}</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <Badge variant="secondary" className="font-nunito text-xs rounded-full">
-                  Age {age ?? '?'}
-                </Badge>
-                {kidMode && (
-                  <Badge className="font-nunito text-xs rounded-full bg-primary/20 text-primary border-0">
-                    Kid Mode
-                  </Badge>
-                )}
-                {profile.isSchoolAccount && (
-                  <Badge variant="outline" className="font-nunito text-xs rounded-full">
-                    School
-                  </Badge>
-                )}
-              </div>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">Birth Year</label>
+              <input
+                className="sonic-input w-full"
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value)}
+                placeholder="e.g. 2010"
+                type="number"
+              />
             </div>
+            <div className="text-sm text-muted-foreground">
+              Age: <span className="font-semibold text-foreground">{age}</span>
+              {kidMode && <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Kid Mode</span>}
+            </div>
+            <button
+              className="sonic-btn sonic-btn-primary flex items-center gap-2"
+              onClick={handleSaveProfile}
+              disabled={saveProfile.isPending}
+            >
+              {saveProfile.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Save Profile
+            </button>
           </div>
-          {profile.warnings > 0 && (
-            <div className="flex items-center gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-              <Zap size={14} className="text-destructive shrink-0" />
-              <p className="font-nunito text-xs text-destructive">
-                {Number(profile.warnings)} warning{Number(profile.warnings) !== 1 ? 's' : ''} on your account
-              </p>
-            </div>
+        ) : (
+          <p className="text-muted-foreground">No profile found. Please complete onboarding.</p>
+        )}
+      </section>
+
+      {/* Password */}
+      <section className="sonic-card p-6 space-y-4">
+        <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+          <Lock className="w-5 h-5 text-primary" />
+          Password (PIN)
+        </h2>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Set New PIN (4 or 6 digits)</label>
+            <input
+              className="sonic-input w-full"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter 4 or 6 digit PIN"
+              type="password"
+              maxLength={6}
+            />
+            <button
+              className="sonic-btn sonic-btn-primary mt-2 flex items-center gap-2"
+              onClick={handleSetPassword}
+              disabled={setPasswordMutation.isPending || newPassword.length < 4}
+            >
+              {setPasswordMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+              Set PIN
+            </button>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-1">Verify PIN</label>
+            <input
+              className="sonic-input w-full"
+              value={verifyPasswordInput}
+              onChange={(e) => setVerifyPasswordInput(e.target.value)}
+              placeholder="Enter PIN to verify"
+              type="password"
+              maxLength={6}
+            />
+            <button
+              className="sonic-btn sonic-btn-secondary mt-2 flex items-center gap-2"
+              onClick={handleVerifyPassword}
+              disabled={verifyPasswordMutation.isPending || verifyPasswordInput.length < 4}
+            >
+              {verifyPasswordMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Verify PIN
+            </button>
+          </div>
+          {passwordMessage && (
+            <p className="text-sm font-medium text-foreground">{passwordMessage}</p>
           )}
         </div>
-      )}
+      </section>
 
-      {/* Password Section */}
-      <PasswordSection hasPassword={hasPassword} />
-
-      {/* Video Upload Section */}
-      <VideoUploadSection />
-
-      {/* Ideas Section */}
-      <IdeasSection />
-
-      {/* Moderator Application Section */}
-      <ModeratorApplicationSection principalId={principalId} />
-
-      {/* Ad Blocker */}
-      <div className="sonic-card p-5 space-y-3">
-        <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2">
-          <Zap size={18} className="text-primary" />
-          Ad Blocker
+      {/* Ideas */}
+      <section className="sonic-card p-6 space-y-4">
+        <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+          <Lightbulb className="w-5 h-5 text-primary" />
+          Submit an Idea
         </h2>
-        <AdBlockerToggle />
-      </div>
+        <div className="space-y-3">
+          <textarea
+            className="sonic-input w-full min-h-[100px] resize-none"
+            value={ideaContent}
+            onChange={(e) => setIdeaContent(e.target.value)}
+            placeholder="Share your idea for Scrambly (max 600 characters)..."
+            maxLength={600}
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{ideaContent.length}/600</span>
+            <button
+              className="sonic-btn sonic-btn-primary flex items-center gap-2"
+              onClick={handleSubmitIdea}
+              disabled={submitIdeaMutation.isPending || ideaContent.trim().length === 0}
+            >
+              {submitIdeaMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lightbulb className="w-4 h-4" />}
+              Submit Idea
+            </button>
+          </div>
+          {ideaMessage && <p className="text-sm font-medium text-foreground">{ideaMessage}</p>}
+        </div>
+      </section>
 
-      {/* Parental Controls */}
-      <div className="sonic-card p-5">
-        <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2 mb-3">
-          <Shield size={18} className="text-primary" />
-          Parental Controls
+      {/* Apply to be a Moderator */}
+      <section className="sonic-card p-6 space-y-4">
+        <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+          <Shield className="w-5 h-5 text-primary" />
+          Apply to be a Moderator
         </h2>
-        <p className="font-nunito text-sm text-muted-foreground mb-3">
-          Parents can set usage timers and manage safety settings.
+        <p className="text-sm text-muted-foreground">
+          Answer the following questions to apply for a moderator role:
         </p>
-        <Link to="/parental">
-          <Button size="sm" variant="outline" className="rounded-full font-fredoka text-sm">
-            Open Parental Dashboard
-          </Button>
-        </Link>
-      </div>
-
-      {/* App Info */}
-      <div className="sonic-card p-5 space-y-2">
-        <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2">
-          <Info size={18} className="text-primary" />
-          App Info
-        </h2>
-        <p className="font-nunito text-sm text-muted-foreground">
-          Scrambly — A Sonic fan community for kids aged 10–18.
-        </p>
-        <p className="font-nunito text-xs text-muted-foreground">
-          Built with love for the Sonic fandom. 💙
-        </p>
-      </div>
-
-      {/* Logout */}
-      <div className="sonic-card p-5">
-        <h2 className="font-fredoka text-lg text-foreground flex items-center gap-2 mb-3">
-          <LogOut size={18} className="text-primary" />
-          Account
-        </h2>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleLogout}
-          className="rounded-full font-fredoka"
+        <ol className="list-decimal list-inside text-sm text-foreground space-y-1">
+          <li>What year was Sonic the Hedgehog first released? (hint: 1991)</li>
+          <li>What year was Sonic the Hedgehog 2 released? (hint: 1992)</li>
+        </ol>
+        <textarea
+          className="sonic-input w-full min-h-[80px] resize-none"
+          value={modAnswers}
+          onChange={(e) => setModAnswers(e.target.value)}
+          placeholder="Type your answers here..."
+        />
+        <button
+          className="sonic-btn sonic-btn-primary flex items-center gap-2"
+          onClick={handleApplyModerator}
+          disabled={applyModeratorMutation.isPending || modAnswers.trim().length === 0}
         >
-          <LogOut size={14} className="mr-1" />
-          Log Out
-        </Button>
-      </div>
+          {applyModeratorMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+          Submit Application
+        </button>
+        {modMessage && <p className="text-sm font-medium text-foreground">{modMessage}</p>}
+      </section>
+
+      {/* External Links */}
+      <section className="sonic-card p-6 space-y-4">
+        <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+          <ExternalLink className="w-5 h-5 text-primary" />
+          External Links
+        </h2>
+        <div className="space-y-3">
+          <button
+            className="sonic-btn sonic-btn-secondary w-full flex items-center justify-center gap-2"
+            onClick={() =>
+              window.open(
+                'https://widespread-crimson-c6q-draft.caffeine.xyz/#caffeineAdminToken=7c4623260dccffc21ab80a4d967ff00efa0fca2d013781ab3aad1fe300afbfce',
+                '_blank',
+                'noopener,noreferrer'
+              )
+            }
+          >
+            <ExternalLink className="w-4 h-4" />
+            Parent Review Panel
+          </button>
+          <button
+            className="sonic-btn sonic-btn-secondary w-full flex items-center justify-center gap-2"
+            onClick={() =>
+              window.open(
+                'https://widespread-crimson-c6q-draft.caffeine.xyz/#caffeineAdminToken=5f715f1e5cc968358c700eb3bf931a95e3d054e31855e1cccdc56069da56f4ab',
+                '_blank',
+                'noopener,noreferrer'
+              )
+            }
+          >
+            <ExternalLink className="w-4 h-4" />
+            Chat with Friends
+          </button>
+        </div>
+      </section>
+
+      {/* Delete Account */}
+      <section className="sonic-card p-6 space-y-4 border-2 border-destructive/30">
+        <h2 className="text-xl font-bold text-destructive font-display flex items-center gap-2">
+          <Trash2 className="w-5 h-5" />
+          Delete Account
+        </h2>
+        <div className="bg-destructive/5 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <p className="text-sm text-muted-foreground">
+            This action is <strong>permanent</strong> and cannot be undone. All your data will be lost.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-muted-foreground">
+            Type <strong>DELETE</strong> to confirm
+          </label>
+          <input
+            className="sonic-input w-full"
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
+            placeholder="Type DELETE here"
+          />
+          {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+          <button
+            className="sonic-btn w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 flex items-center justify-center gap-2 disabled:opacity-50"
+            onClick={handleDeleteAccount}
+            disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+          >
+            {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            Delete My Account
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

@@ -118,12 +118,16 @@ export enum UserRole {
 }
 export interface backendInterface {
     addSonicEntry(entry: SonicKnowledgeEntry): Promise<void>;
+    adminBanUser(target: Principal): Promise<void>;
+    adminUnbanUser(target: Principal): Promise<void>;
+    adminWarnUser(target: Principal): Promise<void>;
     applyForModerator(answers: string): Promise<ModeratorApplicationResult>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCommunityPost(message: string): Promise<void>;
     getAllEntriesByType(content_type: string): Promise<Array<SonicKnowledgeEntry>>;
     getAllFriendsModeRequests(): Promise<Array<FriendsModeRequest>>;
     getAllIdeas(): Promise<Array<Idea>>;
+    getBanList(): Promise<Array<Principal>>;
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCommunityPosts(): Promise<Array<PostContent>>;
@@ -134,12 +138,16 @@ export interface backendInterface {
     getRemainingUsageTime(user: Principal): Promise<bigint | null>;
     getUserProfile(user: Principal): Promise<Profile>;
     getUsersByAge(fromYear: bigint, toYear: bigint): Promise<Array<Profile>>;
+    getWarnList(): Promise<Array<Principal>>;
     isCallerAdmin(): Promise<boolean>;
     isCallerApproved(): Promise<boolean>;
+    isCallerBanned(): Promise<boolean>;
     isSchoolAccount(user: Principal): Promise<boolean>;
+    isUserModerator(user: Principal): Promise<boolean>;
     issueWarning(target: Principal, reason: string): Promise<bigint>;
     listApprovals(): Promise<Array<UserApprovalInfo>>;
     markIdeaReviewed(index: bigint): Promise<void>;
+    promoteUserToModerator(target: Principal): Promise<void>;
     requestApproval(): Promise<void>;
     respondToFriendRequest(requesterId: Principal, accept: boolean): Promise<string>;
     reviewAppeal(user: Principal, approve: boolean, adminNote: string | null): Promise<AppealStatus>;

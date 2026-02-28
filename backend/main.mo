@@ -4,22 +4,17 @@ import Time "mo:core/Time";
 import Array "mo:core/Array";
 import Order "mo:core/Order";
 import Int "mo:core/Int";
-import Text "mo:core/Text";
-import Runtime "mo:core/Runtime";
-import List "mo:core/List";
-import Iter "mo:core/Iter";
-import Nat "mo:core/Nat";
-import Set "mo:core/Set";
-
 import MixinAuthorization "authorization/MixinAuthorization";
 import UserApproval "user-approval/approval";
 import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
+import Set "mo:core/Set";
+import List "mo:core/List";
+import Iter "mo:core/Iter";
 
 import Migration "migration";
 
-// Apply the migration module using the \`with\` clause
 (with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
@@ -28,6 +23,10 @@ actor {
   let approvalState = UserApproval.initState(accessControlState);
 
   include MixinStorage();
+
+  let bannedUsers = Set.empty<Principal>();
+  let warnedUsers = Set.empty<Principal>();
+  let moderatorUsers = Set.empty<Principal>();
 
   public shared ({ caller }) func requestApproval() : async () {
     UserApproval.requestApproval(approvalState, caller);
@@ -103,7 +102,7 @@ actor {
   public type FriendRequest = {
     requesterId : Principal;
     recipientId : Principal;
-    status : Text; // "pending", "accepted", "declined"
+    status : Text;
     sentAt : Time.Time;
   };
 
@@ -121,6 +120,42 @@ actor {
     #approved;
     #denied;
     #none;
+  };
+
+  // Banned content keywords - checked before saving any post
+  let bannedKeywords : [Text] = [
+    "porn",
+    "anime",
+    "inappropriate anime",
+    "hentai",
+    "nsfw",
+    "explicit",
+    "nude",
+    "naked",
+    "xxx",
+    "adult content",
+  ];
+
+  // Check if a message contains banned content
+  func containsBannedContent(message : Text) : Bool {
+    let lowerMessage = message.toLower();
+    for (keyword in bannedKeywords.vals()) {
+      if (lowerMessage.contains(#text keyword)) {
+        return true;
+      };
+    };
+    false;
+  };
+
+  // Auto-ban a user for posting banned content and lock their profile
+  func autoBanUser(user : Principal, reason : Text) {
+    bannedUsers.add(user);
+    switch (profiles.get(user)) {
+      case (?profile) {
+        profiles.add(user, { profile with accountLocked = true });
+      };
+      case (null) {};
+    };
   };
 
   public shared ({ caller }) func submitFriendsModeRequest(birthdate : Text) : async () {
@@ -278,6 +313,7 @@ actor {
                 };
                 case (null) {};
               };
+              bannedUsers.remove(user);
               return #approved;
             } else {
               appeals.add(
@@ -357,7 +393,6 @@ actor {
   };
 
   public shared ({ caller }) func verifyAge(name : Text, birthYear : Nat) : async AgeCheckResult {
-    // Only registered users can verify/set their age profile
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only registered users can verify age");
     };
@@ -423,7 +458,6 @@ actor {
   };
 
   public query ({ caller }) func isSchoolAccount(user : Principal) : async Bool {
-    // Only the user themselves or an admin can check school account status
     if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own account status");
     };
@@ -496,18 +530,31 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create community posts");
     };
+
     switch (profiles.get(caller)) {
       case (?profile) {
-        if (profile.accountLocked) { Runtime.trap("Account locked") };
-        let newPost = {
-          author = caller;
-          timestamp = Time.now();
-          message;
+        if (profile.accountLocked) {
+          Runtime.trap("Account locked: You are banned and cannot post");
         };
-        posts.add(newPost);
       };
       case (null) { Runtime.trap("User profile not found") };
     };
+
+    // Auto-ban check: must happen before saving the post
+    if (containsBannedContent(message)) {
+      autoBanUser(
+        caller,
+        "Automatic ban: Your post contained prohibited content (anime images, pornographic material, or other inappropriate terms). This action is immediate and permanent pending appeal.",
+      );
+      Runtime.trap("Your account has been banned. Reason: Your post contained prohibited content including anime images, pornographic material, or other inappropriate terms. Posting such content is strictly forbidden.");
+    };
+
+    let newPost = {
+      author = caller;
+      timestamp = Time.now();
+      message;
+    };
+    posts.add(newPost);
   };
 
   public query func getCommunityPosts() : async [PostContent] {
@@ -619,7 +666,7 @@ actor {
 
   public query func getAllEntriesByType(content_type : Text) : async [SonicKnowledgeEntry] {
     sonicData.toArray().filter(
-      func(entry) { Text.equal(entry.content_type, content_type) }
+      func(entry) { entry.content_type == content_type }
     );
   };
 
@@ -721,7 +768,6 @@ actor {
   };
 
   public type Idea = {
-    // Author is stored as the caller's principal text to prevent impersonation
     author : Text;
     content : Text;
     timestamp : Time.Time;
@@ -730,8 +776,6 @@ actor {
 
   let ideas = List.empty<Idea>();
 
-  // The author is derived from the caller's principal (or display name from their profile),
-  // not from user-supplied input, to prevent impersonation.
   public shared ({ caller }) func submitIdea(content : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can submit ideas");
@@ -741,7 +785,6 @@ actor {
       Runtime.trap("Idea must have less than 600 characters");
     };
 
-    // Derive author from the caller's profile name or fall back to principal text
     let authorName = switch (profiles.get(caller)) {
       case (?profile) { profile.name };
       case (null) { caller.toText() };
@@ -829,12 +872,10 @@ actor {
       case (?existing) { existing };
     };
 
-    // Check for existing pending request
     if (recipientRequests.toArray().find(func(req) { req.requesterId == caller and req.status == "pending" }) != null) {
       return "Friend request already pending";
     };
 
-    // Add the friend request to recipient's requests
     let friendRequest : FriendRequest = {
       requesterId = caller;
       recipientId = recipientPrincipal;
@@ -924,5 +965,85 @@ actor {
       case (null) { [] };
       case (?requests) { requests.toArray() };
     };
+  };
+
+  public shared ({ caller }) func adminBanUser(target : Principal) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can manage bans");
+    };
+    bannedUsers.add(target);
+    // Also lock the profile
+    switch (profiles.get(target)) {
+      case (?profile) {
+        profiles.add(target, { profile with accountLocked = true });
+      };
+      case (null) {};
+    };
+  };
+
+  public shared ({ caller }) func adminWarnUser(target : Principal) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can manage warnings");
+    };
+    warnedUsers.add(target);
+    // Also increment warning count in profile
+    switch (profiles.get(target)) {
+      case (?profile) {
+        let newWarnings = profile.warnings + 1;
+        profiles.add(target, {
+          profile with
+          warnings = newWarnings;
+          accountLocked = if (newWarnings >= 3) { true } else { profile.accountLocked };
+        });
+      };
+      case (null) {};
+    };
+  };
+
+  public shared ({ caller }) func adminUnbanUser(target : Principal) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can manage bans");
+    };
+    bannedUsers.remove(target);
+    // Also unlock the profile
+    switch (profiles.get(target)) {
+      case (?profile) {
+        profiles.add(target, { profile with accountLocked = false });
+      };
+      case (null) {};
+    };
+  };
+
+  public query ({ caller }) func getBanList() : async [Principal] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can view ban list");
+    };
+    bannedUsers.toArray();
+  };
+
+  public query ({ caller }) func getWarnList() : async [Principal] {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can view warn list");
+    };
+    warnedUsers.toArray();
+  };
+
+  public shared ({ caller }) func promoteUserToModerator(target : Principal) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can promote users");
+    };
+    moderatorUsers.add(target);
+  };
+
+  public query ({ caller }) func isUserModerator(user : Principal) : async Bool {
+    // Any authenticated user can check moderator status (needed for celebratory message on page load)
+    moderatorUsers.contains(user);
+  };
+
+  public query ({ caller }) func isCallerBanned() : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      return false;
+    };
+    bannedUsers.contains(caller);
   };
 };

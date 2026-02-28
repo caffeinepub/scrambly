@@ -20,7 +20,7 @@ export default function AgeMatcher() {
   const fromYear = userBirthYear ? BigInt(userBirthYear) : BigInt(0);
   const toYear = userBirthYear ? BigInt(userBirthYear) : BigInt(0);
 
-  const { data: matchedUsers, isLoading } = useGetUsersByAge(fromYear, toYear, searchEnabled && !!userBirthYear && !!isAdmin);
+  const { data: matchedUsers, isLoading } = useGetUsersByAge(fromYear, toYear);
 
   const handleFindFriends = () => {
     setSearchEnabled(true);
