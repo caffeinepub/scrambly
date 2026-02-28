@@ -1,159 +1,59 @@
 {
   "kind": "build_request",
-  "title": "Sonic Speedrun Videos, Parental PIN Update, Admin Panel with Ban/Warn/Mod Tools",
+  "title": "Add Remember Me feature to login with persistent session",
   "projectName": "Scrambly",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Replace the current video content on the Videos page with curated Sonic speedrun and gameplay videos covering four categories: 'How to Speed Run Sonic 1', 'How to Speed Run Sonic 2', 'How to Speed Run Sonic 3', and 'How to Speed Run Sonic Mania'. Update the static video data files (knucklesVideos.ts, sonicBoomVideos.ts, sonicPrimeVideos.ts, sonicSaysVideos.ts, or a new speedrunVideos.ts) to include real YouTube video entries for each of these four Sonic game speedrun/gameplay categories. Replace old video lists with these new entries and update VideosPage.tsx category filters accordingly.",
+      "text": "Add a 'Remember Me' checkbox to the login/authentication UI. When the user initiates the Internet Identity login flow, display a clearly labeled 'Remember Me' checkbox before or alongside the login button. Persist the user's 'Remember Me' preference in localStorage.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-last"
+          "msg-1"
         ],
         "quotes": [
-          "Change the videos to how to speed run sonic 3 videos and sonic mania videos and sonic 1 videos and sonic 2 videos"
+          "When the user starts logging in make button that says remember me"
         ]
       },
       "acceptanceCriteria": [
-        "Videos page shows four categories: Sonic 1 Speedruns, Sonic 2 Speedruns, Sonic 3 Speedruns, Sonic Mania Speedruns",
-        "Each category contains at least 3 YouTube video entries with valid YouTube IDs and titles",
-        "Old unrelated video entries (Sonic Boom episodes, Sonic Says PSAs, Sonic Prime, etc.) are removed or replaced",
-        "Category filter buttons on VideosPage update the displayed video list correctly"
+        "A 'Remember Me' checkbox is visible on the login screen/AuthGate login prompt",
+        "The checkbox defaults to unchecked",
+        "Checking 'Remember Me' saves the preference to localStorage (e.g., key: 'rememberMe')",
+        "The checkbox state persists across page refreshes"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Update the parental control PIN system in PINEntryModal.tsx so that: (1) the default PIN is '1234', (2) parents can change the PIN to any value between 3 and 4 characters (digits or alphanumeric), and (3) the PIN change UI enforces the 3–4 character length limit with validation feedback.",
+      "text": "When 'Remember Me' is enabled and the user is logged in, prevent the user from being automatically or accidentally signed out. The logout/sign-out action should be suppressed or require explicit confirmation when 'Remember Me' is active. Specifically: (1) If 'Remember Me' is stored as true in localStorage, the app should restore/maintain the authenticated session on page load without re-prompting login. (2) The sign-out button should either be hidden or show a confirmation dialog ('Are you sure you want to sign out? Remember Me is enabled.') before proceeding with logout when the preference is active.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-last"
+          "msg-1"
         ],
         "quotes": [
-          "put the parental control password to 1234 so the parents can change it to whatever they want up to 3 to 4 characters"
+          "everytime when they sign out make sure the user doesn't get signed out when the user is signed in"
         ]
       },
       "acceptanceCriteria": [
-        "Default PIN stored in localStorage is '1234' if none was previously set",
-        "PIN change input validates that the new PIN is 3 or 4 characters; shows error if shorter or longer",
-        "Parent can successfully change the PIN to a new 3–4 character value",
-        "After change, the new PIN is required to access parental controls"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add a face scan step to the parental controls access flow. When a parent attempts to open the parental controls dashboard, show a camera modal that briefly captures a frame (liveness check), displays a 'Verifying parent identity...' message, then immediately discards the image data and grants access. The captured image must never be stored or sent to the backend. After the scan completes, close the camera and proceed to the PIN entry step.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-last"
-        ],
-        "quotes": [
-          "scan your face to see if you are a parent and delete it"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Opening Parental Controls triggers a camera modal before PIN entry",
-        "Camera auto-starts and captures a frame after a brief countdown",
-        "Image data is immediately discarded (not stored in state, localStorage, or sent to backend)",
-        "After scan, camera stops and user proceeds to PIN entry",
-        "If camera permission is denied, show an error and fall back to PIN-only entry"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Create a dedicated Admin Panel page accessible only to the user with username 'TailsTheBeast124'. Add a route '/admin' to App.tsx gated by admin identity check. The panel must include: (1) a Ban section with a text input for username and a 'Ban' button that bans the typed user; (2) a Warn section with a text input for username and a 'Warn' button that sends a warning to that user; (3) an Unban section that shows a scrollable list of currently banned users by username with an 'Unban' button next to each entry; (4) a Ban List display that shows 'Nobody' when zero users are banned, or 'X person(s) banned' when any are banned, up to a display cap of 100,000,000,000,000; (5) a Warn List display showing the total number of warned users up to 100,000,000,000,000.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-last"
-        ],
-        "quotes": [
-          "make an admin panel for the owner TailsTheBeast124 buttons like ban user the admin will have to type the username in from the public post and ban add a button that says warn they have to type the username in and press warn to send the warning and add a button that says unban that unbanned the user account by list on the side of the users username and on the ban list show nobody when nobody is banned show 1 person banned when someone is banned and the max of banned people are 100000000000000 and the max people are warned is 100000000000000"
-        ]
-      },
-      "acceptanceCriteria": [
-        "'/admin' route is only accessible to TailsTheBeast124; all others are redirected",
-        "Ban input + button: typing a username and pressing Ban bans that user account in the backend",
-        "Warn input + button: typing a username and pressing Warn sends a warning to that user in the backend",
-        "Unban section shows a list of all currently banned users with an Unban button per user",
-        "Ban list shows 'Nobody' when ban count is 0, '1 person banned' when 1, 'N people banned' for N>1",
-        "Ban list and warn list counters display up to 100,000,000,000,000",
-        "Backend ban and warn records support counts up to 100,000,000,000,000"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Add a Moderation Promotion tool to the Admin Panel. The owner (TailsTheBeast124) must be able to type a target username and a reason, then press 'Make Moderator' to grant that user the moderator role. When a user is successfully granted the moderator role, upon their next page load or navigation they should see a celebratory message: 'Yay, you're a mod! Help with Scrambly to make it better!'",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-last"
-        ],
-        "quotes": [
-          "add a button that says moderation and the owner has to type their username and reason and press make the user a moderator and when the user is a moderation the page will say yay your a mod help with scrambly to make it better"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Admin Panel has a Moderation section with username input, reason input, and 'Make Moderator' button",
-        "Pressing Make Moderator calls the backend to grant the mod role to the specified user",
-        "When a newly-promoted moderator loads the app, a banner or modal shows: 'Yay, you're a mod! Help with Scrambly to make it better!'",
-        "The celebratory message is shown only once (dismissed or session-flagged after first display)"
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "text": "Update post moderation logic: do NOT auto-warn users for any regular text post. However, instantly ban any user who posts content containing or attaching anime images, or who spams the words 'porn', 'anime', 'inappropriate anime', or other clearly inappropriate terms in their post body. The auto-ban must trigger before the post is saved and must display a clear ban reason to the affected user.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-last"
-        ],
-        "quotes": [
-          "when anything is posted don't warn anybody for a post and when the user is posting anime pictures instant ban them when they spam the word porn inappropriate anime and anime"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Submitting a regular text post does not trigger any automatic warning",
-        "Submitting a post with an attached anime image triggers an instant ban before the post is saved",
-        "Submitting a post body containing 'porn', 'anime', 'inappropriate anime', or equivalent terms triggers an instant ban",
-        "Banned user sees an AccountLockedMessage with reason explaining the ban",
-        "Post is rejected and not saved when an auto-ban is triggered"
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "text": "Update the search moderation logic in useSearchModerator.ts: when the admin (TailsTheBeast124) searches for inappropriate terms (porn, anime, inappropriate content), do not block or warn — instead silently replace the results with Sonic the Hedgehog vs Metal Sonic content. When any user (including admin) searches for 'sonic.exe vs metal sonic', show all YouTube video results for that exact query by embedding matching video entries from a new static data file containing 'sonic.exe vs metal sonic' YouTube entries.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-last"
-        ],
-        "quotes": [
-          "inappropriate stuff on the search when the admin searches it up dont do anything just show results of sonic the hedgehog vs metal sonic and when sonic.exe vs metal sonic searched show all results of YouTube videos on sonic.exe vs metal sonic"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When TailsTheBeast124 searches an inappropriate term, results show Sonic vs Metal Sonic videos without any warning or block",
-        "When any user searches 'sonic.exe vs metal sonic', results display a list of YouTube video entries for that topic",
-        "Non-admin users searching inappropriate terms still trigger the existing warn/ban moderation flow",
-        "A static data file (sonicExeVsMetalSonicVideos.ts or similar) contains multiple sonic.exe vs metal sonic YouTube entries"
+        "When 'Remember Me' is enabled, the user remains signed in after closing and reopening the browser tab",
+        "When 'Remember Me' is enabled, clicking the sign-out button shows a confirmation dialog before signing out",
+        "The confirmation dialog clearly warns the user that 'Remember Me' is enabled",
+        "If the user confirms sign-out, they are logged out and the 'Remember Me' preference is cleared from localStorage",
+        "If the user cancels the confirmation, they remain signed in",
+        "When 'Remember Me' is not enabled, sign-out behaves as normal without a confirmation dialog"
       ]
     }
   ],
   "constraints": [
-    "The admin panel must be strictly gated to TailsTheBeast124 only — no other user may access it",
-    "Face scan data must be immediately discarded client-side and never stored or transmitted to the backend",
-    "Do not auto-warn users for normal text posts — only auto-ban for anime images or spam of prohibited keywords",
-    "All Motoko logic must remain in the single backend/main.mo actor"
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts or frontend/src/hooks/useActor.ts directly — implement Remember Me logic in a wrapper or via the components that call these hooks",
+    "Do not modify files under frontend/src/components/ui",
+    "Do not modify frontend/src/main.tsx"
   ],
   "nonGoals": [
-    "Real facial recognition or AI-based identity verification — the face scan is a liveness capture only and is immediately discarded",
-    "Integrating external YouTube API — video entries are static data with YouTube IDs",
-    "Changing the existing Sonic Mania monitor box button animations or Settings bar Sonic sprite",
-    "Changing the Chat with Friends or draft preview settings buttons added in prior builds"
+    "Backend session storage — Remember Me state should be handled entirely in localStorage on the frontend",
+    "Changing the Internet Identity authentication provider or flow",
+    "Automatic session renewal or token refresh logic beyond what Internet Identity provides"
   ],
   "imageRequirements": {
     "required": [],

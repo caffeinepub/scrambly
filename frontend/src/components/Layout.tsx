@@ -1,11 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Search, Video, Gamepad2, Users, Settings, Shield, Heart, Crown } from "lucide-react";
+import { Home, Search, Video, Gamepad2, Users, Settings, Shield, Heart, Crown, LogOut } from "lucide-react";
 import ModeratorWelcomeBanner from "./ModeratorWelcomeBanner";
 import { useGetCallerUserProfile } from "../hooks/useQueries";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ADMIN_USERNAME = "TailsTheBeast124";
+const REMEMBER_ME_KEY = "rememberMe";
 
 interface NavItem {
   to: string;
@@ -25,10 +37,47 @@ const navItems: NavItem[] = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { identity } = useInternetIdentity();
+  const { identity, clear } = useInternetIdentity();
+  const queryClient = useQueryClient();
   const { data: profile } = useGetCallerUserProfile();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   const isAdmin = profile?.name === ADMIN_USERNAME;
+
+  const isRememberMeEnabled = (): boolean => {
+    try {
+      return localStorage.getItem(REMEMBER_ME_KEY) === "true";
+    } catch {
+      return false;
+    }
+  };
+
+  const handleSignOutClick = () => {
+    if (isRememberMeEnabled()) {
+      setShowSignOutDialog(true);
+    } else {
+      performSignOut();
+    }
+  };
+
+  const performSignOut = async () => {
+    try {
+      localStorage.removeItem(REMEMBER_ME_KEY);
+    } catch {
+      // ignore
+    }
+    await clear();
+    queryClient.clear();
+  };
+
+  const handleConfirmSignOut = async () => {
+    setShowSignOutDialog(false);
+    await performSignOut();
+  };
+
+  const handleCancelSignOut = () => {
+    setShowSignOutDialog(false);
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -91,6 +140,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Shield className="w-5 h-5" />
               <span>Parental</span>
             </Link>
+
+            {/* Sign Out button */}
+            {identity && (
+              <button
+                onClick={handleSignOutClick}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                title="Sign out"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Sign Out</span>
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -123,6 +184,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <span>Admin</span>
             </Link>
           )}
+          {/* Mobile Sign Out */}
+          {identity && (
+            <button
+              onClick={handleSignOutClick}
+              className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-medium transition-colors text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="w-5 h-5" />
+              <span>Sign Out</span>
+            </button>
+          )}
         </div>
       </nav>
 
@@ -146,6 +217,30 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </a>
         </p>
       </footer>
+
+      {/* Remember Me Sign Out Confirmation Dialog */}
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out of Scrambly?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>Remember Me is enabled</strong> — you'll be signed out and will need to log in again next time.
+              Are you sure you want to sign out?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelSignOut}>
+              Stay Signed In
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmSignOut}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -13,9 +13,9 @@ import Set "mo:core/Set";
 import List "mo:core/List";
 import Iter "mo:core/Iter";
 
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);

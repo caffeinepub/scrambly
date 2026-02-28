@@ -1,60 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Scrambly is a Sonic-themed social/video app for kids with parental controls, admin moderation, and Sonic Mania-styled UI. Features include PIN-protected parental controls, Sonic Mania monitor box button animations, admin panel for owner TailsTheBeast124, and curated Sonic video content.",
-  "architectural_notes": [
-    "Admin panel is owner-only (TailsTheBeast124); ban/warn/unban actions require typing the username from a public post",
-    "Parental controls PIN defaults to 1234 and is changeable to 3-4 characters; face scan verifies parent then is deleted",
-    "Auto-moderation: instant ban on anime image posts or spam of porn/anime/inappropriate keywords in search"
-  ],
+  "summary": "New project",
+  "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-replace-the-current-video-content-on-the-videos-page-with-curated-sonic-speedrun-and-gameplay-videos-covering-four-categories-how-to-speed-run-sonic-1-how-to-speed-run-sonic-2-how-to-speed-run-sonic-3-and-how-to-speed-run-sonic-mania-update-the-static-video-data-files-knucklesvideos-ts-sonicboomvideos-ts-sonicprimevideos-ts-sonicsaysvideos-ts-or-a-new-speedrunvideos-ts-to-include-real-youtube-video-entries-for-each-of-these-four-sonic-game-speedrun-gameplay-categories-replace-old-video-lists-with-these-new-entries-and-update-videospage-tsx-category-filters-accordingly",
-      "title": "Replace the current video content on the Videos page with curated Sonic speedrun and gameplay videos covering four categories: 'How to Speed Run Sonic 1', 'How to Speed Run Sonic 2', 'How to Speed Run Sonic 3', and 'How to Speed Run Sonic Mania'. Update the static video data files (knucklesVideos.ts, sonicBoomVideos.ts, sonicPrimeVideos.ts, sonicSaysVideos.ts, or a new speedrunVideos.ts) to include real YouTube video entries for each of these four Sonic game speedrun/gameplay categories. Replace old video lists with these new entries and update VideosPage.tsx category filters accordingly.",
+      "id": "feature-add-a-remember-me-checkbox-to-the-login-authentication-ui-when-the-user-initiates-the-internet-identity-login-flow-display-a-clearly-labeled-remember-me-checkbox-before-or-alongside-the-login-button-persist-the-user-s-remember-me-preference-in-localstorage",
+      "title": "Add a 'Remember Me' checkbox to the login/authentication UI. When the user initiates the Internet Identity login flow, display a clearly labeled 'Remember Me' checkbox before or alongside the login button. Persist the user's 'Remember Me' preference in localStorage.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-a-face-scan-step-to-the-parental-controls-access-flow-when-a-parent-attempts-to-open-the-parental-controls-dashboard-show-a-camera-modal-that-briefly-captures-a-frame-liveness-check-displays-a-verifying-parent-identity-message-then-immediately-discards-the-image-data-and-grants-access-the-captured-image-must-never-be-stored-or-sent-to-the-backend-after-the-scan-completes-close-the-camera-and-proceed-to-the-pin-entry-step",
-      "title": "Add a face scan step to the parental controls access flow. When a parent attempts to open the parental controls dashboard, show a camera modal that briefly captures a frame (liveness check), displays a 'Verifying parent identity...' message, then immediately discards the image data and grants access. The captured image must never be stored or sent to the backend. After the scan completes, close the camera and proceed to the PIN entry step.",
+      "id": "feature-when-remember-me-is-enabled-and-the-user-is-logged-in-prevent-the-user-from-being-automatically-or-accidentally-signed-out-the-logout-sign-out-action-should-be-suppressed-or-require-explicit-confirmation-when-remember-me-is-active-specifically-1-if-remember-me-is-stored-as-true-in-localstorage-the-app-should-restore-maintain-the-authenticated-session-on-page-load-without-re-prompting-login-2-the-sign-out-button-should-either-be-hidden-or-show-a-confirmation-dialog-are-you-sure-you-want-to-sign-out-remember-me-is-enabled-before-proceeding-with-logout-when-the-preference-is-active",
+      "title": "When 'Remember Me' is enabled and the user is logged in, prevent the user from being automatically or accidentally signed out. The logout/sign-out action should be suppressed or require explicit confirmation when 'Remember Me' is active. Specifically: (1) If 'Remember Me' is stored as true in localStorage, the app should restore/maintain the authenticated session on page load without re-prompting login. (2) The sign-out button should either be hidden or show a confirmation dialog ('Are you sure you want to sign out? Remember Me is enabled.') before proceeding with logout when the preference is active.",
       "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-create-a-dedicated-admin-panel-page-accessible-only-to-the-user-with-username-tailsthebeast124-add-a-route-admin-to-app-tsx-gated-by-admin-identity-check-the-panel-must-include-1-a-ban-section-with-a-text-input-for-username-and-a-ban-button-that-bans-the-typed-user-2-a-warn-section-with-a-text-input-for-username-and-a-warn-button-that-sends-a-warning-to-that-user-3-an-unban-section-that-shows-a-scrollable-list-of-currently-banned-users-by-username-with-an-unban-button-next-to-each-entry-4-a-ban-list-display-that-shows-nobody-when-zero-users-are-banned-or-x-person-s-banned-when-any-are-banned-up-to-a-display-cap-of-100-000-000-000-000-5-a-warn-list-display-showing-the-total-number-of-warned-users-up-to-100-000-000-000-000",
-      "title": "Create a dedicated Admin Panel page accessible only to the user with username 'TailsTheBeast124'. Add a route '/admin' to App.tsx gated by admin identity check. The panel must include: (1) a Ban section with a text input for username and a 'Ban' button that bans the typed user; (2) a Warn section with a text input for username and a 'Warn' button that sends a warning to that user; (3) an Unban section that shows a scrollable list of currently banned users by username with an 'Unban' button next to each entry; (4) a Ban List display that shows 'Nobody' when zero users are banned, or 'X person(s) banned' when any are banned, up to a display cap of 100,000,000,000,000; (5) a Warn List display showing the total number of warned users up to 100,000,000,000,000.",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-moderation-promotion-tool-to-the-admin-panel-the-owner-tailsthebeast124-must-be-able-to-type-a-target-username-and-a-reason-then-press-make-moderator-to-grant-that-user-the-moderator-role-when-a-user-is-successfully-granted-the-moderator-role-upon-their-next-page-load-or-navigation-they-should-see-a-celebratory-message-yay-you-re-a-mod-help-with-scrambly-to-make-it-better",
-      "title": "Add a Moderation Promotion tool to the Admin Panel. The owner (TailsTheBeast124) must be able to type a target username and a reason, then press 'Make Moderator' to grant that user the moderator role. When a user is successfully granted the moderator role, upon their next page load or navigation they should see a celebratory message: 'Yay, you're a mod! Help with Scrambly to make it better!'",
-      "reqIds": [
-        "REQ-5"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-post-moderation-logic-do-not-auto-warn-users-for-any-regular-text-post-however-instantly-ban-any-user-who-posts-content-containing-or-attaching-anime-images-or-who-spams-the-words-porn-anime-inappropriate-anime-or-other-clearly-inappropriate-terms-in-their-post-body-the-auto-ban-must-trigger-before-the-post-is-saved-and-must-display-a-clear-ban-reason-to-the-affected-user",
-      "title": "Update post moderation logic: do NOT auto-warn users for any regular text post. However, instantly ban any user who posts content containing or attaching anime images, or who spams the words 'porn', 'anime', 'inappropriate anime', or other clearly inappropriate terms in their post body. The auto-ban must trigger before the post is saved and must display a clear ban reason to the affected user.",
-      "reqIds": [
-        "REQ-6"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-the-search-moderation-logic-in-usesearchmoderator-ts-when-the-admin-tailsthebeast124-searches-for-inappropriate-terms-porn-anime-inappropriate-content-do-not-block-or-warn-instead-silently-replace-the-results-with-sonic-the-hedgehog-vs-metal-sonic-content-when-any-user-including-admin-searches-for-sonic-exe-vs-metal-sonic-show-all-youtube-video-results-for-that-exact-query-by-embedding-matching-video-entries-from-a-new-static-data-file-containing-sonic-exe-vs-metal-sonic-youtube-entries",
-      "title": "Update the search moderation logic in useSearchModerator.ts: when the admin (TailsTheBeast124) searches for inappropriate terms (porn, anime, inappropriate content), do not block or warn — instead silently replace the results with Sonic the Hedgehog vs Metal Sonic content. When any user (including admin) searches for 'sonic.exe vs metal sonic', show all YouTube video results for that exact query by embedding matching video entries from a new static data file containing 'sonic.exe vs metal sonic' YouTube entries.",
-      "reqIds": [
-        "REQ-7"
+        "REQ-2"
       ],
       "version": 1
     }
@@ -62,74 +26,11 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Replace Videos page with Sonic speedrun/gameplay videos: Sonic 3, Sonic Mania, Sonic 1, Sonic 2",
+      "summary": "Add 'Remember Me' checkbox/button on login screen that keeps the user signed in across sessions and prevents sign-out when the option is enabled",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Set default parental control PIN to 1234, allow parents to change it to 3-4 character custom PIN",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "Add face scan to verify parent identity for parental controls access, then delete the scan",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Admin panel for owner TailsTheBeast124 with ban, warn, unban, and moderation tools; ban list shows count up to 100000000000000; warn list up to 100000000000000",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-5",
-      "summary": "Auto-instant-ban users who post anime pictures or spam porn/inappropriate anime/anime keywords in search",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-6",
-      "summary": "When admin searches inappropriate terms, show only Sonic the Hedgehog vs Metal Sonic results; when sonic.exe vs metal sonic is searched show all YouTube results for that query",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Moderator promotion flow: owner types username and reason, grants mod role; mod sees 'Yay you're a mod' message",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-8",
-      "summary": "Do not auto-warn users for regular posts; only auto-ban for anime pictures or inappropriate spam",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-9",
-      "summary": "Settings bar: all buttons styled as Sonic Mania monitor boxes with spindash press animation, peel-out release animation, and persistent small Sonic sprite on bar",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-10",
-      "summary": "Add 'Chat with Friends' button in Settings linking to specified admin token URL; add separate settings link button to draft URL",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-12",
-      "summary": "Update the parental control PIN system in PINEntryModal.tsx so that: (1) the default PIN is '1234', (2) parents can change the PIN to any value between 3 and 4 characters (digits or alphanumeric), and (3) the PIN change UI enforces the 3–4 character length limit with validation feedback.",
-      "reqIds": [
-        "REQ-2"
-      ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
   "projectName": "Scrambly",
   "clarification_mode": "instant",
   "clarification_rounds": 0

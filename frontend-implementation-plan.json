@@ -1,188 +1,46 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Sonic Speedrun Videos, Parental PIN Update, Admin Panel with Ban/Warn/Mod Tools",
+  "title": "Add Remember Me feature to login with persistent session",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Replace Videos page content with Sonic speedrun videos for Sonic 1, 2, 3, and Mania",
+      "summary": "Add a 'Remember Me' checkbox to the login/authentication UI that persists the user's preference in localStorage",
       "acceptanceCriteria": [
-        "Videos page shows four categories: Sonic 1 Speedruns, Sonic 2 Speedruns, Sonic 3 Speedruns, Sonic Mania Speedruns",
-        "Each category contains at least 3 YouTube video entries with valid YouTube IDs and titles",
-        "Old unrelated video entries (Sonic Boom episodes, Sonic Says PSAs, Sonic Prime, etc.) are removed or replaced",
-        "Category filter buttons on VideosPage update the displayed video list correctly"
+        "A 'Remember Me' checkbox is visible on the login screen/AuthGate login prompt",
+        "The checkbox defaults to unchecked",
+        "Checking 'Remember Me' saves the preference to localStorage (e.g., key: 'rememberMe')",
+        "The checkbox state persists across page refreshes"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/data/speedrunVideos.ts",
-          "operation": "create",
-          "description": "Create a new static data file exporting an array of Sonic speedrun VideoEntry objects organized into four categories: 'Sonic 1 Speedruns', 'Sonic 2 Speedruns', 'Sonic 3 Speedruns', and 'Sonic Mania Speedruns'. Each category must contain at least 3 entries with real YouTube video IDs, titles, category labels, and kidFriendly flags set to true."
-        },
-        {
-          "path": "frontend/src/pages/VideosPage.tsx",
+          "path": "frontend/src/components/AuthGate.tsx",
           "operation": "modify",
-          "description": "Replace the current video imports (knucklesVideos, sonicBoomVideos, sonicPrimeVideos, sonicSaysVideos) with the new speedrunVideos import. Update the category filter state and buttons to reflect the four new speedrun categories. Update the video rendering logic to display videos from the speedrunVideos array filtered by selected category."
+          "description": "Add a 'Remember Me' checkbox to the login UI section within AuthGate. When the checkbox is checked, save the preference to localStorage using the key 'rememberMe' with a boolean value. On component mount, read from localStorage to initialize the checkbox state. Position the checkbox near the login button with clear labeling. Do not modify the underlying useInternetIdentity hook calls; only add UI and localStorage logic around the existing login flow."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Update parental control PIN system with default '1234', allow 3-4 character PIN changes with validation",
+      "summary": "When 'Remember Me' is enabled, maintain the authenticated session on page load and show a confirmation dialog before sign-out",
       "acceptanceCriteria": [
-        "Default PIN stored in localStorage is '1234' if none was previously set",
-        "PIN change input validates that the new PIN is 3 or 4 characters; shows error if shorter or longer",
-        "Parent can successfully change the PIN to a new 3–4 character value",
-        "After change, the new PIN is required to access parental controls"
+        "When 'Remember Me' is enabled, the user remains signed in after closing and reopening the browser tab",
+        "When 'Remember Me' is enabled, clicking the sign-out button shows a confirmation dialog before signing out",
+        "The confirmation dialog clearly warns the user that 'Remember Me' is enabled",
+        "If the user confirms sign-out, they are logged out and the 'Remember Me' preference is cleared from localStorage",
+        "If the user cancels the confirmation, they remain signed in",
+        "When 'Remember Me' is not enabled, sign-out behaves as normal without a confirmation dialog"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/PINEntryModal.tsx",
+          "path": "frontend/src/components/AuthGate.tsx",
           "operation": "modify",
-          "description": "Update the localStorage initialization logic to set a default PIN of '1234' if no PIN exists. Add a PIN change section with input and validation that enforces 3-4 character length (digits or alphanumeric). Display validation error messages when the new PIN is too short or too long. Update the PIN verification logic to use the stored/changed PIN value."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Add face scan liveness check before parental controls PIN entry, immediately discard image",
-      "acceptanceCriteria": [
-        "Opening Parental Controls triggers a camera modal before PIN entry",
-        "Camera auto-starts and captures a frame after a brief countdown",
-        "Image data is immediately discarded (not stored in state, localStorage, or sent to backend)",
-        "After scan, camera stops and user proceeds to PIN entry",
-        "If camera permission is denied, show an error and fall back to PIN-only entry"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/ParentalFaceScanModal.tsx",
-          "operation": "create",
-          "description": "Use the camera component to create a modal that auto-starts the camera for a liveness check. Display a countdown (3-2-1), capture a single frame using capturePhoto from the useCamera hook, show 'Verifying parent identity...' message, then immediately discard the captured image without storing it in state, localStorage, or sending to backend. Stop the camera and call an onComplete callback to proceed. If camera permission is denied, show an error message and provide a 'Skip to PIN' button. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/ParentalDashboard.tsx",
-          "operation": "modify",
-          "description": "Add state to track whether the face scan step is completed (initially false). When the parental controls dashboard is opened, first show the ParentalFaceScanModal if the scan is not completed. After the face scan completes successfully, set the scan completion flag and proceed to show the PINEntryModal. If the scan is skipped due to camera errors, proceed directly to PIN entry."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Create Admin Panel page for TailsTheBeast124 with ban, warn, unban, and list capabilities",
-      "acceptanceCriteria": [
-        "'/admin' route is only accessible to TailsTheBeast124; all others are redirected",
-        "Ban input + button: typing a username and pressing Ban bans that user account in the backend",
-        "Warn input + button: typing a username and pressing Warn sends a warning to that user in the backend",
-        "Unban section shows a list of all currently banned users with an Unban button per user",
-        "Ban list shows 'Nobody' when ban count is 0, '1 person banned' when 1, 'N people banned' for N>1",
-        "Ban list and warn list counters display up to 100,000,000,000,000"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/AdminPanel.tsx",
-          "operation": "create",
-          "description": "Create an admin-only page with four sections: (1) Ban User section with a text input for username and a 'Ban' button that calls adminBanUser mutation with the target user's principal; (2) Warn User section with a text input for username and a 'Warn' button that calls adminWarnUser mutation; (3) Unban section that fetches the ban list via getBanList query and displays a scrollable list of banned users by principal with an 'Unban' button calling adminUnbanUser for each; (4) Ban List display showing 'Nobody' when count is 0, '1 person banned' when 1, or 'N people banned' for N>1, with a max display of 100,000,000,000,000; (5) Warn List display showing total warned users count up to 100,000,000,000,000 via getWarnList query. Use toast notifications for success/error feedback."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add React Query hooks for adminBanUser, adminWarnUser, adminUnbanUser, getBanList, and getWarnList that wrap the corresponding backend actor methods. Include invalidation logic so that getBanList and getWarnList queries are invalidated after ban/warn/unban mutations complete."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Add a new route '/admin' that renders the AdminPanel page component. Wrap the route with an admin identity guard that checks if the current user's profile name is 'TailsTheBeast124' (or use backend isCallerAdmin if available). Redirect non-admin users to the homepage if they attempt to access the admin route."
+          "description": "On component mount, check if 'rememberMe' is true in localStorage. If true and the user is not authenticated, attempt to restore the session by calling the login function from useInternetIdentity (Internet Identity may restore the session automatically if the user was previously authenticated). Ensure this logic runs only once on mount to avoid loops. Do not modify useInternetIdentity.ts directly; implement session restoration logic in AuthGate using the existing login function."
         },
         {
           "path": "frontend/src/components/Layout.tsx",
           "operation": "modify",
-          "description": "Add a navigation link to '/admin' in the header navigation menu that is only visible when the current user's profile name is 'TailsTheBeast124' or the backend isCallerAdmin returns true. Place the link in an admin-only section of the navigation bar."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Add moderation promotion tool to Admin Panel with celebratory message for new moderators",
-      "acceptanceCriteria": [
-        "Admin Panel has a Moderation section with username input, reason input, and 'Make Moderator' button",
-        "Pressing Make Moderator calls the backend to grant the mod role to the specified user",
-        "When a newly-promoted moderator loads the app, a banner or modal shows: 'Yay, you're a mod! Help with Scrambly to make it better!'",
-        "The celebratory message is shown only once (dismissed or session-flagged after first display)"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/AdminPanel.tsx",
-          "operation": "modify",
-          "description": "Add a new Moderation Promotion section with a text input for target username (principal), a text input for reason, and a 'Make Moderator' button. When the button is clicked, call the promoteUserToModerator mutation with the target principal. Display toast notification on success or error."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Add a React Query mutation hook for promoteUserToModerator that wraps the backend actor's promoteUserToModerator method. Invalidate the user role and profile queries after successful promotion."
-        },
-        {
-          "path": "frontend/src/components/ModeratorWelcomeBanner.tsx",
-          "operation": "create",
-          "description": "Create a celebratory banner component that checks if the current user was recently promoted to moderator by querying isUserModerator. If true and the banner has not been dismissed in sessionStorage, display a full-width banner with the message: 'Yay, you're a mod! Help with Scrambly to make it better!' Include a dismiss button that sets a sessionStorage flag to prevent re-showing the banner during the same session."
-        },
-        {
-          "path": "frontend/src/components/Layout.tsx",
-          "operation": "modify",
-          "description": "Import and render the ModeratorWelcomeBanner component at the top of the Layout (above the main content area) so it is visible on any page load for newly-promoted moderators. The banner will self-manage visibility based on sessionStorage and user role."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Update post moderation to not auto-warn for text posts, but instantly ban for anime images or prohibited spam keywords",
-      "acceptanceCriteria": [
-        "Submitting a regular text post does not trigger any automatic warning",
-        "Submitting a post with an attached anime image triggers an instant ban before the post is saved",
-        "Submitting a post body containing 'porn', 'anime', 'inappropriate anime', or equivalent terms triggers an instant ban",
-        "Banned user sees an AccountLockedMessage with reason explaining the ban",
-        "Post is rejected and not saved when an auto-ban is triggered"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/CommunityPostForm.tsx",
-          "operation": "modify",
-          "description": "Before submitting a post via the createCommunityPost mutation, add client-side validation that checks the post message for prohibited keywords ('porn', 'anime', 'inappropriate anime'). If any are detected, immediately show an error toast stating the user is banned for inappropriate content and do not call the backend. Remove any existing auto-warn logic for regular text posts. Note: backend will handle anime image detection and banning on its side; frontend should display the resulting ban state via AccountLockedMessage."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Update the createCommunityPost mutation to handle backend errors that indicate an instant ban (e.g., trap message containing 'banned'). On such errors, invalidate the user profile query to trigger a re-fetch of the accountLocked status, causing the AuthGate to show the AccountLockedMessage with the ban reason."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Update search moderation to show Sonic vs Metal Sonic results for admin inappropriate searches, and all sonic.exe vs metal sonic YouTube results for that exact query",
-      "acceptanceCriteria": [
-        "When TailsTheBeast124 searches an inappropriate term, results show Sonic vs Metal Sonic videos without any warning or block",
-        "When any user searches 'sonic.exe vs metal sonic', results display a list of YouTube video entries for that topic",
-        "Non-admin users searching inappropriate terms still trigger the existing warn/ban moderation flow",
-        "A static data file (sonicExeVsMetalSonicVideos.ts or similar) contains multiple sonic.exe vs metal sonic YouTube entries"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/data/sonicVsMetalSonicVideos.ts",
-          "operation": "create",
-          "description": "Create a static data file exporting an array of VideoEntry objects for 'Sonic the Hedgehog vs Metal Sonic' themed videos. Include at least 5 entries with real YouTube IDs, titles, category set to 'Sonic vs Metal Sonic', and kidFriendly flags. This file will be used as replacement results for admin inappropriate searches."
-        },
-        {
-          "path": "frontend/src/data/sonicExeVsMetalSonicVideos.ts",
-          "operation": "create",
-          "description": "Create a static data file exporting an array of VideoEntry objects specifically for 'sonic.exe vs metal sonic' searches. Include at least 5 entries with real YouTube IDs, titles, category set to 'Sonic.exe vs Metal Sonic', and kidFriendly flags. These entries will be displayed when any user searches for 'sonic.exe vs metal sonic'."
-        },
-        {
-          "path": "frontend/src/hooks/useSearchModerator.ts",
-          "operation": "modify",
-          "description": "Update the validateSearch function to check if the current user is admin (TailsTheBeast124) via profile name or isCallerAdmin. If admin and query contains inappropriate terms, return a success validation result but set a flag indicating results should be replaced. Add logic to the hook's return value that provides a shouldReplaceResults flag and replacementResults array. When shouldReplaceResults is true, return the Sonic vs Metal Sonic video entries from sonicVsMetalSonicVideos.ts."
-        },
-        {
-          "path": "frontend/src/pages/SearchPage.tsx",
-          "operation": "modify",
-          "description": "Update the search results rendering logic to check if the search query exactly matches 'sonic.exe vs metal sonic' (case-insensitive). If so, display the video entries from sonicExeVsMetalSonicVideos.ts in the Videos tab. Also, check the useSearchModerator hook's shouldReplaceResults flag. If true (admin searching inappropriate term), display the replacement results from sonicVsMetalSonicVideos.ts instead of the actual search results, without showing any warning or ban screen."
+          "description": "Modify the logout/sign-out button handler in the Layout component. Before calling the clear() function from useInternetIdentity, check if 'rememberMe' is true in localStorage. If true, show a confirmation dialog (use a shadcn/ui Dialog or AlertDialog component) with a message like 'Are you sure you want to sign out? Remember Me is enabled.' If the user confirms, proceed with clear(), clear the queryClient cache, and remove the 'rememberMe' key from localStorage. If the user cancels, do nothing and keep them signed in. If 'rememberMe' is false or not set, proceed with logout as normal without showing the dialog."
         }
       ]
     }

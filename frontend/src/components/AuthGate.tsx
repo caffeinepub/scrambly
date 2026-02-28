@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetCallerUserProfile } from '../hooks/useQueries';
 import { useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,10 @@ import AccountLockedMessage from './AccountLockedMessage';
 import UsageTimerLockout from './UsageTimerLockout';
 import { useUsageTimer } from '../hooks/useUsageTimer';
 import { Zap } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+
+const REMEMBER_ME_KEY = 'rememberMe';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -20,14 +24,68 @@ export default function AuthGate({ children }: AuthGateProps) {
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
   const { isExpired } = useUsageTimer(userProfile);
 
-  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
-  const showLocked = isAuthenticated && !profileLoading && isFetched && userProfile?.accountLocked === true;
-  const showTimerExpired = isAuthenticated && !profileLoading && isFetched && userProfile !== null && isExpired;
+  // Remember Me state — initialize from localStorage
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(REMEMBER_ME_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  // Auto-login attempt when rememberMe is set and user is not yet authenticated
+  const autoLoginAttempted = useRef(false);
+  useEffect(() => {
+    if (
+      !isInitializing &&
+      !isAuthenticated &&
+      rememberMe &&
+      !autoLoginAttempted.current
+    ) {
+      autoLoginAttempted.current = true;
+      try {
+        login();
+      } catch {
+        // If auto-login fails, just show the login screen normally
+      }
+    }
+  }, [isInitializing, isAuthenticated, rememberMe, login]);
+
+  const handleRememberMeChange = (checked: boolean) => {
+    setRememberMe(checked);
+    try {
+      if (checked) {
+        localStorage.setItem(REMEMBER_ME_KEY, 'true');
+      } else {
+        localStorage.removeItem(REMEMBER_ME_KEY);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  };
+
+  const handleLogin = () => {
+    // Persist rememberMe before login so it's set if the page reloads
+    try {
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_ME_KEY, 'true');
+      } else {
+        localStorage.removeItem(REMEMBER_ME_KEY);
+      }
+    } catch {
+      // ignore
+    }
+    login();
+  };
 
   const handleLogout = async () => {
     await clear();
     queryClient.clear();
   };
+
+  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  const showLocked = isAuthenticated && !profileLoading && isFetched && userProfile?.accountLocked === true;
+  const showTimerExpired = isAuthenticated && !profileLoading && isFetched && userProfile !== null && isExpired;
 
   if (isInitializing) {
     return (
@@ -59,15 +117,33 @@ export default function AuthGate({ children }: AuthGateProps) {
           <p className="text-sm text-muted-foreground font-nunito mb-6">
             Search Sonic lore, play games, connect with fans your age, and more!
           </p>
+
           <button
-            onClick={login}
+            onClick={handleLogin}
             disabled={isLoggingIn}
-            className="sonic-btn-primary w-full flex items-center justify-center gap-2"
+            className="sonic-btn-primary w-full flex items-center justify-center gap-2 mb-4"
           >
             <Zap size={18} />
             {isLoggingIn ? 'Logging in...' : 'Login to Scrambly'}
           </button>
-          <p className="text-xs text-muted-foreground mt-4 font-nunito">
+
+          {/* Remember Me checkbox */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Checkbox
+              id="remember-me"
+              checked={rememberMe}
+              onCheckedChange={(checked) => handleRememberMeChange(checked === true)}
+              className="border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            />
+            <Label
+              htmlFor="remember-me"
+              className="text-sm font-nunito text-foreground cursor-pointer select-none"
+            >
+              Remember me
+            </Label>
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-2 font-nunito">
             Ages 10–18 only. Parental guidance recommended.
           </p>
         </div>
