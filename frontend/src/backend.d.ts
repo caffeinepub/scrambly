@@ -96,6 +96,18 @@ export interface FriendRequest {
     recipientId: Principal;
     requesterId: Principal;
 }
+export interface Post {
+    id: bigint;
+    deleted: boolean;
+    authorUsername: string;
+    edited: boolean;
+    text: string;
+    authorRole: PostRole;
+    author: Principal;
+    timestamp: Time;
+    image?: Uint8Array;
+    parentId?: bigint;
+}
 export interface Password {
     attemptsLeft: bigint;
     verified: boolean;
@@ -111,6 +123,12 @@ export enum ModeratorApplicationResult {
     success = "success",
     applicationFull = "applicationFull"
 }
+export enum PostRole {
+    admin = "admin",
+    moderator = "moderator",
+    normal = "normal",
+    warned = "warned"
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -119,14 +137,20 @@ export enum UserRole {
 export interface backendInterface {
     addSonicEntry(entry: SonicKnowledgeEntry): Promise<void>;
     adminBanUser(target: Principal): Promise<void>;
+    adminSetUsername(user: Principal, arg1: string, new_username: string): Promise<void>;
     adminUnbanUser(target: Principal): Promise<void>;
     adminWarnUser(target: Principal): Promise<void>;
     applyForModerator(answers: string): Promise<ModeratorApplicationResult>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createCommunityPost(message: string): Promise<void>;
+    createPost(text: string, image: Uint8Array | null): Promise<bigint>;
+    deletePost(postId: bigint): Promise<void>;
+    editPost(postId: bigint, newText: string, newImage: Uint8Array | null): Promise<void>;
     getAllEntriesByType(content_type: string): Promise<Array<SonicKnowledgeEntry>>;
     getAllFriendsModeRequests(): Promise<Array<FriendsModeRequest>>;
     getAllIdeas(): Promise<Array<Idea>>;
+    getAllPosts(): Promise<Array<Post>>;
+    getAllUsers(): Promise<Array<[string, Principal]>>;
     getBanList(): Promise<Array<Principal>>;
     getCallerUserProfile(): Promise<Profile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -136,6 +160,7 @@ export interface backendInterface {
     getFriendsModeStatus(): Promise<string | null>;
     getMyVideos(): Promise<Array<Video>>;
     getRemainingUsageTime(user: Principal): Promise<bigint | null>;
+    getReplies(parentId: bigint): Promise<Array<Post>>;
     getUserProfile(user: Principal): Promise<Profile>;
     getUsersByAge(fromYear: bigint, toYear: bigint): Promise<Array<Profile>>;
     getWarnList(): Promise<Array<Principal>>;
@@ -148,6 +173,7 @@ export interface backendInterface {
     listApprovals(): Promise<Array<UserApprovalInfo>>;
     markIdeaReviewed(index: bigint): Promise<void>;
     promoteUserToModerator(target: Principal): Promise<void>;
+    replyToPost(parentId: bigint, text: string, image: Uint8Array | null): Promise<bigint>;
     requestApproval(): Promise<void>;
     respondToFriendRequest(requesterId: Principal, accept: boolean): Promise<string>;
     reviewAppeal(user: Principal, approve: boolean, adminNote: string | null): Promise<AppealStatus>;

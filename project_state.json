@@ -1,36 +1,25 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
+  "summary": "App with admin panel access restricted to a single user account (TailsTheBeast124), who has exclusive admin privileges.",
+  "architectural_notes": [
+    "Only the account 'TailsTheBeast124' is allowed to log in; all other accounts are restricted.",
+    "TailsTheBeast124 has exclusive access to the Admin panel."
+  ],
   "known_issues": [],
   "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-add-a-remember-me-checkbox-to-the-login-authentication-ui-when-the-user-initiates-the-internet-identity-login-flow-display-a-clearly-labeled-remember-me-checkbox-before-or-alongside-the-login-button-persist-the-user-s-remember-me-preference-in-localstorage",
-      "title": "Add a 'Remember Me' checkbox to the login/authentication UI. When the user initiates the Internet Identity login flow, display a clearly labeled 'Remember Me' checkbox before or alongside the login button. Persist the user's 'Remember Me' preference in localStorage.",
+      "id": "feature-in-authgate-tsx-enforce-that-only-the-user-whose-username-is-tailsthebeast124-can-proceed-past-the-authentication-gate-any-authenticated-internet-identity-user-whose-resolved-username-is-not-tailsthebeast124-must-be-shown-the-accessdeniedscreen-immediately-after-login-before-any-app-content-is-rendered-this-restriction-must-apply-regardless-of-onboarding-state-or-account-type",
+      "title": "In AuthGate.tsx, enforce that only the user whose username is 'TailsTheBeast124' can proceed past the authentication gate. Any authenticated Internet Identity user whose resolved username is not 'TailsTheBeast124' must be shown the AccessDeniedScreen immediately after login, before any app content is rendered. This restriction must apply regardless of onboarding state or account type.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-when-remember-me-is-enabled-and-the-user-is-logged-in-prevent-the-user-from-being-automatically-or-accidentally-signed-out-the-logout-sign-out-action-should-be-suppressed-or-require-explicit-confirmation-when-remember-me-is-active-specifically-1-if-remember-me-is-stored-as-true-in-localstorage-the-app-should-restore-maintain-the-authenticated-session-on-page-load-without-re-prompting-login-2-the-sign-out-button-should-either-be-hidden-or-show-a-confirmation-dialog-are-you-sure-you-want-to-sign-out-remember-me-is-enabled-before-proceeding-with-logout-when-the-preference-is-active",
-      "title": "When 'Remember Me' is enabled and the user is logged in, prevent the user from being automatically or accidentally signed out. The logout/sign-out action should be suppressed or require explicit confirmation when 'Remember Me' is active. Specifically: (1) If 'Remember Me' is stored as true in localStorage, the app should restore/maintain the authenticated session on page load without re-prompting login. (2) The sign-out button should either be hidden or show a confirmation dialog ('Are you sure you want to sign out? Remember Me is enabled.') before proceeding with logout when the preference is active.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Add 'Remember Me' checkbox/button on login screen that keeps the user signed in across sessions and prevents sign-out when the option is enabled",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
+  "new_feature_requests": [],
+  "gameProjectType": "none",
   "projectName": "Scrambly",
   "clarification_mode": "instant",
   "clarification_rounds": 0

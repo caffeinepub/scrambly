@@ -2,9 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-remember-me-checkbox-to-the-login-authentication-ui-when-the-user-initiates-the-internet-identity-login-flow-display-a-clearly-labeled-remember-me-checkbox-before-or-alongside-the-login-button-persist-the-user-s-remember-me-preference-in-localstorage",
-      "featureTitle": "Add a 'Remember Me' checkbox to the login/authentication UI. When the user initiates the Internet Identity login flow, display a clearly labeled 'Remember Me' checkbox before or alongside the login button. Persist the user's 'Remember Me' preference in localStorage.",
+      "featureId": "feature-in-authgate-tsx-enforce-that-only-the-user-whose-username-is-tailsthebeast124-can-proceed-past-the-authentication-gate-any-authenticated-internet-identity-user-whose-resolved-username-is-not-tailsthebeast124-must-be-shown-the-accessdeniedscreen-immediately-after-login-before-any-app-content-is-rendered-this-restriction-must-apply-regardless-of-onboarding-state-or-account-type",
+      "featureTitle": "In AuthGate.tsx, enforce that only the user whose username is 'TailsTheBeast124' can proceed past the authentication gate. Any authenticated Internet Identity user whose resolved username is not 'TailsTheBeast124' must be shown the AccessDeniedScreen immediately after login, before any app content is rendered. This restriction must apply regardless of onboarding state or account type.",
       "files": [
+        "frontend/src/components/AccessDeniedScreen.tsx",
         "frontend/src/components/AuthGate.tsx"
       ],
       "components": [
@@ -20,29 +21,6 @@
       ],
       "testIds": [
         "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-when-remember-me-is-enabled-and-the-user-is-logged-in-prevent-the-user-from-being-automatically-or-accidentally-signed-out-the-logout-sign-out-action-should-be-suppressed-or-require-explicit-confirmation-when-remember-me-is-active-specifically-1-if-remember-me-is-stored-as-true-in-localstorage-the-app-should-restore-maintain-the-authenticated-session-on-page-load-without-re-prompting-login-2-the-sign-out-button-should-either-be-hidden-or-show-a-confirmation-dialog-are-you-sure-you-want-to-sign-out-remember-me-is-enabled-before-proceeding-with-logout-when-the-preference-is-active",
-      "featureTitle": "When 'Remember Me' is enabled and the user is logged in, prevent the user from being automatically or accidentally signed out. The logout/sign-out action should be suppressed or require explicit confirmation when 'Remember Me' is active. Specifically: (1) If 'Remember Me' is stored as true in localStorage, the app should restore/maintain the authenticated session on page load without re-prompting login. (2) The sign-out button should either be hidden or show a confirmation dialog ('Are you sure you want to sign out? Remember Me is enabled.') before proceeding with logout when the preference is active.",
-      "files": [
-        "frontend/src/components/AuthGate.tsx",
-        "frontend/src/components/Layout.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0",
-        "user-approval@3.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
       ],
       "confidence": "high"
     }

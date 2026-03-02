@@ -54,11 +54,27 @@ export interface Password {
   'verified' : boolean,
   'password' : string,
 }
+export interface Post {
+  'id' : bigint,
+  'deleted' : boolean,
+  'authorUsername' : string,
+  'edited' : boolean,
+  'text' : string,
+  'authorRole' : PostRole,
+  'author' : Principal,
+  'timestamp' : Time,
+  'image' : [] | [Uint8Array],
+  'parentId' : [] | [bigint],
+}
 export interface PostContent {
   'author' : Principal,
   'message' : string,
   'timestamp' : Time,
 }
+export type PostRole = { 'admin' : null } |
+  { 'moderator' : null } |
+  { 'normal' : null } |
+  { 'warned' : null };
 export interface Profile {
   'birthYear' : bigint,
   'password' : [] | [Password],
@@ -114,14 +130,20 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addSonicEntry' : ActorMethod<[SonicKnowledgeEntry], undefined>,
   'adminBanUser' : ActorMethod<[Principal], undefined>,
+  'adminSetUsername' : ActorMethod<[Principal, string, string], undefined>,
   'adminUnbanUser' : ActorMethod<[Principal], undefined>,
   'adminWarnUser' : ActorMethod<[Principal], undefined>,
   'applyForModerator' : ActorMethod<[string], ModeratorApplicationResult>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createCommunityPost' : ActorMethod<[string], undefined>,
+  'createPost' : ActorMethod<[string, [] | [Uint8Array]], bigint>,
+  'deletePost' : ActorMethod<[bigint], undefined>,
+  'editPost' : ActorMethod<[bigint, string, [] | [Uint8Array]], undefined>,
   'getAllEntriesByType' : ActorMethod<[string], Array<SonicKnowledgeEntry>>,
   'getAllFriendsModeRequests' : ActorMethod<[], Array<FriendsModeRequest>>,
   'getAllIdeas' : ActorMethod<[], Array<Idea>>,
+  'getAllPosts' : ActorMethod<[], Array<Post>>,
+  'getAllUsers' : ActorMethod<[], Array<[string, Principal]>>,
   'getBanList' : ActorMethod<[], Array<Principal>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [Profile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
@@ -131,6 +153,7 @@ export interface _SERVICE {
   'getFriendsModeStatus' : ActorMethod<[], [] | [string]>,
   'getMyVideos' : ActorMethod<[], Array<Video>>,
   'getRemainingUsageTime' : ActorMethod<[Principal], [] | [bigint]>,
+  'getReplies' : ActorMethod<[bigint], Array<Post>>,
   'getUserProfile' : ActorMethod<[Principal], Profile>,
   'getUsersByAge' : ActorMethod<[bigint, bigint], Array<Profile>>,
   'getWarnList' : ActorMethod<[], Array<Principal>>,
@@ -143,6 +166,7 @@ export interface _SERVICE {
   'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
   'markIdeaReviewed' : ActorMethod<[bigint], undefined>,
   'promoteUserToModerator' : ActorMethod<[Principal], undefined>,
+  'replyToPost' : ActorMethod<[bigint, string, [] | [Uint8Array]], bigint>,
   'requestApproval' : ActorMethod<[], undefined>,
   'respondToFriendRequest' : ActorMethod<[Principal, boolean], string>,
   'reviewAppeal' : ActorMethod<

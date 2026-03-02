@@ -5,12 +5,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import OnboardingFlow from './OnboardingFlow';
 import AccountLockedMessage from './AccountLockedMessage';
 import UsageTimerLockout from './UsageTimerLockout';
+import AccessDeniedScreen from './AccessDeniedScreen';
 import { useUsageTimer } from '../hooks/useUsageTimer';
 import { Zap } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
 const REMEMBER_ME_KEY = 'rememberMe';
+const ALLOWED_USERNAME = 'TailsTheBeast124';
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -65,7 +67,6 @@ export default function AuthGate({ children }: AuthGateProps) {
   };
 
   const handleLogin = () => {
-    // Persist rememberMe before login so it's set if the page reloads
     try {
       if (rememberMe) {
         localStorage.setItem(REMEMBER_ME_KEY, 'true');
@@ -83,9 +84,22 @@ export default function AuthGate({ children }: AuthGateProps) {
     queryClient.clear();
   };
 
+  const handleOnboardingComplete = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+  };
+
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
   const showLocked = isAuthenticated && !profileLoading && isFetched && userProfile?.accountLocked === true;
-  const showTimerExpired = isAuthenticated && !profileLoading && isFetched && userProfile !== null && isExpired;
+  const showTimerExpired = isAuthenticated && !profileLoading && isFetched && userProfile != null && isExpired;
+
+  // Username-based access restriction: only TailsTheBeast124 is allowed
+  // Check after onboarding is complete (userProfile is not null/undefined and not loading)
+  const showAccessDenied =
+    isAuthenticated &&
+    !profileLoading &&
+    isFetched &&
+    userProfile != null &&
+    userProfile.name !== ALLOWED_USERNAME;
 
   if (isInitializing) {
     return (
@@ -162,10 +176,14 @@ export default function AuthGate({ children }: AuthGateProps) {
   if (showProfileSetup) {
     return (
       <OnboardingFlow
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })}
-        onLogout={handleLogout}
+        onComplete={handleOnboardingComplete}
       />
     );
+  }
+
+  // Block all users except TailsTheBeast124 after onboarding is complete
+  if (showAccessDenied) {
+    return <AccessDeniedScreen onLogout={handleLogout} />;
   }
 
   return <>{children}</>;

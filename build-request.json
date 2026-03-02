@@ -1,59 +1,37 @@
 {
   "kind": "build_request",
-  "title": "Add Remember Me feature to login with persistent session",
+  "title": "Restrict login to TailsTheBeast124 only",
   "projectName": "Scrambly",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a 'Remember Me' checkbox to the login/authentication UI. When the user initiates the Internet Identity login flow, display a clearly labeled 'Remember Me' checkbox before or alongside the login button. Persist the user's 'Remember Me' preference in localStorage.",
+      "text": "In AuthGate.tsx, enforce that only the user whose username is 'TailsTheBeast124' can proceed past the authentication gate. Any authenticated Internet Identity user whose resolved username is not 'TailsTheBeast124' must be shown the AccessDeniedScreen immediately after login, before any app content is rendered. This restriction must apply regardless of onboarding state or account type.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-recent"
         ],
         "quotes": [
-          "When the user starts logging in make button that says remember me"
+          "Only let me log in as TailsTheBeast124"
         ]
       },
       "acceptanceCriteria": [
-        "A 'Remember Me' checkbox is visible on the login screen/AuthGate login prompt",
-        "The checkbox defaults to unchecked",
-        "Checking 'Remember Me' saves the preference to localStorage (e.g., key: 'rememberMe')",
-        "The checkbox state persists across page refreshes"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "When 'Remember Me' is enabled and the user is logged in, prevent the user from being automatically or accidentally signed out. The logout/sign-out action should be suppressed or require explicit confirmation when 'Remember Me' is active. Specifically: (1) If 'Remember Me' is stored as true in localStorage, the app should restore/maintain the authenticated session on page load without re-prompting login. (2) The sign-out button should either be hidden or show a confirmation dialog ('Are you sure you want to sign out? Remember Me is enabled.') before proceeding with logout when the preference is active.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "everytime when they sign out make sure the user doesn't get signed out when the user is signed in"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When 'Remember Me' is enabled, the user remains signed in after closing and reopening the browser tab",
-        "When 'Remember Me' is enabled, clicking the sign-out button shows a confirmation dialog before signing out",
-        "The confirmation dialog clearly warns the user that 'Remember Me' is enabled",
-        "If the user confirms sign-out, they are logged out and the 'Remember Me' preference is cleared from localStorage",
-        "If the user cancels the confirmation, they remain signed in",
-        "When 'Remember Me' is not enabled, sign-out behaves as normal without a confirmation dialog"
+        "After logging in via Internet Identity, if the resolved username is not 'TailsTheBeast124', the AccessDeniedScreen is displayed and no app routes are accessible.",
+        "When logged in as 'TailsTheBeast124', the app loads normally with full access.",
+        "The AccessDeniedScreen includes a logout button that clears the Internet Identity session.",
+        "No other username — even a valid registered account — can access any page of the app."
       ]
     }
   ],
   "constraints": [
-    "Do not modify frontend/src/hooks/useInternetIdentity.ts or frontend/src/hooks/useActor.ts directly — implement Remember Me logic in a wrapper or via the components that call these hooks",
-    "Do not modify files under frontend/src/components/ui",
-    "Do not modify frontend/src/main.tsx"
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts or frontend/src/hooks/useActor.ts.",
+    "The username restriction must be enforced in AuthGate.tsx, not in individual pages or routes."
   ],
   "nonGoals": [
-    "Backend session storage — Remember Me state should be handled entirely in localStorage on the frontend",
-    "Changing the Internet Identity authentication provider or flow",
-    "Automatic session renewal or token refresh logic beyond what Internet Identity provides"
+    "Adding multi-user support or role-based access for other usernames.",
+    "Changing the backend access control logic.",
+    "Modifying the Admin panel itself."
   ],
   "imageRequirements": {
     "required": [],

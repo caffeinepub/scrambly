@@ -1,46 +1,27 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Add Remember Me feature to login with persistent session",
+  "title": "Restrict login to TailsTheBeast124 only",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a 'Remember Me' checkbox to the login/authentication UI that persists the user's preference in localStorage",
+      "summary": "Enforce that only the username 'TailsTheBeast124' can access the application after Internet Identity login",
       "acceptanceCriteria": [
-        "A 'Remember Me' checkbox is visible on the login screen/AuthGate login prompt",
-        "The checkbox defaults to unchecked",
-        "Checking 'Remember Me' saves the preference to localStorage (e.g., key: 'rememberMe')",
-        "The checkbox state persists across page refreshes"
+        "After logging in via Internet Identity, if the resolved username is not 'TailsTheBeast124', the AccessDeniedScreen is displayed and no app routes are accessible.",
+        "When logged in as 'TailsTheBeast124', the app loads normally with full access.",
+        "The AccessDeniedScreen includes a logout button that clears the Internet Identity session.",
+        "No other username — even a valid registered account — can access any page of the app."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/AuthGate.tsx",
           "operation": "modify",
-          "description": "Add a 'Remember Me' checkbox to the login UI section within AuthGate. When the checkbox is checked, save the preference to localStorage using the key 'rememberMe' with a boolean value. On component mount, read from localStorage to initialize the checkbox state. Position the checkbox near the login button with clear labeling. Do not modify the underlying useInternetIdentity hook calls; only add UI and localStorage logic around the existing login flow."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "When 'Remember Me' is enabled, maintain the authenticated session on page load and show a confirmation dialog before sign-out",
-      "acceptanceCriteria": [
-        "When 'Remember Me' is enabled, the user remains signed in after closing and reopening the browser tab",
-        "When 'Remember Me' is enabled, clicking the sign-out button shows a confirmation dialog before signing out",
-        "The confirmation dialog clearly warns the user that 'Remember Me' is enabled",
-        "If the user confirms sign-out, they are logged out and the 'Remember Me' preference is cleared from localStorage",
-        "If the user cancels the confirmation, they remain signed in",
-        "When 'Remember Me' is not enabled, sign-out behaves as normal without a confirmation dialog"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/AuthGate.tsx",
-          "operation": "modify",
-          "description": "On component mount, check if 'rememberMe' is true in localStorage. If true and the user is not authenticated, attempt to restore the session by calling the login function from useInternetIdentity (Internet Identity may restore the session automatically if the user was previously authenticated). Ensure this logic runs only once on mount to avoid loops. Do not modify useInternetIdentity.ts directly; implement session restoration logic in AuthGate using the existing login function."
+          "description": "Add username restriction logic after authentication and profile fetch. After the user profile is successfully loaded via getCallerUserProfile, check if profile.name equals 'TailsTheBeast124'. If not, set a new state flag (e.g., isAccessDenied) to true and render the AccessDeniedScreen component instead of the onboarding flow or children. Ensure this check occurs after onboarding is complete and before rendering the main app content. The check must apply regardless of approval status, account lock state, or other conditions."
         },
         {
-          "path": "frontend/src/components/Layout.tsx",
+          "path": "frontend/src/components/AccessDeniedScreen.tsx",
           "operation": "modify",
-          "description": "Modify the logout/sign-out button handler in the Layout component. Before calling the clear() function from useInternetIdentity, check if 'rememberMe' is true in localStorage. If true, show a confirmation dialog (use a shadcn/ui Dialog or AlertDialog component) with a message like 'Are you sure you want to sign out? Remember Me is enabled.' If the user confirms, proceed with clear(), clear the queryClient cache, and remove the 'rememberMe' key from localStorage. If the user cancels, do nothing and keep them signed in. If 'rememberMe' is false or not set, proceed with logout as normal without showing the dialog."
+          "description": "Update the AccessDeniedScreen component to accept an onLogout callback prop. Ensure the logout button calls this callback to trigger the Internet Identity logout flow (via clear() from useInternetIdentity) and clears all cached React Query data. Update the message text to clearly state that only the user 'TailsTheBeast124' is permitted to access this application."
         }
       ]
     }

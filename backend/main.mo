@@ -15,7 +15,6 @@ import Iter "mo:core/Iter";
 
 
 
-
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -27,6 +26,9 @@ actor {
   let bannedUsers = Set.empty<Principal>();
   let warnedUsers = Set.empty<Principal>();
   let moderatorUsers = Set.empty<Principal>();
+
+  // Username Data
+  let usernames = Set.empty<Text>();
 
   public shared ({ caller }) func requestApproval() : async () {
     UserApproval.requestApproval(approvalState, caller);
@@ -397,6 +399,15 @@ actor {
       Runtime.trap("Unauthorized: Only registered users can verify age");
     };
 
+    // Username Checks
+    if (usernames.contains(name)) {
+      Runtime.trap("Error: This username is already being used! Please choose another username.");
+    };
+
+    if (name == "TailsTheBeast124") {
+      Runtime.trap("Cannot be admin — please choose a different username.");
+    };
+
     let currentYear = 2024;
 
     if (birthYear > currentYear) {
@@ -410,19 +421,16 @@ actor {
         if (profile.accountLocked) { return #locked };
         if (age > 18) { return #tooOld(age) };
         if (age < 10) { return #tooYoung(age) };
+
         profiles.add(
           caller,
           {
+            profile with
             name;
             birthYear;
-            warnings = profile.warnings;
-            accountLocked = false;
-            lastLogin = Time.now();
-            usageTimeRemaining = profile.usageTimeRemaining;
-            isSchoolAccount = profile.isSchoolAccount;
-            password = profile.password;
           },
         );
+        usernames.add(name);
         return #ok;
       };
       case (null) {
@@ -439,9 +447,33 @@ actor {
           isSchoolAccount = false;
           password = null;
         };
+        usernames.add(name);
         profiles.add(caller, profile);
         return #ok;
       };
+    };
+  };
+
+  public shared ({ caller }) func adminSetUsername(user : Principal, _ : Text, new_username : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can perform this action");
+    };
+
+    if (usernames.contains(new_username)) {
+      Runtime.trap("This username is already being used! Please choose another username.");
+    };
+
+    if (new_username == "TailsTheBeast124") {
+      Runtime.trap("Cannot be admin — please choose a different username.");
+    };
+
+    switch (profiles.get(user)) {
+      case (?profile) {
+        usernames.remove(profile.name);
+        usernames.add(new_username);
+        profiles.add(user, { profile with name = new_username });
+      };
+      case (null) { Runtime.trap("User profile not found") };
     };
   };
 
@@ -478,8 +510,6 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can save their profile");
     };
-    // Users may not set privileged fields (warnings, accountLocked, isSchoolAccount, password)
-    // through this general save function. Password must be set via setPassword.
     switch (profiles.get(caller)) {
       case (null) {
         profiles.add(caller, {
@@ -488,6 +518,7 @@ actor {
           accountLocked = false;
           isSchoolAccount = false;
           password = null;
+          name = "UnnamedRushoz";
         });
       };
       case (?existing) {
@@ -497,6 +528,7 @@ actor {
           accountLocked = existing.accountLocked;
           isSchoolAccount = existing.isSchoolAccount;
           password = existing.password;
+          name = existing.name;
         });
       };
     };
@@ -560,6 +592,214 @@ actor {
   public query func getCommunityPosts() : async [PostContent] {
     posts.toArray().sort();
   };
+
+  // ---- New Post Data Model ----
+
+  public type PostRole = {
+    #admin;
+    #moderator;
+    #warned;
+    #normal;
+  };
+
+  public type Post = {
+    id : Nat;
+    author : Principal;
+    authorUsername : Text;
+    authorRole : PostRole;
+    text : Text;
+    image : ?Blob;
+    timestamp : Time.Time;
+    edited : Bool;
+    deleted : Bool;
+    parentId : ?Nat;
+  };
+
+  var nextPostId : Nat = 0;
+  let allPosts = Map.empty<Nat, Post>();
+
+  func getAuthorUsername(author : Principal) : Text {
+    switch (profiles.get(author)) {
+      case (?profile) { profile.name };
+      case (null) { author.toText() };
+    };
+  };
+
+  func getAuthorPostRole(author : Principal) : PostRole {
+    if (AccessControl.isAdmin(accessControlState, author)) {
+      return #admin;
+    };
+    if (moderatorUsers.contains(author)) {
+      return #moderator;
+    };
+    if (warnedUsers.contains(author)) {
+      return #warned;
+    };
+    #normal;
+  };
+
+  // createPost: registered user only, not banned
+  public shared ({ caller }) func createPost(text : Text, image : ?Blob) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can create posts");
+    };
+
+    switch (profiles.get(caller)) {
+      case (?profile) {
+        if (profile.accountLocked) {
+          Runtime.trap("Account locked: You are banned and cannot post");
+        };
+      };
+      case (null) { Runtime.trap("User profile not found") };
+    };
+
+    if (containsBannedContent(text)) {
+      autoBanUser(caller, "Automatic ban: Post contained prohibited content.");
+      Runtime.trap("Your account has been banned for posting prohibited content.");
+    };
+
+    let postId = nextPostId;
+    nextPostId += 1;
+
+    let newPost : Post = {
+      id = postId;
+      author = caller;
+      authorUsername = getAuthorUsername(caller);
+      authorRole = getAuthorPostRole(caller);
+      text;
+      image;
+      timestamp = Time.now();
+      edited = false;
+      deleted = false;
+      parentId = null;
+    };
+
+    allPosts.add(postId, newPost);
+    postId;
+  };
+
+  // editPost: registered user only, must be the post's author
+  public shared ({ caller }) func editPost(postId : Nat, newText : Text, newImage : ?Blob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can edit posts");
+    };
+
+    switch (allPosts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?post) {
+        if (post.author != caller) {
+          Runtime.trap("Unauthorized: You can only edit your own posts");
+        };
+        if (post.deleted) {
+          Runtime.trap("Cannot edit a deleted post");
+        };
+
+        if (containsBannedContent(newText)) {
+          autoBanUser(caller, "Automatic ban: Edited post contained prohibited content.");
+          Runtime.trap("Your account has been banned for posting prohibited content.");
+        };
+
+        allPosts.add(postId, {
+          post with
+          text = newText;
+          image = newImage;
+          edited = true;
+        });
+      };
+    };
+  };
+
+  // deletePost: registered user only, must be the post's author (soft-delete)
+  public shared ({ caller }) func deletePost(postId : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can delete posts");
+    };
+
+    switch (allPosts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?post) {
+        if (post.author != caller) {
+          Runtime.trap("Unauthorized: You can only delete your own posts");
+        };
+        allPosts.add(postId, { post with deleted = true });
+      };
+    };
+  };
+
+  // getAllPosts: returns non-deleted top-level posts in reverse chronological order, visible to everyone
+  public query func getAllPosts() : async [Post] {
+    let activePosts = allPosts.values().toArray().filter(
+      func(post : Post) : Bool {
+        not post.deleted and post.parentId == null
+      }
+    );
+    activePosts.sort(func(a : Post, b : Post) : Order.Order {
+      Int.compare(b.timestamp, a.timestamp)
+    });
+  };
+
+  // replyToPost: registered user only, not banned; reply references a parent post ID
+  public shared ({ caller }) func replyToPost(parentId : Nat, text : Text, image : ?Blob) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only registered users can reply to posts");
+    };
+
+    switch (profiles.get(caller)) {
+      case (?profile) {
+        if (profile.accountLocked) {
+          Runtime.trap("Account locked: You are banned and cannot reply");
+        };
+      };
+      case (null) { Runtime.trap("User profile not found") };
+    };
+
+    switch (allPosts.get(parentId)) {
+      case (null) { Runtime.trap("Parent post not found") };
+      case (?parentPost) {
+        if (parentPost.deleted) {
+          Runtime.trap("Cannot reply to a deleted post");
+        };
+      };
+    };
+
+    if (containsBannedContent(text)) {
+      autoBanUser(caller, "Automatic ban: Reply contained prohibited content.");
+      Runtime.trap("Your account has been banned for posting prohibited content.");
+    };
+
+    let replyId = nextPostId;
+    nextPostId += 1;
+
+    let reply : Post = {
+      id = replyId;
+      author = caller;
+      authorUsername = getAuthorUsername(caller);
+      authorRole = getAuthorPostRole(caller);
+      text;
+      image;
+      timestamp = Time.now();
+      edited = false;
+      deleted = false;
+      parentId = ?parentId;
+    };
+
+    allPosts.add(replyId, reply);
+    replyId;
+  };
+
+  // getReplies: returns non-deleted replies for a given parent post, visible to everyone
+  public query func getReplies(parentId : Nat) : async [Post] {
+    let replies = allPosts.values().toArray().filter(
+      func(post : Post) : Bool {
+        not post.deleted and post.parentId == ?parentId
+      }
+    );
+    replies.sort(func(a : Post, b : Post) : Order.Order {
+      Int.compare(a.timestamp, b.timestamp)
+    });
+  };
+
+  // ---- End New Post Data Model ----
 
   public shared ({ caller }) func issueWarning(target : Principal, reason : Text) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
@@ -1045,5 +1285,17 @@ actor {
       return false;
     };
     bannedUsers.contains(caller);
+  };
+
+  // User Management View for Admin — returns username and full Principal ID
+  public query ({ caller }) func getAllUsers() : async [(Text, Principal)] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view all users");
+    };
+    let users = List.empty<(Text, Principal)>();
+    for ((principal, profile) in profiles.entries()) {
+      users.add((profile.name, principal));
+    };
+    users.toArray();
   };
 };

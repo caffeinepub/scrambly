@@ -1,14 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Add a "Remember Me" feature to the login flow so users can stay signed in across sessions and are protected from accidental sign-outs.
+**Goal:** Restrict app access so that only the user with username `TailsTheBeast124` can log in and use the app.
 
 **Planned changes:**
-- Add a "Remember Me" checkbox to the login/AuthGate UI, defaulting to unchecked
-- Save and restore the "Remember Me" preference in localStorage so it persists across page refreshes
-- When "Remember Me" is enabled, maintain the authenticated session on page load without re-prompting login
-- When "Remember Me" is enabled and the user clicks sign-out, show a confirmation dialog warning them before proceeding
-- If the user confirms sign-out with "Remember Me" active, log them out and clear the preference from localStorage
-- If the user cancels, they remain signed in
+- In `AuthGate.tsx`, after a user authenticates via Internet Identity, check if their resolved username is `TailsTheBeast124`
+- If the username is anything other than `TailsTheBeast124`, immediately display the `AccessDeniedScreen` before any app content renders, regardless of onboarding state or account type
+- The `AccessDeniedScreen` includes a logout button that clears the Internet Identity session
+- Users logged in as `TailsTheBeast124` continue to have full normal access
 
-**User-visible outcome:** Users can check "Remember Me" at login to stay signed in across sessions, and will see a confirmation prompt before being signed out when the feature is active.
+**User-visible outcome:** Only the user `TailsTheBeast124` can access the app. Any other authenticated user sees an access denied screen with a logout option and cannot reach any part of the app.

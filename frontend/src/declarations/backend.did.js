@@ -48,6 +48,24 @@ export const Idea = IDL.Record({
   'timestamp' : Time,
   'reviewed' : IDL.Bool,
 });
+export const PostRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'moderator' : IDL.Null,
+  'normal' : IDL.Null,
+  'warned' : IDL.Null,
+});
+export const Post = IDL.Record({
+  'id' : IDL.Nat,
+  'deleted' : IDL.Bool,
+  'authorUsername' : IDL.Text,
+  'edited' : IDL.Bool,
+  'text' : IDL.Text,
+  'authorRole' : PostRole,
+  'author' : IDL.Principal,
+  'timestamp' : Time,
+  'image' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  'parentId' : IDL.Opt(IDL.Nat),
+});
 export const Password = IDL.Record({
   'attemptsLeft' : IDL.Nat,
   'verified' : IDL.Bool,
@@ -134,11 +152,23 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addSonicEntry' : IDL.Func([SonicKnowledgeEntry], [], []),
   'adminBanUser' : IDL.Func([IDL.Principal], [], []),
+  'adminSetUsername' : IDL.Func([IDL.Principal, IDL.Text, IDL.Text], [], []),
   'adminUnbanUser' : IDL.Func([IDL.Principal], [], []),
   'adminWarnUser' : IDL.Func([IDL.Principal], [], []),
   'applyForModerator' : IDL.Func([IDL.Text], [ModeratorApplicationResult], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createCommunityPost' : IDL.Func([IDL.Text], [], []),
+  'createPost' : IDL.Func(
+      [IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+      [IDL.Nat],
+      [],
+    ),
+  'deletePost' : IDL.Func([IDL.Nat], [], []),
+  'editPost' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
   'getAllEntriesByType' : IDL.Func(
       [IDL.Text],
       [IDL.Vec(SonicKnowledgeEntry)],
@@ -150,6 +180,12 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'getAllIdeas' : IDL.Func([], [IDL.Vec(Idea)], ['query']),
+  'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+  'getAllUsers' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Principal))],
+      ['query'],
+    ),
   'getBanList' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
@@ -163,6 +199,7 @@ export const idlService = IDL.Service({
       [IDL.Opt(IDL.Nat)],
       ['query'],
     ),
+  'getReplies' : IDL.Func([IDL.Nat], [IDL.Vec(Post)], ['query']),
   'getUserProfile' : IDL.Func([IDL.Principal], [Profile], ['query']),
   'getUsersByAge' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Vec(Profile)], ['query']),
   'getWarnList' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
@@ -175,6 +212,11 @@ export const idlService = IDL.Service({
   'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
   'markIdeaReviewed' : IDL.Func([IDL.Nat], [], []),
   'promoteUserToModerator' : IDL.Func([IDL.Principal], [], []),
+  'replyToPost' : IDL.Func(
+      [IDL.Nat, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+      [IDL.Nat],
+      [],
+    ),
   'requestApproval' : IDL.Func([], [], []),
   'respondToFriendRequest' : IDL.Func(
       [IDL.Principal, IDL.Bool],
@@ -253,6 +295,24 @@ export const idlFactory = ({ IDL }) => {
     'author' : IDL.Text,
     'timestamp' : Time,
     'reviewed' : IDL.Bool,
+  });
+  const PostRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'moderator' : IDL.Null,
+    'normal' : IDL.Null,
+    'warned' : IDL.Null,
+  });
+  const Post = IDL.Record({
+    'id' : IDL.Nat,
+    'deleted' : IDL.Bool,
+    'authorUsername' : IDL.Text,
+    'edited' : IDL.Bool,
+    'text' : IDL.Text,
+    'authorRole' : PostRole,
+    'author' : IDL.Principal,
+    'timestamp' : Time,
+    'image' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'parentId' : IDL.Opt(IDL.Nat),
   });
   const Password = IDL.Record({
     'attemptsLeft' : IDL.Nat,
@@ -340,6 +400,7 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addSonicEntry' : IDL.Func([SonicKnowledgeEntry], [], []),
     'adminBanUser' : IDL.Func([IDL.Principal], [], []),
+    'adminSetUsername' : IDL.Func([IDL.Principal, IDL.Text, IDL.Text], [], []),
     'adminUnbanUser' : IDL.Func([IDL.Principal], [], []),
     'adminWarnUser' : IDL.Func([IDL.Principal], [], []),
     'applyForModerator' : IDL.Func(
@@ -349,6 +410,17 @@ export const idlFactory = ({ IDL }) => {
       ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createCommunityPost' : IDL.Func([IDL.Text], [], []),
+    'createPost' : IDL.Func(
+        [IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+        [IDL.Nat],
+        [],
+      ),
+    'deletePost' : IDL.Func([IDL.Nat], [], []),
+    'editPost' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
     'getAllEntriesByType' : IDL.Func(
         [IDL.Text],
         [IDL.Vec(SonicKnowledgeEntry)],
@@ -360,6 +432,12 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getAllIdeas' : IDL.Func([], [IDL.Vec(Idea)], ['query']),
+    'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+    'getAllUsers' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Principal))],
+        ['query'],
+      ),
     'getBanList' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
@@ -373,6 +451,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(IDL.Nat)],
         ['query'],
       ),
+    'getReplies' : IDL.Func([IDL.Nat], [IDL.Vec(Post)], ['query']),
     'getUserProfile' : IDL.Func([IDL.Principal], [Profile], ['query']),
     'getUsersByAge' : IDL.Func(
         [IDL.Nat, IDL.Nat],
@@ -389,6 +468,11 @@ export const idlFactory = ({ IDL }) => {
     'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
     'markIdeaReviewed' : IDL.Func([IDL.Nat], [], []),
     'promoteUserToModerator' : IDL.Func([IDL.Principal], [], []),
+    'replyToPost' : IDL.Func(
+        [IDL.Nat, IDL.Text, IDL.Opt(IDL.Vec(IDL.Nat8))],
+        [IDL.Nat],
+        [],
+      ),
     'requestApproval' : IDL.Func([], [], []),
     'respondToFriendRequest' : IDL.Func(
         [IDL.Principal, IDL.Bool],
