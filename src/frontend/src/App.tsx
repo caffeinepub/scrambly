@@ -8,10 +8,11 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import { ThemeProvider } from "next-themes";
-import React from "react";
+import React, { useEffect } from "react";
 
 import AuthGate from "./components/AuthGate";
 import Layout from "./components/Layout";
+import { useMusicPlayer } from "./hooks/useMusicPlayer";
 
 import AdminPanel from "./pages/AdminPanel";
 import AgeMatcher from "./pages/AgeMatcher";
@@ -142,10 +143,17 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// Mounts the global music player (audio starts here, persists across routes)
+function GlobalMusicPlayer() {
+  useMusicPlayer();
+  return null;
+}
+
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
+        <GlobalMusicPlayer />
         <RouterProvider router={router} />
         <Toaster richColors position="top-right" />
       </QueryClientProvider>

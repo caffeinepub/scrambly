@@ -2,18 +2,25 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   AlertTriangle,
+  Crop,
   ExternalLink,
   Lightbulb,
   Loader2,
   Lock,
+  Music,
   Save,
   Shield,
   Trash2,
-  Video,
+  Upload,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import PhotoCropModal from "../components/PhotoCropModal";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import { useMusicPlayer } from "../hooks/useMusicPlayer";
 import {
   useApplyForModerator,
   useGetCallerUserProfile,
@@ -45,6 +52,15 @@ export default function SettingsPage() {
   const verifyPasswordMutation = useVerifyPassword();
   const submitIdeaMutation = useSubmitIdea();
   const applyModeratorMutation = useApplyForModerator();
+
+  // Music player
+  const { volume, setVolume, isMuted } = useMusicPlayer();
+
+  // Photo crop state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropImageSrc, setCropImageSrc] = useState("");
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [croppedPhotoUrl, setCroppedPhotoUrl] = useState("");
 
   // Profile form state
   const [name, setName] = useState("");
@@ -158,6 +174,26 @@ export default function SettingsPage() {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string;
+      setCropImageSrc(src);
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
+  const handleCropSubmit = (dataUrl: string) => {
+    setCroppedPhotoUrl(dataUrl);
+    setCropModalOpen(false);
+    toast.success("Photo cropped and saved!");
+  };
+
   if (profileLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -172,6 +208,129 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
       <h1 className="text-3xl font-bold text-primary font-display">Settings</h1>
+
+      {/* ── MUSIC ── */}
+      <section
+        className="sonic-card p-6 space-y-4"
+        data-ocid="settings.music.panel"
+      >
+        <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+          <Music className="w-5 h-5 text-primary" />
+          Music
+        </h2>
+
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Background Music
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Casino Night Zone —{" "}
+            <span className="italic">Sonic the Hedgehog 2</span>
+          </p>
+
+          <div className="flex items-center gap-4">
+            {isMuted ? (
+              <VolumeX
+                className="w-6 h-6 text-destructive shrink-0"
+                aria-label="Muted"
+              />
+            ) : (
+              <Volume2
+                className="w-6 h-6 text-primary shrink-0"
+                aria-label="Playing"
+              />
+            )}
+
+            <div className="flex-1 space-y-1">
+              <input
+                type="range"
+                min={1}
+                max={100}
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                className="w-full accent-primary cursor-pointer"
+                aria-label="Music volume"
+                data-ocid="settings.music.input"
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>🔇 Muted</span>
+                <span className="font-semibold text-foreground">
+                  {isMuted ? "Muted" : `${volume}%`}
+                </span>
+                <span>🔊 Max</span>
+              </div>
+            </div>
+          </div>
+
+          {isMuted && (
+            <p className="text-xs text-destructive flex items-center gap-1">
+              <VolumeX className="w-3 h-3" />
+              Music is muted. Slide above 1 to enable.
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* ── PHOTO CROP ── */}
+      <section
+        className="sonic-card p-6 space-y-4"
+        data-ocid="settings.photo.panel"
+      >
+        <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
+          <Crop className="w-5 h-5 text-primary" />
+          Profile Photo
+        </h2>
+
+        <div className="space-y-3">
+          {croppedPhotoUrl && (
+            <div className="flex items-center gap-4">
+              <img
+                src={croppedPhotoUrl}
+                alt="Cropped profile"
+                className="w-20 h-20 rounded-full object-cover border-2 border-primary"
+              />
+              <span className="text-sm text-muted-foreground">
+                Current profile photo
+              </span>
+            </div>
+          )}
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+
+          <button
+            type="button"
+            className="sonic-btn sonic-btn-primary flex items-center gap-2"
+            onClick={() => fileInputRef.current?.click()}
+            data-ocid="settings.photo.upload_button"
+          >
+            <Upload className="w-4 h-4" />
+            Upload Photo
+          </button>
+
+          {cropImageSrc && !cropModalOpen && (
+            <button
+              type="button"
+              className="sonic-btn sonic-btn-secondary flex items-center gap-2"
+              onClick={() => setCropModalOpen(true)}
+              data-ocid="settings.photo.edit_button"
+            >
+              <Crop className="w-4 h-4" />
+              Crop Photo
+            </button>
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            After selecting a photo, use the crop tool to resize and position
+            it.
+          </p>
+        </div>
+      </section>
 
       {/* Account Settings */}
       <section className="sonic-card p-6 space-y-4">
@@ -479,6 +638,16 @@ export default function SettingsPage() {
           </button>
         </div>
       </section>
+
+      {/* Photo Crop Modal */}
+      {cropModalOpen && cropImageSrc && (
+        <PhotoCropModal
+          open={cropModalOpen}
+          imageSrc={cropImageSrc}
+          onSubmit={handleCropSubmit}
+          onClose={() => setCropModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
