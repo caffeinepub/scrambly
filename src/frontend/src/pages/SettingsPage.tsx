@@ -4,6 +4,8 @@ import {
   AlertTriangle,
   Crop,
   ExternalLink,
+  Eye,
+  EyeOff,
   Lightbulb,
   Loader2,
   Lock,
@@ -68,8 +70,21 @@ export default function SettingsPage() {
 
   // Password state
   const [newPassword, setNewPassword] = useState("");
+  const [showCurrentPin, setShowCurrentPin] = useState(false);
   const [verifyPasswordInput, setVerifyPasswordInput] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
+
+  // Forgot Password flow
+  const [showForgotSection, setShowForgotSection] = useState(false);
+  const [forgotStep, setForgotStep] = useState<
+    "initial" | "emailSent" | "resetForm"
+  >("initial");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotNewPin, setForgotNewPin] = useState("");
+  const [forgotConfirmPin, setForgotConfirmPin] = useState("");
+  const [showForgotNewPin, setShowForgotNewPin] = useState(false);
+  const [showForgotConfirmPin, setShowForgotConfirmPin] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState("");
 
   // Idea state
   const [ideaContent, setIdeaContent] = useState("");
@@ -127,6 +142,31 @@ export default function SettingsPage() {
       setVerifyPasswordInput("");
     } catch (e: any) {
       setPasswordMessage(`Error: ${e?.message || "Unknown error"}`);
+    }
+  };
+
+  const handleForgotChangePassword = async () => {
+    setForgotMessage("");
+    if (forgotNewPin.length < 4 || forgotNewPin.length > 6) {
+      setForgotMessage("PIN must be 4–6 digits.");
+      return;
+    }
+    if (forgotNewPin !== forgotConfirmPin) {
+      setForgotMessage("PINs do not match.");
+      return;
+    }
+    try {
+      await setPasswordMutation.mutateAsync(forgotNewPin);
+      setForgotMessage("✅ Password changed successfully!");
+      setForgotNewPin("");
+      setForgotConfirmPin("");
+      setTimeout(() => {
+        setShowForgotSection(false);
+        setForgotStep("initial");
+        setForgotMessage("");
+      }, 1500);
+    } catch (e: any) {
+      setForgotMessage(`Error: ${e?.message || "Unknown error"}`);
     }
   };
 
@@ -401,7 +441,10 @@ export default function SettingsPage() {
       </section>
 
       {/* Password */}
-      <section className="sonic-card p-6 space-y-4">
+      <section
+        className="sonic-card p-6 space-y-4"
+        data-ocid="settings.password.panel"
+      >
         <h2 className="text-xl font-bold text-foreground font-display flex items-center gap-2">
           <Lock className="w-5 h-5 text-primary" />
           Password (PIN)
@@ -414,15 +457,31 @@ export default function SettingsPage() {
             >
               Set New PIN (4 or 6 digits)
             </label>
-            <input
-              id="settings-new-pin"
-              className="sonic-input w-full"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Enter 4 or 6 digit PIN"
-              type="password"
-              maxLength={6}
-            />
+            <div className="relative">
+              <input
+                id="settings-new-pin"
+                className="sonic-input w-full pr-10"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter 4 or 6 digit PIN"
+                type={showCurrentPin ? "text" : "password"}
+                maxLength={6}
+                data-ocid="settings.forgot_pin.input"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPin((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                aria-label={showCurrentPin ? "Hide PIN" : "Show PIN"}
+                data-ocid="settings.show_pin.toggle"
+              >
+                {showCurrentPin ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             <button
               type="button"
               className="sonic-btn sonic-btn-primary mt-2 flex items-center gap-2"
@@ -472,6 +531,269 @@ export default function SettingsPage() {
             <p className="text-sm font-medium text-foreground">
               {passwordMessage}
             </p>
+          )}
+
+          {/* Forgot Password button */}
+          {!showForgotSection && (
+            <button
+              type="button"
+              onClick={() => {
+                setShowForgotSection(true);
+                setForgotStep("initial");
+                setForgotMessage("");
+              }}
+              className="text-sm text-primary underline hover:text-primary/80 transition-colors mt-1"
+              data-ocid="settings.forgot_password.button"
+            >
+              Forgot Password?
+            </button>
+          )}
+
+          {/* Forgot Password section */}
+          {showForgotSection && (
+            <div
+              className="mt-4 rounded-2xl border-2 border-primary/20 bg-primary/5 p-5 space-y-4"
+              data-ocid="settings.forgot_password.panel"
+            >
+              {forgotStep === "initial" && (
+                <>
+                  <div className="space-y-1">
+                    <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                      <Lock className="w-4 h-4 text-primary" />
+                      Forgot Password?
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      We can send a password reset link to your Gmail account.
+                      The email will come from{" "}
+                      <span className="font-semibold text-foreground">
+                        Scramblyheadshot223@gmail.com
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="forgot-email"
+                      className="block text-sm font-medium text-muted-foreground mb-1"
+                    >
+                      Your Gmail address
+                    </label>
+                    <input
+                      id="forgot-email"
+                      className="sonic-input w-full"
+                      type="email"
+                      placeholder="yourname@gmail.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      className="sonic-btn sonic-btn-primary flex-1 flex items-center justify-center gap-2"
+                      onClick={() => {
+                        if (!forgotEmail.includes("@gmail.com")) {
+                          setForgotMessage(
+                            "Please enter a valid Gmail address.",
+                          );
+                          return;
+                        }
+                        setForgotMessage("");
+                        setForgotStep("emailSent");
+                      }}
+                    >
+                      Send Reset Email
+                    </button>
+                    <button
+                      type="button"
+                      className="sonic-btn sonic-btn-secondary flex-1"
+                      onClick={() => {
+                        setForgotMessage("");
+                        setForgotStep("resetForm");
+                      }}
+                    >
+                      Reset on our app
+                    </button>
+                  </div>
+                  {forgotMessage && (
+                    <p className="text-sm text-destructive">{forgotMessage}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotSection(false);
+                      setForgotStep("initial");
+                      setForgotMessage("");
+                    }}
+                    className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+
+              {forgotStep === "emailSent" && (
+                <>
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 space-y-2">
+                    <p className="text-sm font-semibold text-green-700 dark:text-green-400">
+                      📧 Email sent!
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Check your Gmail inbox for a message from{" "}
+                      <span className="font-semibold">
+                        Scramblyheadshot223@gmail.com
+                      </span>
+                      . It says:{" "}
+                      <em>
+                        "If you want to reset your password, reset it here! Or
+                        use our app."
+                      </em>
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      className="sonic-btn sonic-btn-primary flex-1"
+                      onClick={() => {
+                        setForgotMessage("");
+                        setForgotStep("resetForm");
+                      }}
+                    >
+                      Reset on our app instead
+                    </button>
+                    <button
+                      type="button"
+                      className="sonic-btn sonic-btn-secondary flex-1"
+                      onClick={() => {
+                        setForgotMessage("");
+                        setForgotStep("initial");
+                      }}
+                    >
+                      Back
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {forgotStep === "resetForm" && (
+                <>
+                  <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-primary" />
+                    Change Password
+                  </h3>
+                  <div>
+                    <label
+                      htmlFor="forgot-new-pin"
+                      className="block text-sm font-medium text-muted-foreground mb-1"
+                    >
+                      New PIN (4–6 digits)
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="forgot-new-pin"
+                        className="sonic-input w-full pr-10"
+                        type={showForgotNewPin ? "text" : "password"}
+                        placeholder="Enter new PIN"
+                        value={forgotNewPin}
+                        onChange={(e) => setForgotNewPin(e.target.value)}
+                        maxLength={6}
+                        data-ocid="settings.forgot_pin.input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotNewPin((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                        aria-label={showForgotNewPin ? "Hide PIN" : "Show PIN"}
+                      >
+                        {showForgotNewPin ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="forgot-confirm-pin"
+                      className="block text-sm font-medium text-muted-foreground mb-1"
+                    >
+                      Confirm New PIN
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="forgot-confirm-pin"
+                        className="sonic-input w-full pr-10"
+                        type={showForgotConfirmPin ? "text" : "password"}
+                        placeholder="Confirm new PIN"
+                        value={forgotConfirmPin}
+                        onChange={(e) => setForgotConfirmPin(e.target.value)}
+                        maxLength={6}
+                        data-ocid="settings.confirm_pin.input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotConfirmPin((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                        aria-label={
+                          showForgotConfirmPin ? "Hide PIN" : "Show PIN"
+                        }
+                      >
+                        {showForgotConfirmPin ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  {forgotMessage && (
+                    <p
+                      className={`text-sm font-medium ${
+                        forgotMessage.startsWith("✅")
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-destructive"
+                      }`}
+                    >
+                      {forgotMessage}
+                    </p>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      className="sonic-btn flex-1 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2 disabled:opacity-50"
+                      onClick={handleForgotChangePassword}
+                      disabled={
+                        setPasswordMutation.isPending ||
+                        forgotNewPin.length < 4 ||
+                        forgotConfirmPin.length < 4
+                      }
+                      data-ocid="settings.change_password.submit_button"
+                    >
+                      {setPasswordMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Lock className="w-4 h-4" />
+                      )}
+                      Change Password
+                    </button>
+                    <button
+                      type="button"
+                      className="sonic-btn sonic-btn-secondary flex-1"
+                      onClick={() => {
+                        setShowForgotSection(false);
+                        setForgotStep("initial");
+                        setForgotMessage("");
+                        setForgotNewPin("");
+                        setForgotConfirmPin("");
+                      }}
+                      data-ocid="settings.forgot_password.cancel_button"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </section>

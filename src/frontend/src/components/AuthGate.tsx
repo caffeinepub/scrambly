@@ -12,6 +12,7 @@ import OnboardingFlow from "./OnboardingFlow";
 import UsageTimerLockout from "./UsageTimerLockout";
 
 const REMEMBER_ME_KEY = "rememberMe";
+const LAST_USERNAME_KEY = "scramblyLastUsername";
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -38,6 +39,26 @@ export default function AuthGate({ children }: AuthGateProps) {
       return false;
     }
   });
+
+  // Last username — read once on mount
+  const [lastUsername] = useState<string>(() => {
+    try {
+      return localStorage.getItem(LAST_USERNAME_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
+
+  // Store username in localStorage when profile loads
+  useEffect(() => {
+    if (userProfile?.name) {
+      try {
+        localStorage.setItem(LAST_USERNAME_KEY, userProfile.name);
+      } catch {
+        // ignore
+      }
+    }
+  }, [userProfile]);
 
   // Auto-login attempt when rememberMe is set and user is not yet authenticated
   const autoLoginAttempted = useRef(false);
@@ -86,6 +107,7 @@ export default function AuthGate({ children }: AuthGateProps) {
   const handleLogout = async () => {
     await clear();
     queryClient.clear();
+    // NOTE: intentionally do NOT clear LAST_USERNAME_KEY so "Sign in as USERNAME" persists
   };
 
   const handleOnboardingComplete = async () => {
@@ -145,11 +167,30 @@ export default function AuthGate({ children }: AuthGateProps) {
             type="button"
             onClick={handleLogin}
             disabled={isLoggingIn}
-            className="sonic-btn-primary w-full flex items-center justify-center gap-2 mb-4"
+            className="sonic-btn-primary w-full flex items-center justify-center gap-2 mb-2"
+            data-ocid="auth.primary_button"
           >
             <Zap size={18} />
-            {isLoggingIn ? "Logging in..." : "Login to Scrambly"}
+            {isLoggingIn
+              ? "Logging in..."
+              : lastUsername
+                ? `Sign in as ${lastUsername}`
+                : "Login to Scrambly"}
           </button>
+
+          {lastUsername && (
+            <p className="text-xs text-muted-foreground mb-4 font-nunito">
+              Not you?{" "}
+              <button
+                type="button"
+                onClick={handleLogin}
+                className="underline text-primary hover:text-primary/80 transition-colors"
+                data-ocid="auth.secondary_button"
+              >
+                Sign in with a different account
+              </button>
+            </p>
+          )}
 
           {/* Remember Me checkbox */}
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -160,6 +201,7 @@ export default function AuthGate({ children }: AuthGateProps) {
                 handleRememberMeChange(checked === true)
               }
               className="border-primary data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              data-ocid="auth.checkbox"
             />
             <Label
               htmlFor="remember-me"
