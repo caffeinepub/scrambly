@@ -31,6 +31,7 @@ import {
   useGetReplies,
   useReplyToPost,
 } from "../hooks/useQueries";
+import ImageViewerModal from "./ImageViewerModal";
 
 interface CommunityFeedProps {
   posts: Post[];
@@ -69,11 +70,28 @@ function formatTime(timestamp: bigint): string {
   return date.toLocaleString();
 }
 
+/** Parse [music:URL] tag from post text, return {text, musicUrl} */
+function parseMusicTag(rawText: string): {
+  displayText: string;
+  musicUrl: string | null;
+} {
+  const match = rawText.match(/\[music:([^\]]+)\]/);
+  if (match) {
+    return {
+      displayText: rawText.replace(match[0], "").trim(),
+      musicUrl: match[1],
+    };
+  }
+  return { displayText: rawText, musicUrl: null };
+}
+
 function PostImage({ imageBytes }: { imageBytes: Uint8Array }) {
+  const [viewerOpen, setViewerOpen] = useState(false);
   const blob = new Blob([new Uint8Array(imageBytes.buffer as ArrayBuffer)], {
     type: "image/jpeg",
   });
   const url = URL.createObjectURL(blob);
+
   return (
     <div className="mb-3">
       <div className="flex items-center gap-1 mb-1">
@@ -81,12 +99,29 @@ function PostImage({ imageBytes }: { imageBytes: Uint8Array }) {
         <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
           Image
         </span>
+        <span className="text-xs text-muted-foreground ml-1">
+          (tap to view fullscreen)
+        </span>
       </div>
-      <img
-        src={url}
-        alt="Attached media"
-        className="rounded-lg max-h-64 w-full object-cover border border-border"
-        onLoad={() => URL.revokeObjectURL(url)}
+      <button
+        type="button"
+        className="block w-full p-0 border-0 bg-transparent cursor-pointer"
+        onClick={() => setViewerOpen(true)}
+        aria-label="View image fullscreen"
+        data-ocid="post.image.canvas_target"
+      >
+        <img
+          src={url}
+          alt="Attached media"
+          className="rounded-lg max-h-64 w-full object-cover border border-border hover:opacity-90 transition-opacity"
+          onLoad={() => URL.revokeObjectURL(url)}
+        />
+      </button>
+      <ImageViewerModal
+        imageUrl={url}
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+        altText="Post image"
       />
     </div>
   );
@@ -182,6 +217,7 @@ function ReplyThread({
       {replies.map((reply) => {
         const isAuthor = reply.author.toString() === currentUserPrincipal;
         const isEditing = editingId === reply.id;
+        const { displayText, musicUrl } = parseMusicTag(reply.text);
 
         return (
           <div key={reply.id.toString()} className="bg-muted/30 rounded-lg p-3">
@@ -242,7 +278,24 @@ function ReplyThread({
                       Text
                     </span>
                   </div>
-                  <p className="text-sm text-foreground">{reply.text}</p>
+                  <p className="text-sm text-foreground">{displayText}</p>
+                  {musicUrl && (
+                    <div className="mt-2">
+                      <audio
+                        controls
+                        src={musicUrl}
+                        className="w-full h-8 rounded"
+                        preload="metadata"
+                      >
+                        <track
+                          kind="captions"
+                          srcLang="en"
+                          label="No captions"
+                        />
+                        Your browser does not support audio.
+                      </audio>
+                    </div>
+                  )}
                 </div>
                 {!isBanned && isAuthor && (
                   <div className="flex gap-2 mt-2">
@@ -375,6 +428,7 @@ function PostCard({ post, currentUserPrincipal, isBanned }: PostCardProps) {
   const [showReplies, setShowReplies] = useState(false);
 
   const isAuthor = post.author.toString() === currentUserPrincipal;
+  const { displayText, musicUrl } = parseMusicTag(post.text);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -490,8 +544,25 @@ function PostCard({ post, currentUserPrincipal, isBanned }: PostCardProps) {
                 </span>
               </div>
               <p className="text-sm text-foreground leading-relaxed">
-                {post.text}
+                {displayText}
               </p>
+              {/* Music player */}
+              {musicUrl && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    🎵 Music attached:
+                  </p>
+                  <audio
+                    controls
+                    src={musicUrl}
+                    className="w-full rounded"
+                    preload="metadata"
+                  >
+                    <track kind="captions" srcLang="en" label="No captions" />
+                    Your browser does not support audio.
+                  </audio>
+                </div>
+              )}
             </div>
           </>
         )}

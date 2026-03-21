@@ -566,7 +566,7 @@ export default function SettingsPage() {
                       We can send a password reset link to your Gmail account.
                       The email will come from{" "}
                       <span className="font-semibold text-foreground">
-                        Scramblyheadshot223@gmail.com
+                        Scrambly223@gmail.com
                       </span>
                     </p>
                   </div>
@@ -640,7 +640,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">
                       Check your Gmail inbox for a message from{" "}
                       <span className="font-semibold">
-                        Scramblyheadshot223@gmail.com
+                        Scrambly223@gmail.com
                       </span>
                       . It says:{" "}
                       <em>

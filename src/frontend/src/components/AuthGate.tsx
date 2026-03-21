@@ -13,6 +13,7 @@ import UsageTimerLockout from "./UsageTimerLockout";
 
 const REMEMBER_ME_KEY = "rememberMe";
 const LAST_USERNAME_KEY = "scramblyLastUsername";
+const DEFAULT_USERNAME = "TailsTheBeast124";
 
 interface AuthGateProps {
   children: React.ReactNode;
@@ -40,12 +41,12 @@ export default function AuthGate({ children }: AuthGateProps) {
     }
   });
 
-  // Last username — read once on mount
+  // Last username — read once on mount; default to TailsTheBeast124 if none stored
   const [lastUsername] = useState<string>(() => {
     try {
-      return localStorage.getItem(LAST_USERNAME_KEY) || "";
+      return localStorage.getItem(LAST_USERNAME_KEY) || DEFAULT_USERNAME;
     } catch {
-      return "";
+      return DEFAULT_USERNAME;
     }
   });
 
@@ -171,26 +172,20 @@ export default function AuthGate({ children }: AuthGateProps) {
             data-ocid="auth.primary_button"
           >
             <Zap size={18} />
-            {isLoggingIn
-              ? "Logging in..."
-              : lastUsername
-                ? `Sign in as ${lastUsername}`
-                : "Login to Scrambly"}
+            {isLoggingIn ? "Logging in..." : `Sign in as ${lastUsername}`}
           </button>
 
-          {lastUsername && (
-            <p className="text-xs text-muted-foreground mb-4 font-nunito">
-              Not you?{" "}
-              <button
-                type="button"
-                onClick={handleLogin}
-                className="underline text-primary hover:text-primary/80 transition-colors"
-                data-ocid="auth.secondary_button"
-              >
-                Sign in with a different account
-              </button>
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground mb-4 font-nunito">
+            Not you?{" "}
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="underline text-primary hover:text-primary/80 transition-colors"
+              data-ocid="auth.secondary_button"
+            >
+              Sign in with a different account
+            </button>
+          </p>
 
           {/* Remember Me checkbox */}
           <div className="flex items-center justify-center gap-2 mb-4">

@@ -149,10 +149,30 @@ function GlobalMusicPlayer() {
   return null;
 }
 
+// Sync system dark/light preference to the `dark` class on <html>
+function SystemThemeSync() {
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = (dark: boolean) => {
+      // Only apply if next-themes hasn't set an explicit override
+      const stored = localStorage.getItem("theme");
+      if (!stored || stored === "system") {
+        document.documentElement.classList.toggle("dark", dark);
+      }
+    };
+    apply(mq.matches);
+    const handler = (e: MediaQueryListEvent) => apply(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return null;
+}
+
 export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
+        <SystemThemeSync />
         <GlobalMusicPlayer />
         <RouterProvider router={router} />
         <Toaster richColors position="top-right" />
